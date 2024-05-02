@@ -137,7 +137,7 @@ public class ResourceRESTService {
 		}
 		else {
 			/*
-			 * Re-direct to client application
+			 * Re-direct to conformance metadata
 			 */
 			String locationPath = ui.getAbsolutePath().toString();
 			log.info("Absolute Path is " + locationPath);
@@ -151,7 +151,7 @@ public class ResourceRESTService {
 			Response.ResponseBuilder builder;
 
 			try {
-				builder = Response.seeOther(new URI(locationPath + "-gui"));
+				builder = Response.seeOther(new URI(locationPath + "/metadata"));
 				response = builder.build();
 			}
 			catch (URISyntaxException e) {

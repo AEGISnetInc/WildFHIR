@@ -256,7 +256,7 @@ public class CapabilityStatementReload extends ResourceOperationProxy {
 				// Should only have one of these
 				CapabilityStatementRestComponent rest = capabilityStatementResource.getRest().get(0);
 
-				rest.setDocumentation("This server supports all instance, type and whole system operations on all resources including batch, transaction and validate. Paging is supported for both the history and search operations. Support for the patch operation is available for both json and xml. Additional custom operations $medication-overview and $purge are supported.");
+				// CapabilityStatement rest documentation manually entered in base capability statement
 
 				// CapabilityStatement Security manually entered in base capability statement
 

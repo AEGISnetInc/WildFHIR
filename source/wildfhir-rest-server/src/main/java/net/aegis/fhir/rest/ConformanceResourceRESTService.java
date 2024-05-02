@@ -189,24 +189,44 @@ public class ConformanceResourceRESTService {
 
 					if (resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
 
-						if (producesType.contains("xml")) {
-							builder = builder.entity(new String(resourceContainer.getConformance().getResourceContents()));
+						byte[] resourceContents = resourceContainer.getConformance().getResourceContents();
+
+						if (resourceContents != null && resourceContents.length > 0) {
+
+							if (producesType.contains("xml")) {
+								builder = builder.entity(new String(resourceContents));
+							}
+							else {
+								// Convert XML contents to JSON
+								iConformance = new ByteArrayInputStream(resourceContents);
+								XmlParser xmlP = new XmlParser();
+								CapabilityStatement conformance = (CapabilityStatement) xmlP.parse(iConformance);
+
+								oConformance = new ByteArrayOutputStream();
+								JsonParser jsonParser = new JsonParser();
+								jsonParser.setOutputStyle(OutputStyle.PRETTY);
+								jsonParser.compose(oConformance, conformance);
+								String sConformance = oConformance.toString();
+
+								builder = builder.entity(sConformance);
+							}
 						}
 						else {
-							// Convert XML contents to JSON
-							iConformance = new ByteArrayInputStream(resourceContainer.getConformance().getResourceContents());
-							XmlParser xmlP = new XmlParser();
-							CapabilityStatement conformance = (CapabilityStatement) xmlP.parse(iConformance);
-
-							oConformance = new ByteArrayOutputStream();
-							JsonParser jsonParser = new JsonParser();
-							jsonParser.setOutputStyle(OutputStyle.PRETTY);
-							jsonParser.compose(oConformance, conformance);
-							String sConformance = oConformance.toString();
-
-							builder = builder.entity(sConformance);
+							// Something went wrong
+							String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.EXCEPTION, "read failure, CapabilityStatement content not defined", null, null, producesType);
+							builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 						}
 					}
+					else {
+						// Something went wrong
+						String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.EXCEPTION, "read failure, response status not ok", null, null, producesType);
+						builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+					}
+				}
+				else {
+					// Something went wrong
+					String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.EXCEPTION, "read failure, conformance not found", null, null, producesType);
+					builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 				}
 			}
 			else {
