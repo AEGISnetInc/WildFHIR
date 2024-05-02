@@ -1,15 +1,23 @@
-WildFHIR
-========
+WildFHIR Community Edition
+==========================
 
 AEGIS WildFHIR - an open-source implementation of the FHIR R4 specification in Java
 
 [![License][Badge-License]][Link-License]
 
+## CI/CD
+
+Coming soon
+
 ## Documentation and wiki
 
-Complete project documentation is available here: TBD
+Complete project documentation is available here: (**JH:** I advocate https://WildFHIR.com)
+* This is analagous to what Smile has done at https://hapifhir.io
+* We can layer more content there as we build it
+* AND ... more complete pitch(es) on commercial support/WildFHIR Enterprise Edition
 
-A demonstration of this project is available here: TBD
+
+A demonstration of this project is available here: TBD (HL7 Foundry?)
 
 This project is Open Source, licensed under the Apache Software License 2.0.
 
