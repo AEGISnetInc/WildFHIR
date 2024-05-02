@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>net.aegis.fhir</groupId>
+    <artifactId>wildfhir</artifactId>
+    <version>0.1.0</version>
+    <packaging>pom</packaging>
+    <name>WildFHIR</name>
+    <description>AEGIS WildFHIR - an open-source implementation of the FHIR R4 specification in Java</description>
+
+    <url>http://wildfhir4.aegis.net/fhir4-0-1</url>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <distribution>repo</distribution>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+        </license>
+    </licenses>
+
+    <properties>
+        <release.version>0.1.0</release.version>
+
+        <core.version>6.3.6</core.version>
+
+        <!-- Explicitly declare encodings to avoid warning messages on build and to ensure consistent build -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- maven-compiler-plugin -->
+        <version.compiler.plugin>3.10.1</version.compiler.plugin>
+        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>JBoss Repository</id>
+            <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+        <repository>
+            <id>oss-snapshot</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>github-releases</id>
+            <url>https://maven.pkg.github.com/hapifhir/org.hl7.fhir.core/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <modules>
+        <module>wildfhir-model</module>
+        <module>wildfhir-service</module>
+        <module>wildfhir-rest-server</module>
+    </modules>
+</project>

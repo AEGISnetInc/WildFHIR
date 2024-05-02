@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings xmlns="http://java.sun.com/xml/ns/persistence/orm"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/persistence/orm orm_2_0.xsd"
+    version="2.0">
+
+    <named-query name="findResourceById">
+        <query><![CDATA[
+                select r
+                from Resource r
+                where r.id = :id
+        ]]></query>
+    </named-query>
+
+    <named-query name="findAllCurrentResources">
+        <query><![CDATA[
+                select r1
+                from Resource r1
+                where r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = r1.resourceId and r2.resourceType = r1.resourceType)
+                and r1.status <> 'deleted'
+        ]]></query>
+    </named-query>
+
+    <named-query name="findAllCurrentResourcesByType">
+        <query><![CDATA[
+                select r1
+                from Resource r1
+                where r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = r1.resourceId and r2.resourceType = :resourceType)
+                and r1.status <> 'deleted'
+                and r1.resourceType = :resourceType
+        ]]></query>
+    </named-query>
+
+    <named-query name="findAllTagsByResource">
+        <query><![CDATA[
+                select rm1
+                from Resourcemetadata rm1
+                where rm1.resource.resourceId = (select r1.resourceId
+                    from Resource r1
+                    where r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = :resourceId and r2.resourceType = r1.resourceType)
+                    and r1.status <> 'deleted')
+                and rm1.paramType = 'tag'
+        ]]></query>
+    </named-query>
+
+    <named-query name="findAllGeneralTagsByResource">
+        <query><![CDATA[
+                select rm1
+                from Resourcemetadata rm1
+                where rm1.resource.resourceId = (select r1.resourceId
+                    from Resource r1
+                    where r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = :resourceId and r2.resourceType = r1.resourceType)
+                    and r1.status <> 'deleted')
+                and rm1.paramType = 'tag'
+                and rm1.paramName = '_tag'
+        ]]></query>
+    </named-query>
+
+    <named-query name="findAllProfileTagsByResource">
+        <query><![CDATA[
+                select rm1
+                from Resourcemetadata rm1
+                where rm1.resource.resourceId = (select r1.resourceId
+                    from Resource r1
+                    where r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = :resourceId and r2.resourceType = r1.resourceType)
+                    and r1.status <> 'deleted')
+                and rm1.paramType = 'tag'
+                and rm1.paramName = '_profile'
+        ]]></query>
+    </named-query>
+
+    <named-query name="findAllSecurityTagsByResource">
+        <query><![CDATA[
+                select rm1
+                from Resourcemetadata rm1
+                where rm1.resource.resourceId = (select r1.resourceId
+                    from Resource r1
+                    where r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = :resourceId and r2.resourceType = r1.resourceType)
+                    and r1.status <> 'deleted')
+                and rm1.paramType = 'tag'
+                and rm1.paramName = '_security'
+        ]]></query>
+    </named-query>
+
+    <named-query name="findParamByResource">
+        <query><![CDATA[
+                select rm1
+                from Resourcemetadata rm1
+                where rm1.resource.resourceId = (select r1.resourceId
+                    from Resource r1
+                    where r1.resourceId = :resourceId
+                    and r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = :resourceId and r2.resourceType = :resourceType)
+                    and r1.resourceType = :resourceType
+                    and r1.status <> 'deleted')
+                and rm1.resource.resourceType like :resourceType
+                and rm1.paramName = :paramName
+        ]]></query>
+    </named-query>
+
+    <named-query name="findLevel1ParamByResource">
+        <query><![CDATA[
+                select rm1
+                from Resourcemetadata rm1
+                where rm1.resource.resourceId = (select r1.resourceId
+                    from Resource r1
+                    where r1.resourceId = :resourceId
+                    and r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = :resourceId and r2.resourceType = :resourceType)
+                    and r1.resourceType = :resourceType
+                    and r1.status <> 'deleted')
+                and rm1.resource.resourceType like :resourceType
+                and rm1.paramName not like '%:%'
+        ]]></query>
+    </named-query>
+
+</entity-mappings>
