@@ -1,3 +1,5 @@
+<img src="WildFHIR-flame-horiz.png" width="240" height="125">
+
 WildFHIR Community Edition
 ==========================
 
