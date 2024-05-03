@@ -17,7 +17,7 @@ Coming soon
 
 Complete project documentation is available on our [Wiki][link-docs].
 
-A demonstration of this project is available here: [community.wildfhir.org](https://community.wildfhir.org)
+A demonstration of this project is available here: [wildfhir.aegis.net/r4]( https://wildfhir.aegis.net/r4)
 
 Please see [this wiki page][Link-wiki] for information on where to get help with WildFHIR.
 
