@@ -17,14 +17,13 @@ Coming soon
 
 Complete project documentation is available on our [Wiki][link-docs].
 
-A demonstration of this project is available here: [Demo-Instance]
+A demonstration of this project is available here: [community.wildfhir.org](https//community.wildfhir.org)
 
 Please see [this wiki page][Link-wiki] for information on where to get help with WildFHIR.
 
 Contact our team [here][Link-support] for information on commercial support.
 
 [link-docs]: https://github.com/AEGISnetInc/WildFHIR/wiki/Docs
-[Demo-Instance]: https//wildfhir.aegis.net
 [Link-wiki]: https://github.com/AEGISnetInc/WildFHIR/wiki/Getting-Help
 [Link-support]: https://touchstone.com/fhir-faster/
 [Link-License]: https://www.apache.org/licenses/LICENSE-2.0
