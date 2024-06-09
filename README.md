@@ -13,6 +13,10 @@ This project is Open Source, licensed under the Apache Software License 2.0.
 
 Coming soon
 
+## Containerized Version of WildFHIR
+
+This is a primary focus of our next commit.  
+
 ## Documentation and wiki
 
 Complete project documentation is available on our [Wiki][link-docs].
