@@ -33,12 +33,10 @@
 package net.aegis.fhir.rest;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Properties;
 import java.util.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -464,7 +462,7 @@ public class ResourceOperationsRESTService {
 
 					StringBuffer returnedDirective = new StringBuffer("");
 
-					String softwareVersion = getSoftwareVersion();
+					String softwareVersion = ServicesUtil.INSTANCE.getSoftwareVersion();
 					log.fine("softwareVersion: " + softwareVersion);
 					Parameters outputParameters = operationProxy.executeOperation(context, headers, resourceService, resourcemetadataService, batchService, transactionService, codeService, conformanceService, softwareVersion, resourceType, resourceId, inputParameters, inputResource, payload, contentType, isPost, returnedDirective);
 
@@ -797,30 +795,6 @@ public class ResourceOperationsRESTService {
 		}
 
 		return payload;
-	}
-
-	private String getSoftwareVersion() throws IOException {
-        InputStream inputStream = null;
-        String softwareVersion = "";
-        try {
-            Properties properties = new Properties();
-            ClassLoader loader = Thread.currentThread().getContextClassLoader();
-            inputStream = loader.getResourceAsStream("application.properties");
-            properties.load(inputStream);
-
-            String versionNumber = (properties.getProperty("version.number") == null)?"":properties.getProperty("version.number");
-            String buildNumber = (properties.getProperty("build.number") == null)?"":properties.getProperty("build.number");
-            String buildTimestamp = (properties.getProperty("build.timestamp") == null)?"":properties.getProperty("build.timestamp");
-
-            softwareVersion = versionNumber + " Build " + buildNumber + " [" + buildTimestamp + "]";
-            log.fine("softwareVersion: " + softwareVersion);
-
-        } finally {
-            if (inputStream != null) {
-                inputStream.close();
-            }
-        }
-        return softwareVersion;
 	}
 
 }

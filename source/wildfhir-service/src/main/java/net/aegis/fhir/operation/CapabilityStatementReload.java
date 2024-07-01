@@ -244,9 +244,9 @@ public class CapabilityStatementReload extends ResourceOperationProxy {
 			implementation.setDescription(capabilityStatementResource.getDescription());
 			capabilityStatementResource.setImplementation(implementation);
 			capabilityStatementResource.setFhirVersion(FHIRVersion._4_0_1);
-			// Format already defined in base
-			capabilityStatementResource.addPatchFormat("application/xml-patch+xml");
-			capabilityStatementResource.addPatchFormat("application/json-patch+json");
+			// Format and Patch Format already defined in base
+			//capabilityStatementResource.addPatchFormat("application/xml-patch+xml");
+			//capabilityStatementResource.addPatchFormat("application/json-patch+json");
 
 			// IG Support manually entered into base CapabilityStatement
 
