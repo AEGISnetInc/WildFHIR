@@ -33,10 +33,13 @@
 package net.aegis.fhir.service.util;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -1376,6 +1379,30 @@ public enum ServicesUtil {
 
 		log.fine("requestFhirVersion:" + requestFhirVersion);
 		return requestFhirVersion;
+	}
+
+	public String getSoftwareVersion() throws IOException {
+        InputStream inputStream = null;
+        String softwareVersion = "";
+        try {
+            Properties properties = new Properties();
+            ClassLoader loader = Thread.currentThread().getContextClassLoader();
+            inputStream = loader.getResourceAsStream("application.properties");
+            properties.load(inputStream);
+
+            String versionNumber = (properties.getProperty("version.number") == null)?"":properties.getProperty("version.number");
+            String buildNumber = (properties.getProperty("build.number") == null)?"":properties.getProperty("build.number");
+            String buildTimestamp = (properties.getProperty("build.timestamp") == null)?"":properties.getProperty("build.timestamp");
+
+            softwareVersion = versionNumber + " Build " + buildNumber + " [" + buildTimestamp + "]";
+            log.fine("softwareVersion: " + softwareVersion);
+
+        } finally {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+        }
+        return softwareVersion;
 	}
 
 
