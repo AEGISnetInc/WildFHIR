@@ -73,6 +73,9 @@ public class ResourceOperationProxyObjectFactory {
 		else if (operationName.equals("purge-all")) {
 			proxy = new ResourcePurgeAll();
 		}
+		else if (operationName.equals("validate")) {
+			proxy = new ResourceValidation();
+		}
 		else if (operationName.equals("versions")) {
 			proxy = new GlobalVersions();
 		}
