@@ -730,6 +730,7 @@ public class RESTResourceOps {
         Response.ResponseBuilder builder = null;
         String contentType = null;
         String producesType = null;
+        String prefer = null;
         String ifMatch = null;
         ByteArrayOutputStream oResource;
 		XmlParser xmlP = new XmlParser();
@@ -1026,7 +1027,73 @@ public class RESTResourceOps {
 									}
 
 									// Check for resource.id
-									if (!resource.hasId() || !resource.getId().equals(id)) {
+									if (resource.hasId() && resource.getId().equals(id)) {
+										// Check for no existing text narrative
+										if (resource instanceof DomainResource) {
+											DomainResource dResource = (DomainResource) resource;
+
+											if (!dResource.hasText()) {
+												// Use Cached NarrativeGeneratorClient
+												FHIRNarrativeGeneratorClient.instance().generate(dResource);
+											}
+										}
+
+										// Convert the Resource to XML byte[]
+										oResource = new ByteArrayOutputStream();
+										xmlP.setOutputStyle(OutputStyle.PRETTY);
+										xmlP.compose(oResource, resource, true);
+										byte[] bResource = oResource.toByteArray();
+
+										// Initialize a Resource to be updated
+										net.aegis.fhir.model.Resource updateResource = new net.aegis.fhir.model.Resource();
+										updateResource.setResourceType(resourceType);
+										updateResource.setResourceContents(bResource);
+
+										String absolutePath = context.getAbsolutePath().toString();
+
+										/*
+										 * Check for missing resource type if called from batch or transaction
+										 */
+										if (!absolutePath.contains(resourceType)) {
+											absolutePath += "/" + resourceType + "/" + id;
+										}
+
+										resourceContainer = resourceService.update(id, updateResource, absolutePath);
+
+										String locationPath = context.getRequestUri().toString();
+
+										/*
+										 * Check for missing resource type if called from batch or transaction
+										 */
+										if (!locationPath.contains(resourceType)) {
+											locationPath += "/" + resourceType + "/" + id;
+										}
+
+										if (resourceContainer != null && resourceContainer.getResource() != null) {
+											locationPath += "/_history/" + resourceContainer.getResource().getVersionId();
+										}
+
+										/*
+										 * Honor Prefer HTTP Header if defined
+										 * Return preference minimal, representation (WildFHIR default) or OperationOutcome
+										 */
+										prefer = ServicesUtil.INSTANCE.getHttpHeader(headers, "Prefer");
+
+										if (prefer != null && prefer.indexOf("minimal") >= 0) {
+											// Return content preference set to minimal; remove resource contents
+											resourceContainer.getResource().setResourceContents(null);
+										}
+										else if ((prefer != null && prefer.indexOf("OperationOutcome") >= 0)) {
+											// Return content preference set to OperationOutcome; generate XML OperationOutcome resource contents
+											String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL,
+													resourceContainer.getResource().getResourceType() + " resource updated with resource id " + resourceContainer.getResource().getResourceId() + ".", null, null);
+
+											resourceContainer.getResource().setResourceContents(outcome.getBytes());
+										}
+
+										builder = buildResource(locationPath, producesType, resourceContainer, Ops.UPDATE, responseFhirVersion);
+									}
+									else {
 										// resource id not found or ids do not match, return 400 (Bad Request) with OperationOutcome
 										String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.CONFLICT,
 												"Resource contents invalid! The request body SHALL be a Resource with an id element that has an identical value to the [id] in the URL.", null, null, producesType);
