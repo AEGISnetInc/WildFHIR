@@ -481,7 +481,7 @@ public class CodeService {
 	}
 
 	/**
-	 * @return byte[] - MedMij $medication-overview default Organization resource
+	 * @return byte[] - code resource contents
 	 * @throws Exception
 	 */
 	public byte[] getCodeResourceContents(String codeName) throws Exception {
@@ -496,28 +496,22 @@ public class CodeService {
 		return result;
 	}
 
-//	/**
-//	 * @return String - Response FHIR Version appended to response Content-Type header
-//	 * @throws Exception
-//	 */
-//	public String getResponseFhirVersion() {
-//
-//		try {
-//			if (ServicesUtil.INSTANCE.getResponseFhirVersion() == null) {
-//				Code supportedVersionsCode = this.findCodeByName("supportedVersions");
-//				if (supportedVersionsCode != null) {
-//					ServicesUtil.INSTANCE.setResponseFhirVersion("; fhirVersion=" + supportedVersionsCode.getValue());
-//				}
-//				else {
-//					ServicesUtil.INSTANCE.setResponseFhirVersion("");
-//				}
-//			}
-//		}
-//		catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//
-//		return ServicesUtil.INSTANCE.getResponseFhirVersion();
-//	}
+	/**
+	 * @param codeName
+	 * @param codeValue
+	 * @return <code>Code</code>
+	 * @throws Exception
+	 */
+	public Code updateCodeValueByName(String codeName, String codeValue) throws Exception {
 
+		Code code = this.findCodeByName(codeName);
+
+		if (code != null && codeValue != null) {
+			code.setValue(codeValue);
+			
+			code = this.update(code);
+		}
+
+		return code;
+	}
 }
