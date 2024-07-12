@@ -82,6 +82,7 @@ import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.ResourcemetadataService;
 import net.aegis.fhir.service.TransactionService;
 import net.aegis.fhir.service.narrative.FHIRNarrativeGeneratorClient;
+import net.aegis.fhir.service.util.ServicesUtil;
 
 public class CapabilityStatementReload extends ResourceOperationProxy {
 
@@ -122,7 +123,24 @@ public class CapabilityStatementReload extends ResourceOperationProxy {
 				String baseUrl = "";
 				if (codeService != null)	{
 					baseUrl = codeService.getCodeValue("baseUrl");
-					log.fine("baseUrl:" + baseUrl);
+					if (baseUrl == null || baseUrl.isEmpty()) {
+						// Default base url with localhost
+						baseUrl = "http://localhost/r4";
+					}
+				}
+				// Update base url with current hostname
+				try {
+					if (baseUrl.contains("localhost")) {
+						// Get local hostname
+						String hostname = ServicesUtil.INSTANCE.getHostName();
+						if (hostname != null && !hostname.equals("locahost")) {
+							baseUrl = "http://" + hostname + "/r4";
+						}
+					}
+				}
+				catch (Exception e) {
+					// Default base url with localhost
+					baseUrl = "http://localhost/r4";
 				}
 
 				boolean capStatementLoaded = reloadCapabilityStatement(conformanceService, softwareVersion, baseUrl, baseCapStmt);

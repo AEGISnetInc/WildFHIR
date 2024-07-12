@@ -35,6 +35,7 @@ package net.aegis.fhir.service.util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -946,6 +947,34 @@ public enum ServicesUtil {
 		}
 
 		return textValue;
+	}
+
+	public String getHostName() {
+		String hostname = "localhost";
+
+		try {
+			InetAddress addr = InetAddress.getLocalHost();
+			hostname = addr.getCanonicalHostName();
+		}
+		catch (Exception e) {
+			// Default to localhost if any exception thrown
+			hostname = "localhost";
+		}
+
+		if (hostname.equals("localhost")) {
+			// InetAddress did not resolve; try OS hostname
+			try {
+				Process p = Runtime.getRuntime().exec("hostname");
+				byte[] bytes = p.getInputStream().readAllBytes();
+				hostname = new String(bytes,"ASCII").trim();
+			}
+			catch (Exception e) {
+				// Default to localhost if any exception thrown
+				hostname = "localhost";
+			}
+		}
+
+		return hostname;
 	}
 
 	/**
