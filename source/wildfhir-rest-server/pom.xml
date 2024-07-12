@@ -180,6 +180,13 @@
 
         <!-- Application Specific Dependencies -->
 
+        <!-- H2 Database support -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.2.224</version>
+        </dependency>
+
         <!-- Force use of guava 27.1 to prevent Wildfly 20.0.1 application start errors -->
         <dependency>
             <groupId>com.google.guava</groupId>
