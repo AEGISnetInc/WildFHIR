@@ -32,17 +32,11 @@
  */
 package net.aegis.fhir.service.util;
 
-import java.util.logging.Logger;
-
 /**
  * @author richard.ettema
  *
  */
-public enum GeoUtil {
-
-	INSTANCE;
-
-	private Logger log = Logger.getLogger("GeoUtil");
+public class GeoUtil {
 
 	private GeoUtil() {
 	}
@@ -82,8 +76,7 @@ public enum GeoUtil {
 	 * @param unit
 	 * @return distance
 	 */
-	public double distance(double lat1, double lon1, double lat2, double lon2, String unit) {
-		log.fine("GeoUtil.distance(lat1=" + lat1 + ", lon1=" + lon1 + ", lat2=" + lat2 + ", lon2=" + lon2 + ", unit=" + unit + ")");
+	public static double distance(double lat1, double lon1, double lat2, double lon2, String unit) {
 
 		double theta = lon1 - lon2;
 		double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
@@ -103,14 +96,14 @@ public enum GeoUtil {
 	/* ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: */
 	/* :: This function converts decimal degrees to radians              : */
 	/* ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: */
-	private double deg2rad(double deg) {
+	private static double deg2rad(double deg) {
 		return (deg * Math.PI / 180.0);
 	}
 
 	/* ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: */
 	/* :: This function converts radians to decimal degrees              : */
 	/* ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: */
-	private double rad2deg(double rad) {
+	private static double rad2deg(double rad) {
 		return (rad * 180 / Math.PI);
 	}
 
