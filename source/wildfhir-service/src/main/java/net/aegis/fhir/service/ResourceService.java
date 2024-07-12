@@ -2913,9 +2913,7 @@ public class ResourceService {
 					}
 
 					if (isValidSearchParameter) {
-						//log.info("   --> Valid search parameter!");
-
-						isValidSearchParameters = true;
+						//log.info("   --> Process valid search parameter");
 
 						boolean isDateType = (criteriaType.equalsIgnoreCase("DATE") ? true : false);
 						boolean isNumericType = (criteriaType.equalsIgnoreCase("NUMBER") ? true : false);
@@ -3153,36 +3151,54 @@ public class ResourceService {
 							}
 							else if (key.equals("near") || key.contains(".near")) {
 								log.fine("searchQuery - near parameter '" + key + "'");
-								// store near parameter latitude and longitude for subsequent processing
-								String[] nearParam = {"", "", ""};
-								if (nearParams.containsKey(key)) {
-									log.fine("            - near parameter '" + key + "' found in map");
-									nearParam = nearParams.get(key);
-								}
-								String[] nearArray = value.split(":");
-								if (nearArray.length > 0) {
-									nearParam[0] = nearArray[0];
-								}
+								// store near parameter latitude|longitude|distance|units for subsequent processing
+								String[] nearParam = {"", "", "", ""};
+								String[] nearArray = value.split("|");
+								
 								if (nearArray.length > 1) {
+									nearParam[0] = nearArray[0];
 									nearParam[1] = nearArray[1];
-								}
-								log.fine("            - near latitude = [" + nearParam[0] + "]; longitude = [" + nearParam[1] + "]");
-								nearParams.put(key, nearParam);
 
-							}
-							else if (key.equals("near-distance") || key.contains(".near-distance")) {
-								log.fine("searchQuery - near-distance parameter '" + key + "'");
-								// store near-distance parameter for subsequent processing
-								String nearKey = key.substring(0, key.indexOf("-distance"));
-								log.fine("            - near key is '" + key + "'");
-								String[] nearParam = {"", "", ""};
-								if (nearParams.containsKey(nearKey)) {
-									log.fine("            - near key '" + nearKey + "' found in map");
-									nearParam = nearParams.get(nearKey);
+									if (nearArray.length > 2) {
+										nearParam[2] = nearArray[2];
+									}
+									else {
+										nearParam[2] = "10"; // Default distance to 10
+									}
+									if (nearArray.length > 3) {
+										nearParam[3] = nearArray[3];
+									}
+									else {
+										nearParam[3] = "km"; // Default units to kilometers
+									}
+
+									if (nearParam[3].equals("km") || nearParam[3].contains("mi")) {
+										log.fine("            - near latitude = [" + nearParam[0] + "]; longitude = [" + nearParam[1] + "]; distance = [" + nearParam[2] + "]; units = [" + nearParam[3] + "]");
+										nearParams.put(key, nearParam);
+									}
+									else {
+										String[] invalidParam = new String[2];
+										invalidParam[0] = key;
+										invalidParam[1] = "near parameter distance units '" + nearParam[3] + "' not supported! Please use 'mi_i', 'mi_us' or 'km'.";
+										invalidParams.add(invalidParam);
+
+										// No validParam values found; blank out validParam name and value; skip processing of this param
+										validParam[0] = "";
+										validParam[1] = "";
+										isValidSearchParameter = false;
+									}
 								}
-								nearParam[2] = value;
-								log.fine("            - near-distance = [" + nearParam[2] + "]");
-								nearParams.put(nearKey, nearParam);
+								else {
+									String[] invalidParam = new String[2];
+									invalidParam[0] = key;
+									invalidParam[1] = "near parameter value '" + value + "' must contain at minimum [latitude]|[longitude].";
+									invalidParams.add(invalidParam);
+
+									// No validParam values found; blank out validParam name and value; skip processing of this param
+									validParam[0] = "";
+									validParam[1] = "";
+									isValidSearchParameter = false;
+								}
 
 							}
 							else if (key.equals("coordinate") || key.contains(".coordinate")) {
@@ -3443,6 +3459,7 @@ public class ResourceService {
 											// No validParam values found; blank out validParam name and value; skip processing of this param
 											validParam[0] = "";
 											validParam[1] = "";
+											isValidSearchParameter = false;
 											isValidParamValues = false;
 										}
 										else {
@@ -3512,6 +3529,7 @@ public class ResourceService {
 											// No validParam values found; blank out validParam name and value; skip processing of this param
 											validParam[0] = "";
 											validParam[1] = "";
+											isValidSearchParameter = false;
 											isValidParamValues = false;
 										}
 										else {
@@ -4246,6 +4264,11 @@ public class ResourceService {
 						}
 
 						parameterCount++;
+
+						// At least one parameter is valid
+						if (isValidSearchParameter) {
+							isValidSearchParameters = true;
+						}
 					} // End If valid search parameter
 
 				} // End Iterate thru the parameter map
@@ -4258,75 +4281,44 @@ public class ResourceService {
 					for (Entry<String, String[]> entry : nearParamSet) {
 						log.fine("searchQuery - process near parameter '" + entry.getKey() + "'");
 
-						if (entry.getValue()[0] != null && !entry.getValue()[0].isEmpty()
-								&& entry.getValue()[1] != null && !entry.getValue()[1].isEmpty()
-								&& entry.getValue()[2] != null && !entry.getValue()[1].isEmpty()) {
+						// build near SQL criteria based on distance units
+						if (entry.getValue()[3].contains("mi")) {
+							if (sbCreateTempWhereCriteria.length() > 5) {
+								iExists++;
+								sExists = sExistsBase + iExists;
 
-							// Determine distance value and units
-							String[] distanceParams = entry.getValue()[2].split("\\|");
-
-							if (distanceParams.length > 2) {
-								log.fine("            - process distance parameter '" + entry.getValue()[2] + "'");
-								String distanceValue = distanceParams[0];
-								String distanceUnits = distanceParams[2];
-								log.fine("            - process distance value = [" + distanceValue + "]; units = [" + distanceUnits + "]");
-
-								// build near SQL criteria based on distance units
-								if (distanceUnits.contains("mi")) {
-									if (sbCreateTempWhereCriteria.length() > 5) {
-										iExists++;
-										sExists = sExistsBase + iExists;
-
-										sbCreateTempSelect.append(", resourcemetadata ").append(sExists);
-										sbCreateTempWhereCriteria.append(" and ");
-										if (iExists > 1) {
-											sbCreateTempWhereJoin.append(" and ");
-										}
-										sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
-									}
-									sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramName = '")
-										.append(entry.getKey()).append("' and ").append(sExists).append(".paramValue is not null and ").append(sExists).append(".systemValue is not null ")
-										.append(" and calcDistanceMi(").append(sExists).append(".paramValue, ").append(sExists).append(".systemValue, ")
-										.append(entry.getValue()[0]).append(", ").append(entry.getValue()[1]).append(") <= ").append(distanceValue).append(")");
+								sbCreateTempSelect.append(", resourcemetadata ").append(sExists);
+								sbCreateTempWhereCriteria.append(" and ");
+								if (iExists > 1) {
+									sbCreateTempWhereJoin.append(" and ");
 								}
-								else if (distanceUnits.contains("km")) {
-									if (sbCreateTempWhereCriteria.length() > 5) {
-										iExists++;
-										sExists = sExistsBase + iExists;
-
-										sbCreateTempSelect.append(", resourcemetadata ").append(sExists);
-										sbCreateTempWhereCriteria.append(" and ");
-										if (iExists > 1) {
-											sbCreateTempWhereJoin.append(" and ");
-										}
-										sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
-									}
-									sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramName = '")
-										.append(entry.getKey()).append("' and ").append(sExists).append(".paramValue is not null and ").append(sExists).append(".systemValue is not null ")
-										.append(" and calcDistanceKm(").append(sExists).append(".paramValue, ").append(sExists).append(".systemValue, ")
-										.append(entry.getValue()[0]).append(", ").append(entry.getValue()[1]).append(") <= ").append(distanceValue).append(")");
-								}
-								else {
-									throw new Exception("Search parameter " + entry.getKey() + "-distance - distance units '" + distanceUnits + "' not supported! Please use 'mi_i', 'mi_us' or 'km'.");
-								}
+								sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
 							}
-							else {
-								throw new Exception("Search parameter " + entry.getKey() + "-distance invalid format! Expected [number]|[system]|[code] but found '" + entry.getValue()[2] + "'.");
+							sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramName = '")
+								.append(entry.getKey()).append("' and ").append(sExists).append(".paramValue is not null and ").append(sExists).append(".systemValue is not null ")
+								.append(" and calcDistanceMi(").append(sExists).append(".paramValue, ").append(sExists).append(".systemValue, ")
+								.append(entry.getValue()[0]).append(", ").append(entry.getValue()[1]).append(") <= ").append(entry.getValue()[2]).append(")");
+						}
+						else if (entry.getValue()[3].contains("km")) {
+							if (sbCreateTempWhereCriteria.length() > 5) {
+								iExists++;
+								sExists = sExistsBase + iExists;
+
+								sbCreateTempSelect.append(", resourcemetadata ").append(sExists);
+								sbCreateTempWhereCriteria.append(" and ");
+								if (iExists > 1) {
+									sbCreateTempWhereJoin.append(" and ");
+								}
+								sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
 							}
+							sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramName = '")
+								.append(entry.getKey()).append("' and ").append(sExists).append(".paramValue is not null and ").append(sExists).append(".systemValue is not null ")
+								.append(" and calcDistanceKm(").append(sExists).append(".paramValue, ").append(sExists).append(".systemValue, ")
+								.append(entry.getValue()[0]).append(", ").append(entry.getValue()[1]).append(") <= ").append(entry.getValue()[2]).append(")");
 						}
 						else {
-							StringBuilder message = new StringBuilder("Search parameters ").append(entry.getKey()).append(", ").append(entry.getKey()).append(" invalid usage!");
-
-							if (entry.getValue()[0] == null) {
-								message.append(" Missing ").append(entry.getKey()).append(" latitude value.");
-							}
-							if (entry.getValue()[1] == null) {
-								message.append(" Missing ").append(entry.getKey()).append(" longitude value.");
-							}
-							if (entry.getValue()[2] == null) {
-								message.append(" Missing ").append(entry.getKey()).append("-distance value.");
-							}
-							throw new Exception(message.toString());
+							// Should not get here
+							throw new Exception("Search parameter " + entry.getKey() + " distance units '" + entry.getValue()[3] + "' not supported! Please use 'mi_i', 'mi_us' or 'km'.");
 						}
 					}
 				}
