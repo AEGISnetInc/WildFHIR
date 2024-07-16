@@ -1,0 +1,8 @@
+cd D:/Apps/h2/bin
+java -cp h2-2.2.224.jar org.h2.tools.Shell
+
+jdbc:h2:E:/H2/WildFHIRCE;MODE=MYSQL;DATABASE_TO_LOWER=TRUE
+
+jdbc:h2:tcp://localhost/E:/H2/WildFHIRCE;MODE=MYSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1
+
+org.h2.jdbcx.JdbcDataSource

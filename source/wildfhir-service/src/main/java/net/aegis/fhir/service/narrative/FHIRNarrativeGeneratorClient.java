@@ -68,6 +68,7 @@ public class FHIRNarrativeGeneratorClient {
 			FilesystemPackageCacheManager pcm = new FilesystemPackageCacheManager.Builder().build();
 			NpmPackage npmX = pcm.loadPackage("hl7.fhir.r4.core", "4.0.1");
 			SimpleWorkerContext contextR4 = SimpleWorkerContext.fromPackage(npmX);
+		    contextR4.setExpansionProfile(makeExpProfileR4());
 			narrativeGenerator = new NarrativeGenerator("", "", contextR4);
 
 			log.info(NarrativeGenerator.class.getSimpleName() + " initialization completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
@@ -104,6 +105,16 @@ public class FHIRNarrativeGeneratorClient {
 
 		log.fine("FHIR NarrativeGenerator - generation of narrative text for resource completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
 
+	}
+
+	/**
+	 * Copied from HL7 Core Library - set expansion profile parameters for use in terminology server requests
+	 */
+	private org.hl7.fhir.r4.model.Parameters makeExpProfileR4() {
+		org.hl7.fhir.r4.model.Parameters ep = new org.hl7.fhir.r4.model.Parameters();
+		ep.addParameter("profile-url", "http://hl7.org/fhir/ExpansionProfile/dc8fd4bc-091a-424a-8a3b-6198ef146891"); // change this to blow the cache
+		// all defaults....
+		return ep;
 	}
 
 }
