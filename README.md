@@ -11,11 +11,15 @@ This project is Open Source, licensed under the Apache Software License 2.0.
 
 ## CI/CD
 
-Coming soon
+### Touchstone Testing Results for 0.2.1-SNAPSHOT
+
+<img src="100 percent TS WildFHIR CE.png" width="240" height="240">
+<img src="Interaction Details.png" width="240" height="240">
+
 
 ## Containerized Version of WildFHIR
 
-This is a primary focus of our next commit.  
+**In progress**; stay tuned.
 
 ## Documentation and wiki
 
