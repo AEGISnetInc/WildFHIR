@@ -5,14 +5,14 @@
     <parent>
         <groupId>net.aegis.fhir</groupId>
         <artifactId>wildfhir</artifactId>
-        <version>0.2.1-SNAPSHOT</version>
+        <version>0.2.1</version>
     </parent>
     <artifactId>wildfhir-rest-server</artifactId>
     <packaging>war</packaging>
     <name>wildfhir-rest-server</name>
     <description>AEGIS FHIR RESTful Server</description>
 
-    <url>http://wildfhir4.aegis.net/fhir4-0-1</url>
+    <url>http://wildfhir.aegis.net/r4</url>
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
