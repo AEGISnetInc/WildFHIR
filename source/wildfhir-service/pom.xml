@@ -251,14 +251,14 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.21</version>
+            <version>1.26.2</version>
         </dependency>
 
-        <!-- force use of commons-io 2.11.0 used in hapi-fhir-base; otherwise picks up 2.1 from resteasy-jaxrs dependency which causes errors due to missing IOUtils.toString() method -->
+        <!-- force use of commons-io 2.16.1 used in hapi-fhir-base; otherwise picks up 2.1 from resteasy-jaxrs dependency which causes errors due to missing IOUtils.toString() method -->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.11.0</version>
+            <version>2.16.1</version>
         </dependency>
 
         <dependency>

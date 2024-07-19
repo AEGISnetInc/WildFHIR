@@ -1,36 +1,36 @@
 Manifest-Version: 1.0
 Class-Path: httpclient-4.5.10.jar httpcore-4.4.13.jar commons-logging-1.
- 2.jar commons-codec-1.15.jar commons-io-2.11.0.jar jcip-annotations-1.0
- -1.jar log4j-core-2.17.0.jar log4j-api-2.17.0.jar jakarta.xml.bind-api-
- 3.0.1.jar h2-2.2.224.jar guava-27.1-jre.jar failureaccess-1.0.1.jar lis
- tenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar jsr305-3.0.
- 2.jar checker-qual-2.5.2.jar error_prone_annotations-2.2.0.jar j2objc-a
- nnotations-1.1.jar animal-sniffer-annotations-1.17.jar cors-filter-2.4.
- jar java-property-utils-1.9.1.jar org.hl7.fhir.r5-6.3.6.jar org.hl7.fhi
- r.utilities-6.3.6.jar hapi-fhir-base-6.4.1.jar jackson-datatype-jsr310-
- 2.14.1.jar jackson-annotations-2.17.0.jar jackson-core-2.17.0.jar jacks
- on-databind-2.17.0.jar commons-lang3-3.12.0.jar commons-text-1.10.0.jar
-  slf4j-api-2.0.3.jar jcl-over-slf4j-2.0.3.jar icu4j-72.1.jar commons-ne
- t-3.9.0.jar nimbus-jose-jwt-9.37.3.jar plantuml-mit-1.2023.9.jar org.hl
- 7.fhir.r4-6.3.6.jar org.hl7.fhir.convertors-6.3.6.jar org.hl7.fhir.dstu
- 2-6.3.6.jar org.hl7.fhir.dstu2016may-6.3.6.jar xpp3-1.1.6.jar jakarta-r
- egexp-1.4.jar org.hl7.fhir.dstu3-6.3.6.jar org.hl7.fhir.r4b-6.3.6.jar s
- qlite-jdbc-3.45.1.0.jar Saxon-HE-9.8.0-15.jar org.hl7.fhir.validation-6
- .3.6.jar gson-2.8.9.jar commons-compress-1.26.0.jar commons-collections
- 4-4.4.jar cql-2.11.0.jar antlr4-runtime-4.10.1.jar antlr4-4.10.1.jar an
- tlr-runtime-3.5.3.jar ST4-4.3.3.jar org.abego.treelayout.core-1.0.3.jar
-  javax.json-1.0.4.jar model-2.11.0.jar jaxb2-basics-runtime-0.13.1.jar 
- jakarta.activation-api-1.2.2.jar elm-2.11.0.jar cql-to-elm-2.11.0.jar u
- cum-1.0.8.jar jackson-module-jaxb-annotations-2.13.2.jar quick-2.11.0.j
- ar qdm-2.11.0.jar byte-buddy-1.14.9.jar thymeleaf-3.1.2.RELEASE.jar ogn
- l-3.3.4.jar javassist-3.29.0-GA.jar attoparser-2.0.7.RELEASE.jar unbesc
- ape-1.1.6.RELEASE.jar wildfhir-model-0.2.1-SNAPSHOT.jar wildfhir-servic
- e-0.2.1-SNAPSHOT.jar jta-1.1.jar javax.servlet-api-4.0.1.jar joda-time-
- 2.12.5.jar okhttp-4.10.0.jar okio-jvm-3.0.0.jar kotlin-stdlib-jdk8-1.6.
- 10.jar kotlin-stdlib-1.6.20.jar annotations-13.0.jar kotlin-stdlib-comm
- on-1.5.31.jar kotlin-stdlib-jdk7-1.6.10.jar logging-interceptor-4.10.0.
- jar commons-jcs-core-2.0-beta-1.jar mysql-connector-j-8.0.31.jar protob
- uf-java-3.19.4.jar commonmark-0.12.1.jar commonmark-ext-gfm-tables-0.12
- .1.jar txtmark-0.13.jar zjsonpatch-0.4.11.jar xml-patch-0.3.1.jar jdom2
- -2.0.6.jar
+ 2.jar commons-codec-1.17.0.jar commons-io-2.16.1.jar jcip-annotations-1
+ .0-1.jar log4j-core-2.17.0.jar log4j-api-2.17.0.jar jakarta.xml.bind-ap
+ i-3.0.1.jar h2-2.2.224.jar guava-27.1-jre.jar failureaccess-1.0.1.jar l
+ istenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar jsr305-3.
+ 0.2.jar checker-qual-2.5.2.jar error_prone_annotations-2.2.0.jar j2objc
+ -annotations-1.1.jar animal-sniffer-annotations-1.17.jar commons-compre
+ ss-1.26.2.jar commons-lang3-3.14.0.jar ucum-1.0.8.jar cors-filter-2.4.j
+ ar java-property-utils-1.9.1.jar org.hl7.fhir.r5-6.3.6.jar org.hl7.fhir
+ .utilities-6.3.6.jar hapi-fhir-base-6.4.1.jar jackson-datatype-jsr310-2
+ .14.1.jar jackson-annotations-2.17.0.jar jackson-core-2.17.0.jar jackso
+ n-databind-2.17.0.jar commons-text-1.10.0.jar slf4j-api-2.0.3.jar jcl-o
+ ver-slf4j-2.0.3.jar icu4j-72.1.jar commons-net-3.9.0.jar nimbus-jose-jw
+ t-9.37.3.jar plantuml-mit-1.2023.9.jar org.hl7.fhir.r4-6.3.6.jar org.hl
+ 7.fhir.convertors-6.3.6.jar org.hl7.fhir.dstu2-6.3.6.jar org.hl7.fhir.d
+ stu2016may-6.3.6.jar xpp3-1.1.6.jar jakarta-regexp-1.4.jar org.hl7.fhir
+ .dstu3-6.3.6.jar org.hl7.fhir.r4b-6.3.6.jar sqlite-jdbc-3.45.1.0.jar Sa
+ xon-HE-9.8.0-15.jar org.hl7.fhir.validation-6.3.6.jar gson-2.8.9.jar co
+ mmons-collections4-4.4.jar cql-2.11.0.jar antlr4-runtime-4.10.1.jar ant
+ lr4-4.10.1.jar antlr-runtime-3.5.3.jar ST4-4.3.3.jar org.abego.treelayo
+ ut.core-1.0.3.jar javax.json-1.0.4.jar model-2.11.0.jar jaxb2-basics-ru
+ ntime-0.13.1.jar jakarta.activation-api-1.2.2.jar elm-2.11.0.jar cql-to
+ -elm-2.11.0.jar jackson-module-jaxb-annotations-2.13.2.jar quick-2.11.0
+ .jar qdm-2.11.0.jar byte-buddy-1.14.9.jar thymeleaf-3.1.2.RELEASE.jar o
+ gnl-3.3.4.jar javassist-3.29.0-GA.jar attoparser-2.0.7.RELEASE.jar unbe
+ scape-1.1.6.RELEASE.jar wildfhir-model-0.2.1-SNAPSHOT.jar wildfhir-serv
+ ice-0.2.1-SNAPSHOT.jar jta-1.1.jar javax.servlet-api-4.0.1.jar joda-tim
+ e-2.12.5.jar okhttp-4.10.0.jar okio-jvm-3.0.0.jar kotlin-stdlib-jdk8-1.
+ 6.10.jar kotlin-stdlib-1.6.20.jar annotations-13.0.jar kotlin-stdlib-co
+ mmon-1.5.31.jar kotlin-stdlib-jdk7-1.6.10.jar logging-interceptor-4.10.
+ 0.jar commons-jcs-core-2.0-beta-1.jar mysql-connector-j-8.0.31.jar prot
+ obuf-java-3.19.4.jar commonmark-0.12.1.jar commonmark-ext-gfm-tables-0.
+ 12.1.jar txtmark-0.13.jar zjsonpatch-0.4.11.jar xml-patch-0.3.1.jar jdo
+ m2-2.0.6.jar
 

@@ -194,6 +194,27 @@
             <version>27.1-jre</version>
         </dependency>
 
+        <!-- Commons -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.26.2</version>
+        </dependency>
+
+        <!-- force use of commons-io 2.16.1 used in hapi-fhir-base; otherwise picks up 2.1 from resteasy-jaxrs dependency which causes errors due to missing IOUtils.toString() method -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.16.1</version>
+        </dependency>
+
+        <!-- UCUM -->
+        <dependency>
+            <groupId>org.fhir</groupId>
+            <artifactId>ucum</artifactId>
+            <version>1.0.8</version>
+        </dependency>
+
         <dependency>
             <groupId>com.thetransactioncompany</groupId>
             <artifactId>cors-filter</artifactId>
