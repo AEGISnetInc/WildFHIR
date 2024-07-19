@@ -3,12 +3,12 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.aegis.fhir</groupId>
     <artifactId>wildfhir</artifactId>
-    <version>0.2.1-SNAPSHOT</version>
+    <version>0.2.1</version>
     <packaging>pom</packaging>
     <name>WildFHIR</name>
     <description>AEGIS WildFHIR - an open-source implementation of the FHIR R4 specification in Java</description>
 
-    <url>http://wildfhir4.aegis.net/fhir4-0-1</url>
+    <url>http://wildfhir.aegis.net/r4</url>
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
@@ -18,7 +18,7 @@
     </licenses>
 
     <properties>
-        <release.version>0.2.1-SNAPSHOT</release.version>
+        <release.version>0.2.1</release.version>
 
         <core.version>6.3.6</core.version>
 

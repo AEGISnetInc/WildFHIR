@@ -24,13 +24,12 @@ Class-Path: httpclient-4.5.10.jar httpcore-4.4.13.jar commons-logging-1.
  -elm-2.11.0.jar jackson-module-jaxb-annotations-2.13.2.jar quick-2.11.0
  .jar qdm-2.11.0.jar byte-buddy-1.14.9.jar thymeleaf-3.1.2.RELEASE.jar o
  gnl-3.3.4.jar javassist-3.29.0-GA.jar attoparser-2.0.7.RELEASE.jar unbe
- scape-1.1.6.RELEASE.jar wildfhir-model-0.2.1-SNAPSHOT.jar wildfhir-serv
- ice-0.2.1-SNAPSHOT.jar jta-1.1.jar javax.servlet-api-4.0.1.jar joda-tim
- e-2.12.5.jar okhttp-4.10.0.jar okio-jvm-3.0.0.jar kotlin-stdlib-jdk8-1.
- 6.10.jar kotlin-stdlib-1.6.20.jar annotations-13.0.jar kotlin-stdlib-co
- mmon-1.5.31.jar kotlin-stdlib-jdk7-1.6.10.jar logging-interceptor-4.10.
- 0.jar commons-jcs-core-2.0-beta-1.jar mysql-connector-j-8.0.31.jar prot
- obuf-java-3.19.4.jar commonmark-0.12.1.jar commonmark-ext-gfm-tables-0.
- 12.1.jar txtmark-0.13.jar zjsonpatch-0.4.11.jar xml-patch-0.3.1.jar jdo
- m2-2.0.6.jar
+ scape-1.1.6.RELEASE.jar wildfhir-model-0.2.1.jar wildfhir-service-0.2.1
+ .jar jta-1.1.jar javax.servlet-api-4.0.1.jar joda-time-2.12.5.jar okhtt
+ p-4.10.0.jar okio-jvm-3.0.0.jar kotlin-stdlib-jdk8-1.6.10.jar kotlin-st
+ dlib-1.6.20.jar annotations-13.0.jar kotlin-stdlib-common-1.5.31.jar ko
+ tlin-stdlib-jdk7-1.6.10.jar logging-interceptor-4.10.0.jar commons-jcs-
+ core-2.0-beta-1.jar mysql-connector-j-8.0.31.jar protobuf-java-3.19.4.j
+ ar commonmark-0.12.1.jar commonmark-ext-gfm-tables-0.12.1.jar txtmark-0
+ .13.jar zjsonpatch-0.4.11.jar xml-patch-0.3.1.jar jdom2-2.0.6.jar
 
