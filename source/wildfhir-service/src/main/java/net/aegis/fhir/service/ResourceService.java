@@ -3154,7 +3154,7 @@ public class ResourceService {
 								// store near parameter latitude|longitude|distance|units for subsequent processing
 								String[] nearParam = {"", "", "", ""};
 								String[] nearArray = value.split("|");
-								
+
 								if (nearArray.length > 1) {
 									nearParam[0] = nearArray[0];
 									nearParam[1] = nearArray[1];
@@ -3668,24 +3668,23 @@ public class ResourceService {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
 																	sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) >= ").append(lowRangeValue)
-																		.append(" and CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) <= ").append(highRangeValue).append(")");
+																		.append(" AND CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) <= ").append(highRangeValue).append(")");
 																}
 																else if (isPeriodType) {
 																	// isPeriodType EQUALS, APPROXIMATE
 																	if (prefixControl.equals("eq") || prefixControl.equals("ap")) {
-																		sbCreateTempWhereCriteria.append(" ((").append(periodStartValueColName).append(" IS NULL or (").append(periodStartValueColName)
-																			.append(" IS NOT NULL and ").append(periodStartValueColName).append(" <= '").append(lowRangeValue).append("')) and (")
-																			.append(periodEndValueColName).append(" IS NULL or (").append(periodEndValueColName).append(" IS NOT NULL and ")
-																			.append(periodEndValueColName).append(" >= '").append(lowRangeValue).append("')))");
+																		sbCreateTempWhereCriteria.append(" (").append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName)
+																			.append(" >= '").append(lowRangeValue).append("' AND ").append(periodEndValueColName).append(" IS NOT NULL AND ")
+																			.append(periodEndValueColName).append(" <= '").append(highRangeValue).append("')");
 																	}
 																	// isPeriodType STARTS AFTER
 																	if (prefixControl.equals("sa")) {
-																		sbCreateTempWhereCriteria.append(" (").append(periodStartValueColName).append(" IS NOT NULL and ").append(periodStartValueColName)
-																			.append(" > '").append(lowRangeValue).append("')");
+																		sbCreateTempWhereCriteria.append(" (").append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName)
+																			.append(" > '").append(highRangeValue).append("')");
 																	}
 																	// isPeriodType ENDS BEFORE
 																	if (prefixControl.equals("eb")) {
-																		sbCreateTempWhereCriteria.append(" (").append(periodEndValueColName).append(" IS NOT NULL and ").append(periodEndValueColName)
+																		sbCreateTempWhereCriteria.append(" (").append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName)
 																			.append(" < '").append(lowRangeValue).append("')");
 																	}
 																}
@@ -3693,24 +3692,23 @@ public class ResourceService {
 																	// isDateType - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
 																	// -- EQUALS, APPROXIMATE
 																	if (prefixControl.equals("eq") || prefixControl.equals("ap")) {
-																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and ((").append(periodStartValueColName)
-																			.append(" IS NULL or (").append(periodStartValueColName).append(" IS NOT NULL and ").append(periodStartValueColName).append(" <= '")
-																			.append(lowRangeValue).append("')) and (").append(periodEndValueColName).append(" IS NULL or (").append(periodEndValueColName)
-																			.append(" IS NOT NULL and ").append(periodEndValueColName).append(" >= '").append(lowRangeValue).append("')))) or (")
-																			.append(sExists).append(".paramType = 'DATE' and ").append(dateParamValueColName).append(" >= '").append(lowRangeValue)
-																			.append("' and ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))");
+																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodStartValueColName)
+																			.append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '").append(lowRangeValue).append("' AND ")
+																			.append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '")
+																			.append(highRangeValue).append("') OR (").append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" >= '")
+																			.append(lowRangeValue).append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))");
 																	}
 																	// -- STARTS AFTER
 																	if (prefixControl.equals("sa")) {
-																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and ").append(periodStartValueColName)
-																			.append(" IS NOT NULL and ").append(periodStartValueColName).append(" > '").append(lowRangeValue).append("') or (")
-																			.append(sExists).append(".paramType = 'DATE' and ").append(dateParamValueColName).append(" > '").append(lowRangeValue).append("'))");
+																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodStartValueColName)
+																			.append(" IS NOT NULL AND ").append(periodStartValueColName).append(" > '").append(highRangeValue).append("') OR (")
+																			.append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" > '").append(highRangeValue).append("'))");
 																	}
 																	// -- ENDS BEFORE
 																	if (prefixControl.equals("eb")) {
-																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and ").append(periodEndValueColName)
-																			.append(" IS NOT NULL and ").append(periodEndValueColName).append(" < '").append(lowRangeValue).append("') or (")
-																			.append(sExists).append(".paramType = 'DATE' and ").append(dateParamValueColName).append(" < '").append(highRangeValue).append("'))");
+																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodEndValueColName)
+																			.append(" IS NOT NULL AND ").append(periodEndValueColName).append(" < '").append(lowRangeValue).append("') OR (")
+																			.append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" < '").append(lowRangeValue).append("'))");
 																	}
 																}
 																splitCriteriaWritten = true;
@@ -3722,21 +3720,23 @@ public class ResourceService {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
 																	sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) > ").append(lowRangeValue)
-																		.append(" or CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) < ").append(highRangeValue).append(")");
+																		.append(" OR CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) < ").append(highRangeValue).append(")");
 																}
 																else if (isPeriodType) {
 																	// isPeriodType NOT EQUALS
-																	sbCreateTempWhereCriteria.append(" ((").append(periodStartValueColName).append(" IS NOT NULL and ").append(periodStartValueColName)
-																		.append(" > '").append(lowRangeValue).append("') or (").append(periodEndValueColName).append(" IS NOT NULL and ")
-																		.append(periodEndValueColName).append(" < '").append(lowRangeValue).append("'))");
+																	sbCreateTempWhereCriteria.append(" ((").append(periodStartValueColName).append(" IS NULL OR ").append(periodEndValueColName)
+																		.append(" IS NULL) OR ((").append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName)
+																		.append(" < '").append(lowRangeValue).append("') OR (").append(periodEndValueColName).append(" IS NOT NULL AND ")
+																		.append(periodEndValueColName).append(" > '").append(highRangeValue).append("')))");
 																}
 																else {
 																	// isDateType NOT EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and ((").append(periodStartValueColName)
-																		.append(" IS NOT NULL and ").append(periodStartValueColName).append(" > '").append(lowRangeValue).append("') or (")
-																		.append(periodEndValueColName).append(" IS NOT NULL and ").append(periodEndValueColName).append(" < '").append(lowRangeValue)
-																		.append("'))) or (").append(sExists).append(".paramType = 'DATE' and ((").append(dateParamValueColName).append(" > '")
-																		.append(lowRangeValue).append("') or (").append(dateParamValueColName).append(" < '").append(highRangeValue).append("'))))");
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ((").append(periodStartValueColName)
+																		.append(" IS NULL OR ").append(periodEndValueColName).append(" IS NULL) OR ((").append(periodStartValueColName).append(" IS NOT NULL AND ")
+																		.append(periodStartValueColName).append(" < '").append(lowRangeValue).append("') OR (").append(periodEndValueColName).append(" IS NOT NULL AND ")
+																		.append(periodEndValueColName).append(" > '").append(highRangeValue).append("')))) OR (").append(sExists).append(".paramType = 'DATE' AND (")
+																		.append(dateParamValueColName).append(" < '").append(lowRangeValue).append("' OR ").append(dateParamValueColName).append(" > '")
+																		.append(highRangeValue).append("')))");
 																}
 																splitCriteriaWritten = true;
 															}
@@ -3746,18 +3746,18 @@ public class ResourceService {
 															else if (prefixControl.equals("gt")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) > ").append(lowRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) > ").append(highRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType GREATER THAN
-																	sbCreateTempWhereCriteria.append(" (").append(periodEndValueColName).append(" IS NULL or ").append(periodEndValueColName)
-																		.append(" > '").append(lowRangeValue).append("')");
+																	sbCreateTempWhereCriteria.append(" (").append(periodEndValueColName).append(" IS NULL OR ").append(periodEndValueColName)
+																		.append(" > '").append(highRangeValue).append("')");
 																}
 																else {
 																	// isDateType GREATER THAN - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and (").append(periodEndValueColName)
-																		.append(" IS NULL or ").append(periodEndValueColName).append(" > '").append(lowRangeValue).append("')) or (")
-																		.append(sExists).append(".paramType = 'DATE' and ").append(dateParamValueColName).append(" > '").append(lowRangeValue).append("'))");
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND (").append(periodEndValueColName)
+																		.append(" IS NULL or ").append(periodEndValueColName).append(" > '").append(highRangeValue).append("')) OR (").append(sExists)
+																		.append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" > '").append(highRangeValue).append("'))");
 																}
 																splitCriteriaWritten = true;
 															}
@@ -3767,18 +3767,18 @@ public class ResourceService {
 															else if (prefixControl.equals("lt")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) < ").append(highRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) < ").append(lowRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType LESS THAN
-																	sbCreateTempWhereCriteria.append(" (").append(periodStartValueColName).append(" IS NULL or ").append(periodStartValueColName)
+																	sbCreateTempWhereCriteria.append(" (").append(periodStartValueColName).append(" IS NULL OR ").append(periodStartValueColName)
 																		.append(" < '").append(lowRangeValue).append("')");
 																}
 																else {
 																	// isDateType LESS THAN - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
 																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and (").append(periodStartValueColName)
-																		.append(" IS NULL or ").append(periodStartValueColName).append(" < '").append(lowRangeValue).append("')) or (")
-																		.append(sExists).append(".paramType = 'DATE' and ").append(dateParamValueColName).append(" < '").append(highRangeValue).append("'))");
+																		.append(" IS NULL OR ").append(periodStartValueColName).append(" < '").append(lowRangeValue).append("')) OR (")
+																		.append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" < '").append(lowRangeValue).append("'))");
 																}
 																splitCriteriaWritten = true;
 															}
@@ -3788,26 +3788,24 @@ public class ResourceService {
 															else if (prefixControl.equals("ge")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) >= ").append(lowRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) >= ").append(highRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType GREATER THAN OR EQUALS
-																	sbCreateTempWhereCriteria.append(" ((").append(periodEndValueColName).append(" IS NULL or ").append(periodEndValueColName)
-																		.append(" > '").append(lowRangeValue).append("') or ((").append(periodStartValueColName).append(" IS NULL or (")
-																		.append(periodStartValueColName).append(" IS NOT NULL and ").append(periodStartValueColName).append(" <= '").append(lowRangeValue)
-																		.append("')) and (").append(periodEndValueColName).append(" IS NULL or (").append(periodEndValueColName).append(" IS NOT NULL and ")
-																		.append(periodEndValueColName).append(" >= '").append(lowRangeValue).append("'))))");
+																	sbCreateTempWhereCriteria.append(" ((").append(periodEndValueColName).append(" IS NULL OR ").append(periodEndValueColName)
+																		.append(" > '").append(highRangeValue).append("') OR (").append(periodStartValueColName).append(" IS NOT NULL AND ")
+																		.append(periodStartValueColName).append(" >= '").append(lowRangeValue).append("' AND ").append(periodEndValueColName)
+																		.append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '").append(highRangeValue).append("'))");
 																}
 																else {
 																	// isDateType GREATER THAN OR EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and ((").append(periodEndValueColName)
-																		.append(" IS NULL or ").append(periodEndValueColName).append(" > '").append(lowRangeValue).append("') or ((")
-																		.append(periodStartValueColName).append(" IS NULL or (").append(periodStartValueColName).append(" IS NOT NULL and ")
-																		.append(periodStartValueColName).append(" <= '").append(lowRangeValue).append("')) and (").append(periodEndValueColName)
-																		.append(" IS NULL or (").append(periodEndValueColName).append(" IS NOT NULL and ").append(periodEndValueColName).append(" >= '")
-																		.append(lowRangeValue).append("'))))) or (").append(sExists).append(".paramType = 'DATE' and ((").append(dateParamValueColName)
-																		.append(" >= '").append(highRangeValue).append("') or (").append(dateParamValueColName).append(" >= '").append(lowRangeValue)
-																		.append("' and ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))))");
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ((").append(periodEndValueColName)
+																		.append(" IS NULL OR ").append(periodEndValueColName).append(" > '").append(highRangeValue).append("') OR (")
+																		.append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '").append(lowRangeValue)
+																		.append("' AND ").append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '")
+																		.append(highRangeValue).append("'))) OR (").append(sExists).append(".paramType = 'DATE' AND ((").append(dateParamValueColName)
+																		.append(" >= '").append(highRangeValue).append("') OR (").append(dateParamValueColName).append(" >= '").append(lowRangeValue)
+																		.append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))))");
 																}
 																splitCriteriaWritten = true;
 															}
@@ -3817,26 +3815,24 @@ public class ResourceService {
 															else if (prefixControl.equals("le")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) <= ").append(highRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) <= ").append(lowRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType LESS THAN OR EQUALS
-																	sbCreateTempWhereCriteria.append(" ((").append(periodStartValueColName).append(" IS NULL or ").append(periodStartValueColName)
-																		.append(" < '").append(lowRangeValue).append("') or ((").append(periodStartValueColName).append(" IS NULL or (")
-																		.append(periodStartValueColName).append(" IS NOT NULL and ").append(periodStartValueColName).append(" <= '").append(lowRangeValue)
-																		.append("')) and (").append(periodEndValueColName).append(" IS NULL or (").append(periodEndValueColName).append(" IS NOT NULL and ")
-																		.append(periodEndValueColName).append(" >= '").append(lowRangeValue).append("'))))");
+																	sbCreateTempWhereCriteria.append(" ((").append(periodStartValueColName).append(" IS NULL OR ").append(periodStartValueColName)
+																		.append(" < '").append(lowRangeValue).append("') OR (").append(periodStartValueColName).append(" IS NOT NULL AND ")
+																		.append(periodStartValueColName).append(" >= '").append(lowRangeValue).append("' AND ").append(periodEndValueColName)
+																		.append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '").append(highRangeValue).append("'))");
 																}
 																else {
 																	// isDateType LESS THAN OR EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and ((").append(periodStartValueColName)
-																		.append(" IS NULL or ").append(periodStartValueColName).append(" < '").append(lowRangeValue).append("') or ((")
-																		.append(periodStartValueColName).append(" IS NULL or (").append(periodStartValueColName).append(" IS NOT NULL and ")
-																		.append(periodStartValueColName).append(" <= '").append(lowRangeValue).append("')) and (").append(periodEndValueColName)
-																		.append(" IS NULL or (").append(periodEndValueColName).append(" IS NOT NULL and ").append(periodEndValueColName).append(" >= '")
-																		.append(lowRangeValue).append("'))))) or (").append(sExists).append(".paramType = 'DATE' and ((").append(dateParamValueColName)
-																		.append(" <= '").append(lowRangeValue).append("') or (").append(dateParamValueColName).append(" >= '").append(lowRangeValue)
-																		.append("' and ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))))");
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ((").append(periodStartValueColName)
+																		.append(" IS NULL OR ").append(periodStartValueColName).append(" < '").append(lowRangeValue).append("') OR (")
+																		.append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '")
+																		.append(lowRangeValue).append("' AND ").append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName)
+																		.append(" <= '").append(highRangeValue).append("'))) OR (").append(sExists).append(".paramType = 'DATE' AND ((")
+																		.append(dateParamValueColName).append(" <= '").append(lowRangeValue).append("') OR (").append(dateParamValueColName).append(" >= '")
+																		.append(lowRangeValue).append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))))");
 																}
 																splitCriteriaWritten = true;
 															}
@@ -3892,19 +3888,17 @@ public class ResourceService {
 														}
 														else if (isPeriodType) {
 															// isPeriodType DEFAULT TO EQUALS
-															sbCreateTempWhereCriteria.append(" ((").append(periodStartValueColName).append(" IS NULL or (").append(periodStartValueColName)
-																.append(" IS NOT NULL and ").append(periodStartValueColName).append(" <= '").append(lowRangeValue).append("')) and (")
-																.append(periodEndValueColName).append(" IS NULL or (").append(periodEndValueColName).append(" IS NOT NULL and ")
-																.append(periodEndValueColName).append(" >= '").append(lowRangeValue).append("')))");
+															sbCreateTempWhereCriteria.append(" (").append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName)
+																.append(" >= '").append(lowRangeValue).append("' AND ").append(periodEndValueColName).append(" IS NOT NULL AND ")
+																.append(periodEndValueColName).append(" <= '").append(highRangeValue).append("')");
 														}
 														else {
 															// isDateType DEFAULT TO EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-															sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and ((").append(periodStartValueColName)
-																.append(" IS NULL or (").append(periodStartValueColName).append(" IS NOT NULL and ").append(periodStartValueColName).append(" <= '")
-																.append(lowRangeValue).append("')) and (").append(periodEndValueColName).append(" IS NULL or (").append(periodEndValueColName)
-																.append(" IS NOT NULL and ").append(periodEndValueColName).append(" >= '").append(lowRangeValue).append("')))) or (")
-																.append(sExists).append(".paramType = 'DATE' and ").append(dateParamValueColName).append(" >= '").append(lowRangeValue)
-																.append("' and ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))");
+															sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodStartValueColName)
+																.append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '").append(lowRangeValue).append("' AND ")
+																.append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '")
+																.append(highRangeValue).append("') OR (").append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" >= '")
+																.append(lowRangeValue).append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))");
 														}
 													}
 												}
@@ -3980,24 +3974,23 @@ public class ResourceService {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
 																	sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) >= ").append(lowRangeValue)
-																		.append(" and CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) <= ").append(highRangeValue).append(")");
+																		.append(" AND CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) <= ").append(highRangeValue).append(")");
 																}
 																else if (isPeriodType) {
 																	// isPeriodType EQUALS, APPROXIMATE
 																	if (prefixControl.equals("eq") || prefixControl.equals("ap")) {
-																		sbCreateTempWhereCriteria.append(" ((").append(periodStartValueColName).append(" IS NULL or (").append(periodStartValueColName)
-																			.append(" IS NOT NULL and ").append(periodStartValueColName).append(" <= '").append(lowRangeValue).append("')) and (")
-																			.append(periodEndValueColName).append(" IS NULL or (").append(periodEndValueColName).append(" IS NOT NULL and ")
-																			.append(periodEndValueColName).append(" >= '").append(lowRangeValue).append("')))");
+																		sbCreateTempWhereCriteria.append(" (").append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName)
+																			.append(" >= '").append(lowRangeValue).append("' AND ").append(periodEndValueColName).append(" IS NOT NULL AND ")
+																			.append(periodEndValueColName).append(" <= '").append(highRangeValue).append("')");
 																	}
 																	// isPeriodType STARTS AFTER
 																	if (prefixControl.equals("sa")) {
-																		sbCreateTempWhereCriteria.append(" (").append(periodStartValueColName).append(" IS NOT NULL and ").append(periodStartValueColName)
-																			.append(" > '").append(lowRangeValue).append("')");
+																		sbCreateTempWhereCriteria.append(" (").append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName)
+																			.append(" > '").append(highRangeValue).append("')");
 																	}
 																	// isPeriodType ENDS BEFORE
 																	if (prefixControl.equals("eb")) {
-																		sbCreateTempWhereCriteria.append(" (").append(periodEndValueColName).append(" IS NOT NULL and ").append(periodEndValueColName)
+																		sbCreateTempWhereCriteria.append(" (").append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName)
 																			.append(" < '").append(lowRangeValue).append("')");
 																	}
 																}
@@ -4005,24 +3998,23 @@ public class ResourceService {
 																	// isDateType - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
 																	// -- EQUALS, APPROXIMATE
 																	if (prefixControl.equals("eq") || prefixControl.equals("ap")) {
-																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and ((").append(periodStartValueColName)
-																			.append(" IS NULL or (").append(periodStartValueColName).append(" IS NOT NULL and ").append(periodStartValueColName).append(" <= '")
-																			.append(lowRangeValue).append("')) and (").append(periodEndValueColName).append(" IS NULL or (").append(periodEndValueColName)
-																			.append(" IS NOT NULL and ").append(periodEndValueColName).append(" >= '").append(lowRangeValue).append("')))) or (")
-																			.append(sExists).append(".paramType = 'DATE' and ").append(dateParamValueColName).append(" >= '").append(lowRangeValue)
-																			.append("' and ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))");
+																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodStartValueColName)
+																			.append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '").append(lowRangeValue).append("' AND ")
+																			.append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '")
+																			.append(highRangeValue).append("') OR (").append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" >= '")
+																			.append(lowRangeValue).append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))");
 																	}
 																	// -- STARTS AFTER
 																	if (prefixControl.equals("sa")) {
-																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and ").append(periodStartValueColName)
-																			.append(" IS NOT NULL and ").append(periodStartValueColName).append(" > '").append(lowRangeValue).append("') or (")
-																			.append(sExists).append(".paramType = 'DATE' and ").append(dateParamValueColName).append(" > '").append(lowRangeValue).append("'))");
+																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodStartValueColName)
+																			.append(" IS NOT NULL AND ").append(periodStartValueColName).append(" > '").append(highRangeValue).append("') OR (")
+																			.append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" > '").append(highRangeValue).append("'))");
 																	}
 																	// -- ENDS BEFORE
 																	if (prefixControl.equals("eb")) {
-																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and ").append(periodEndValueColName)
-																			.append(" IS NOT NULL and ").append(periodEndValueColName).append(" < '").append(lowRangeValue).append("') or (")
-																			.append(sExists).append(".paramType = 'DATE' and ").append(dateParamValueColName).append(" < '").append(highRangeValue).append("'))");
+																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodEndValueColName)
+																			.append(" IS NOT NULL AND ").append(periodEndValueColName).append(" < '").append(lowRangeValue).append("') OR (")
+																			.append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" < '").append(lowRangeValue).append("'))");
 																	}
 																}
 																splitCriteriaWritten = true;
@@ -4034,21 +4026,23 @@ public class ResourceService {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
 																	sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) > ").append(lowRangeValue)
-																		.append(" or CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) < ").append(highRangeValue).append(")");
+																		.append(" OR CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) < ").append(highRangeValue).append(")");
 																}
 																else if (isPeriodType) {
 																	// isPeriodType NOT EQUALS
-																	sbCreateTempWhereCriteria.append(" ((").append(periodStartValueColName).append(" IS NOT NULL and ").append(periodStartValueColName)
-																		.append(" > '").append(lowRangeValue).append("') or (").append(periodEndValueColName).append(" IS NOT NULL and ")
-																		.append(periodEndValueColName).append(" < '").append(lowRangeValue).append("'))");
+																	sbCreateTempWhereCriteria.append(" ((").append(periodStartValueColName).append(" IS NULL OR ").append(periodEndValueColName)
+																		.append(" IS NULL) OR ((").append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName)
+																		.append(" < '").append(lowRangeValue).append("') OR (").append(periodEndValueColName).append(" IS NOT NULL AND ")
+																		.append(periodEndValueColName).append(" > '").append(highRangeValue).append("')))");
 																}
 																else {
 																	// isDateType NOT EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and ((").append(periodStartValueColName)
-																		.append(" IS NOT NULL and ").append(periodStartValueColName).append(" > '").append(lowRangeValue).append("') or (")
-																		.append(periodEndValueColName).append(" IS NOT NULL and ").append(periodEndValueColName).append(" < '").append(lowRangeValue)
-																		.append("'))) or (").append(sExists).append(".paramType = 'DATE' and ((").append(dateParamValueColName).append(" > '")
-																		.append(lowRangeValue).append("') or (").append(dateParamValueColName).append(" < '").append(highRangeValue).append("'))))");
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ((").append(periodStartValueColName)
+																		.append(" IS NULL OR ").append(periodEndValueColName).append(" IS NULL) OR ((").append(periodStartValueColName).append(" IS NOT NULL AND ")
+																		.append(periodStartValueColName).append(" < '").append(lowRangeValue).append("') OR (").append(periodEndValueColName).append(" IS NOT NULL AND ")
+																		.append(periodEndValueColName).append(" > '").append(highRangeValue).append("')))) OR (").append(sExists).append(".paramType = 'DATE' AND (")
+																		.append(dateParamValueColName).append(" < '").append(lowRangeValue).append("' OR ").append(dateParamValueColName).append(" > '")
+																		.append(highRangeValue).append("')))");
 																}
 																splitCriteriaWritten = true;
 															}
@@ -4058,18 +4052,18 @@ public class ResourceService {
 															else if (prefixControl.equals("gt")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) > ").append(lowRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) > ").append(highRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType GREATER THAN
-																	sbCreateTempWhereCriteria.append(" (").append(periodEndValueColName).append(" IS NULL or ").append(periodEndValueColName)
-																		.append(" > '").append(lowRangeValue).append("')");
+																	sbCreateTempWhereCriteria.append(" (").append(periodEndValueColName).append(" IS NULL OR ").append(periodEndValueColName)
+																		.append(" > '").append(highRangeValue).append("')");
 																}
 																else {
 																	// isDateType GREATER THAN - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and (").append(periodEndValueColName)
-																		.append(" IS NULL or ").append(periodEndValueColName).append(" > '").append(lowRangeValue).append("')) or (")
-																		.append(sExists).append(".paramType = 'DATE' and ").append(dateParamValueColName).append(" > '").append(lowRangeValue).append("'))");
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND (").append(periodEndValueColName)
+																		.append(" IS NULL or ").append(periodEndValueColName).append(" > '").append(highRangeValue).append("')) OR (").append(sExists)
+																		.append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" > '").append(highRangeValue).append("'))");
 																}
 																splitCriteriaWritten = true;
 															}
@@ -4079,18 +4073,18 @@ public class ResourceService {
 															else if (prefixControl.equals("lt")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) < ").append(highRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) < ").append(lowRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType LESS THAN
-																	sbCreateTempWhereCriteria.append(" (").append(periodStartValueColName).append(" IS NULL or ").append(periodStartValueColName)
+																	sbCreateTempWhereCriteria.append(" (").append(periodStartValueColName).append(" IS NULL OR ").append(periodStartValueColName)
 																		.append(" < '").append(lowRangeValue).append("')");
 																}
 																else {
 																	// isDateType LESS THAN - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
 																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and (").append(periodStartValueColName)
-																		.append(" IS NULL or ").append(periodStartValueColName).append(" < '").append(lowRangeValue).append("')) or (")
-																		.append(sExists).append(".paramType = 'DATE' and ").append(dateParamValueColName).append(" < '").append(highRangeValue).append("'))");
+																		.append(" IS NULL OR ").append(periodStartValueColName).append(" < '").append(lowRangeValue).append("')) OR (")
+																		.append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" < '").append(lowRangeValue).append("'))");
 																}
 																splitCriteriaWritten = true;
 															}
@@ -4100,26 +4094,24 @@ public class ResourceService {
 															else if (prefixControl.equals("ge")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) >= ").append(lowRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) >= ").append(highRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType GREATER THAN OR EQUALS
-																	sbCreateTempWhereCriteria.append(" ((").append(periodEndValueColName).append(" IS NULL or ").append(periodEndValueColName)
-																		.append(" > '").append(lowRangeValue).append("') or ((").append(periodStartValueColName).append(" IS NULL or (")
-																		.append(periodStartValueColName).append(" IS NOT NULL and ").append(periodStartValueColName).append(" <= '").append(lowRangeValue)
-																		.append("')) and (").append(periodEndValueColName).append(" IS NULL or (").append(periodEndValueColName).append(" IS NOT NULL and ")
-																		.append(periodEndValueColName).append(" >= '").append(lowRangeValue).append("'))))");
+																	sbCreateTempWhereCriteria.append(" ((").append(periodEndValueColName).append(" IS NULL OR ").append(periodEndValueColName)
+																		.append(" > '").append(highRangeValue).append("') OR (").append(periodStartValueColName).append(" IS NOT NULL AND ")
+																		.append(periodStartValueColName).append(" >= '").append(lowRangeValue).append("' AND ").append(periodEndValueColName)
+																		.append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '").append(highRangeValue).append("'))");
 																}
 																else {
 																	// isDateType GREATER THAN OR EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and ((").append(periodEndValueColName)
-																		.append(" IS NULL or ").append(periodEndValueColName).append(" > '").append(lowRangeValue).append("') or ((")
-																		.append(periodStartValueColName).append(" IS NULL or (").append(periodStartValueColName).append(" IS NOT NULL and ")
-																		.append(periodStartValueColName).append(" <= '").append(lowRangeValue).append("')) and (").append(periodEndValueColName)
-																		.append(" IS NULL or (").append(periodEndValueColName).append(" IS NOT NULL and ").append(periodEndValueColName).append(" >= '")
-																		.append(lowRangeValue).append("'))))) or (").append(sExists).append(".paramType = 'DATE' and ((").append(dateParamValueColName)
-																		.append(" >= '").append(highRangeValue).append("') or (").append(dateParamValueColName).append(" >= '").append(lowRangeValue)
-																		.append("' and ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))))");
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ((").append(periodEndValueColName)
+																		.append(" IS NULL OR ").append(periodEndValueColName).append(" > '").append(highRangeValue).append("') OR (")
+																		.append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '").append(lowRangeValue)
+																		.append("' AND ").append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '")
+																		.append(highRangeValue).append("'))) OR (").append(sExists).append(".paramType = 'DATE' AND ((").append(dateParamValueColName)
+																		.append(" >= '").append(highRangeValue).append("') OR (").append(dateParamValueColName).append(" >= '").append(lowRangeValue)
+																		.append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))))");
 																}
 																splitCriteriaWritten = true;
 															}
@@ -4129,26 +4121,24 @@ public class ResourceService {
 															else if (prefixControl.equals("le")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) <= ").append(highRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) <= ").append(lowRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType LESS THAN OR EQUALS
-																	sbCreateTempWhereCriteria.append(" ((").append(periodStartValueColName).append(" IS NULL or ").append(periodStartValueColName)
-																		.append(" < '").append(lowRangeValue).append("') or ((").append(periodStartValueColName).append(" IS NULL or (")
-																		.append(periodStartValueColName).append(" IS NOT NULL and ").append(periodStartValueColName).append(" <= '").append(lowRangeValue)
-																		.append("')) and (").append(periodEndValueColName).append(" IS NULL or (").append(periodEndValueColName).append(" IS NOT NULL and ")
-																		.append(periodEndValueColName).append(" >= '").append(lowRangeValue).append("'))))");
+																	sbCreateTempWhereCriteria.append(" ((").append(periodStartValueColName).append(" IS NULL OR ").append(periodStartValueColName)
+																		.append(" < '").append(lowRangeValue).append("') OR (").append(periodStartValueColName).append(" IS NOT NULL AND ")
+																		.append(periodStartValueColName).append(" >= '").append(lowRangeValue).append("' AND ").append(periodEndValueColName)
+																		.append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '").append(highRangeValue).append("'))");
 																}
 																else {
 																	// isDateType LESS THAN OR EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and ((").append(periodStartValueColName)
-																		.append(" IS NULL or ").append(periodStartValueColName).append(" < '").append(lowRangeValue).append("') or ((")
-																		.append(periodStartValueColName).append(" IS NULL or (").append(periodStartValueColName).append(" IS NOT NULL and ")
-																		.append(periodStartValueColName).append(" <= '").append(lowRangeValue).append("')) and (").append(periodEndValueColName)
-																		.append(" IS NULL or (").append(periodEndValueColName).append(" IS NOT NULL and ").append(periodEndValueColName).append(" >= '")
-																		.append(lowRangeValue).append("'))))) or (").append(sExists).append(".paramType = 'DATE' and ((").append(dateParamValueColName)
-																		.append(" <= '").append(lowRangeValue).append("') or (").append(dateParamValueColName).append(" >= '").append(lowRangeValue)
-																		.append("' and ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))))");
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ((").append(periodStartValueColName)
+																		.append(" IS NULL OR ").append(periodStartValueColName).append(" < '").append(lowRangeValue).append("') OR (")
+																		.append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '")
+																		.append(lowRangeValue).append("' AND ").append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName)
+																		.append(" <= '").append(highRangeValue).append("'))) OR (").append(sExists).append(".paramType = 'DATE' AND ((")
+																		.append(dateParamValueColName).append(" <= '").append(lowRangeValue).append("') OR (").append(dateParamValueColName).append(" >= '")
+																		.append(lowRangeValue).append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))))");
 																}
 																splitCriteriaWritten = true;
 															}
@@ -4204,19 +4194,17 @@ public class ResourceService {
 														}
 														else if (isPeriodType) {
 															// isPeriodType DEFAULT TO EQUALS
-															sbCreateTempWhereCriteria.append(" ((").append(periodStartValueColName).append(" IS NULL or (").append(periodStartValueColName)
-																.append(" IS NOT NULL and ").append(periodStartValueColName).append(" <= '").append(lowRangeValue).append("')) and (")
-																.append(periodEndValueColName).append(" IS NULL or (").append(periodEndValueColName).append(" IS NOT NULL and ")
-																.append(periodEndValueColName).append(" >= '").append(lowRangeValue).append("')))");
+															sbCreateTempWhereCriteria.append(" (").append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName)
+																.append(" >= '").append(lowRangeValue).append("' AND ").append(periodEndValueColName).append(" IS NOT NULL AND ")
+																.append(periodEndValueColName).append(" <= '").append(highRangeValue).append("')");
 														}
 														else {
 															// isDateType DEFAULT TO EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-															sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and ((").append(periodStartValueColName)
-																.append(" IS NULL or (").append(periodStartValueColName).append(" IS NOT NULL and ").append(periodStartValueColName).append(" <= '")
-																.append(lowRangeValue).append("')) and (").append(periodEndValueColName).append(" IS NULL or (").append(periodEndValueColName)
-																.append(" IS NOT NULL and ").append(periodEndValueColName).append(" >= '").append(lowRangeValue).append("')))) or (")
-																.append(sExists).append(".paramType = 'DATE' and ").append(dateParamValueColName).append(" >= '").append(lowRangeValue)
-																.append("' and ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))");
+															sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodStartValueColName)
+																.append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '").append(lowRangeValue).append("' AND ")
+																.append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '")
+																.append(highRangeValue).append("') OR (").append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" >= '")
+																.append(lowRangeValue).append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))");
 														}
 													}
 												}
