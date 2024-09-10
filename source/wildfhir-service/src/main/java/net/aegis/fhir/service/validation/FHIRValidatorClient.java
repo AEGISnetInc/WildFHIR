@@ -66,6 +66,8 @@ public class FHIRValidatorClient {
 
     private static FHIRValidatorClient me;
 
+    private static String FHIR_PACKAGES_ENV_VAR = "FHIR_PACKAGES";
+
 	private ValidationEngine engine = null;
 
 	private JsonParser jsonParser = new JsonParser();
@@ -86,13 +88,19 @@ public class FHIRValidatorClient {
 			ValidationEngineBuilder builder = new ValidationEngine.ValidationEngineBuilder();
 			engine = builder.fromSource("hl7.fhir.r4.core");
 
-			// TSP-2348 - Set anyExtensionsAllowed equal to true to relax error rule on unknown extensions
+			// Check for additional packages via environment variable
+			String fhirPackages = System.getenv(FHIR_PACKAGES_ENV_VAR);
+			if (fhirPackages != null && !fhirPackages.isEmpty()) {
+				loadPackages(fhirPackages);
+			}
+
+			// Set anyExtensionsAllowed equal to true to relax error rule on unknown extensions
 			engine.setAnyExtensionsAllowed(true);
 
-			// SET ASSUME VALID REST REFERENCES
+			// Set assume valid REST references
 			engine.setAssumeValidRestReferences(true);
 
-			// AEGIS 2021 - TSP-188 Allow example paths
+			// Set allow example paths
 			engine.setAllowExampleUrls(true);
 
 			engine.connectToTSServer("http://tx.fhir.org/r4", null, FhirPublication.R4, false);
@@ -200,6 +208,36 @@ public class FHIRValidatorClient {
 	/*
 	 * Private methods
 	 */
+
+	/**
+	 * Load FHIR packages from environment variable FHIR_PACKAGES
+	 * Expect a string with comma delimited list of package#version, ...
+	 * NOTE - NO ERROR CHECKING IS DONE TO VERIFY THE PACKAGE NAME AND VERSION
+	 * 
+	 * @param fhirPackages
+	 */
+	private void loadPackages(String fhirPackages) {
+
+		// Split list of packages by comma
+		String[] packageList = fhirPackages.split(",");
+
+		for (String pkg : packageList) {
+			// Split pkg into package name and version by '#'
+			String[] pkgSplit = pkg.split("#");
+			String pkgName = pkgSplit[0];
+			String pkgVersion = pkgSplit[1];
+			if (pkgVersion == null || pkgVersion.isEmpty()) {
+				pkgVersion = null;
+			}
+
+			try {
+				log.info("Load package " + pkgName + "#" + (pkgVersion != null ? pkgVersion : "null"));
+				engine.loadPackage(pkgName, pkgVersion);
+			} catch (Exception e) {
+				log.severe("Load package " + pkgName + "#" + (pkgVersion != null ? pkgVersion : "null") + " failed! " + e.getMessage());
+			}
+		}
+	}
 
 	/**
 	 * Build an OperationOutcome resource with a single issue.
