@@ -1,0 +1,42 @@
+# -------------------------------------------------------------------------------
+# Set up named compose project wildfhirce-r4-wildfly20-mysql8
+# - This will show up in Docker Desktop
+# -------------------------------------------------------------------------------
+docker compose -p wildfhirce-r4-wildfly20-mysql8 create
+
+=================================================================================
+
+# -------------------------------------------------------------------------------
+# Create docker bridge network wildfhirce-net
+# - This is needed for container-container communication
+# -------------------------------------------------------------------------------
+docker network create -d bridge wildfhirce-net
+
+# -------------------------------------------------------------------------------
+# Create and run wildfhirce-mysql image
+# - From tag r4-mysql8.0
+# - Using the bridge network wildfhirce-net
+# - Expose port 3306 for MySQL Workbench access
+# -------------------------------------------------------------------------------
+docker run --network=wildfhirce-net -itd -p 3306:3306 --name=wildfhircemysql aegisnetinc/wildfhirce-mysql:r4-mysql8.0
+
+# -------------------------------------------------------------------------------
+# Run wildfhircemysql container
+# - Uses wildfhircemysql container created from run command above
+# -------------------------------------------------------------------------------
+docker start wildfhircemysql
+
+# -------------------------------------------------------------------------------
+# Create and run wildfhirce-wildfly image
+# - From tag r4-20.0.1.Final-mysql8.0
+# - Using the bridge network wildfhirce-net
+# - Define WildFHIR environment variable file
+# - Expose ports 80, 443, 9990 for browser and RESTful client access
+# -------------------------------------------------------------------------------
+docker run --network=wildfhirce-net -itd -p 80:80 -p 443:443 -p 9990:9990 --env-file env.list --name=wildfhircewildfly aegisnetinc/wildfhirce-wildfly:r4-20.0.1.Final-mysql8.0
+
+# -------------------------------------------------------------------------------
+# Run wildfhircewildfly container
+# - Uses wildfhircewildfly container created from run command above
+# -------------------------------------------------------------------------------
+docker start wildfhircewildfly
