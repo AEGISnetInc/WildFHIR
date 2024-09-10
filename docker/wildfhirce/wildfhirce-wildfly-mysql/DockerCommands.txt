@@ -1,0 +1,5 @@
+# -------------------------------------------------------------------------------
+# Build wildfhirce-wildfly image
+# - Named tag r4-20.0.1.Final-mysql8.0
+# -------------------------------------------------------------------------------
+docker build -t aegisnetinc/wildfhirce-wildfly:r4-20.0.1.Final-mysql8.0 .
