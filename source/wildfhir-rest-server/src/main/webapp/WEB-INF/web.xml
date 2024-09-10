@@ -57,25 +57,32 @@
 		<url-pattern>*</url-pattern>
 	</filter-mapping>
 
-	<!-- Initialize FHIR Validator Pool -->
+	<!-- Initialize FHIR Validator -->
 	<servlet>
-		<servlet-name>fhirValidatorPoolServlet</servlet-name>
+		<servlet-name>fhirValidatorInitializeServlet</servlet-name>
 		<servlet-class>net.aegis.fhir.rest.init.InitializeFHIRValidation</servlet-class>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
 
 	<!-- Initialize FHIR NarrativeGenerator -->
 	<servlet>
-		<servlet-name>fhirNarrativeGeneratorPoolServlet</servlet-name>
+		<servlet-name>fhirNarrativeGeneratorInitializeServlet</servlet-name>
 		<servlet-class>net.aegis.fhir.rest.init.InitializeFHIRNarrativeGenerator</servlet-class>
 		<load-on-startup>2</load-on-startup>
 	</servlet>
 
-	<!-- Initialize FHIR CapabilityStatement -->
+	<!-- Initialize WildFHIR CapabilityStatement -->
 	<servlet>
-		<servlet-name>fhirCapabilityStatementPoolServlet</servlet-name>
+		<servlet-name>fhirCapabilityStatementInitializeServlet</servlet-name>
 		<servlet-class>net.aegis.fhir.rest.init.InitializeCapabilityStatement</servlet-class>
 		<load-on-startup>3</load-on-startup>
+	</servlet>
+
+	<!-- Initialize WildFHIR Code Configuration -->
+	<servlet>
+		<servlet-name>fhirCodeConfigurationInitializeServlet</servlet-name>
+		<servlet-class>net.aegis.fhir.rest.init.InitializeCodeConfiguration</servlet-class>
+		<load-on-startup>4</load-on-startup>
 	</servlet>
 
 </web-app>
