@@ -5,7 +5,7 @@
     <parent>
         <groupId>net.aegis.fhir</groupId>
         <artifactId>wildfhir</artifactId>
-        <version>0.3.0</version>
+        <version>0.3.1-SNAPSHOT</version>
     </parent>
     <artifactId>wildfhir-service</artifactId>
     <packaging>jar</packaging>
