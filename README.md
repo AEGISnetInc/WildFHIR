@@ -19,7 +19,11 @@ This project is Open Source, licensed under the Apache Software License 2.0.
 
 ## Containerized Version of WildFHIR
 
-**In progress**; stay tuned.
+Docker images may be found here:
+
+[WildFHIR Community Edition - Wildfly Project](https://hub.docker.com/r/aegisnetinc/wildfhirce-wildfly)
+
+[WildFHIR Community Edition - MySQL Project](https://hub.docker.com/r/aegisnetinc/wildfhirce-mysql)
 
 ## Documentation and wiki
 
