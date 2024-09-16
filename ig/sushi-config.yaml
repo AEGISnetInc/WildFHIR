@@ -1,0 +1,80 @@
+# ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
+# │  ACTION REQUIRED: REVIEW AND EDIT THIS FILE TO ENSURE IT ACCURATELY REFLECTS YOUR PROJECT!     │
+# │                                                                                                │
+# │  This file was generated from your existing project files and will be used for SUSHI           │
+# │  configuration from now on. You may delete your package.json as it is no longer needed.        │
+# ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+# ╭──────────────────ImplementationGuide-net.aegis.touchstone.fhir.testing.json────────────────────╮
+# │  The properties below are used to create the ImplementationGuide resource. For a list of       │
+# │  supported properties, see:                                                                    │
+# │  http://build.fhir.org/ig/HL7/fhir-shorthand/branches/beta/sushi.html#ig-development           │
+# ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
+id: net.aegis.wildfhir.ig.wildfhirce
+canonical: http://wildfhir.aegis.net/ig/wildfhirce
+version: 0.3.0
+name: WildFHIRCEIG
+title: WildFHIR CE IG
+status: active
+publisher:
+  name: 'AEGIS.net, Inc.'
+  url: https://www.aegis.net
+contact:
+  - name: Richard Ettema
+    telecom:
+      - system: email
+        value: mailto:richard.ettema@aegis.net
+description: The AEGIS WildFHIR Community Edition R4 Implementation Guide defines the minimum conformance requirements for implementing optional operations to a FHIR R4 server.
+license: CC0-1.0
+fhirVersion: 4.0.1
+parameters:
+  path-resource:
+    - input/resources
+    - fsh-generated/resources
+  path-pages:
+    - input/pagecontent
+    - fsh-generated/includes
+  show-inherited-invariants: 'false'
+  logging: progress
+  shownav: 'false'
+  active-tables: 'false'
+  apply-contact: 'true'
+  apply-jurisdiction: 'true'
+  apply-publisher: 'true'
+  apply-version: 'true'
+  usage-stats-opt-out: 'true'
+  excludettl: 'true'
+  excludemap: 'true'
+  validation: 'allow-any-extensions'
+
+copyrightYear: 2024+
+releaseLabel: current
+jurisdiction: http://unstats.un.org/unsd/methods/m49/m49.htm#001 "World"
+
+# ╭────────────────────────────────────────────menu.xml────────────────────────────────────────────╮
+# │  To control the menu.xml using this config, uncomment and set the "menu" property.             │
+# ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+menu:
+  Home: index.html
+  Contents: toc.html
+  Artifacts: artifacts.html
+  Safety and Security: safety_security.html
+  Support:
+    Downloads: downloads.html
+
+pages:
+  index.md:
+    title: Home
+  safety_security.md:
+    title: Safety and Security
+  downloads.md:
+    title: Downloads
+  history.md:
+    title: History
+
+# ╭───────────────────────────────────────package-list.json────────────────────────────────────────╮
+# │  To control the package-list.json using this config, uncomment and set the "history" property. │
+# ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+# resources:

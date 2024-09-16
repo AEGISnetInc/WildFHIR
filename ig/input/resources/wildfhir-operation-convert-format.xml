@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OperationDefinition xmlns="http://hl7.org/fhir">
+	<id value="wildfhir-operation-convert-format"/>
+	<text>
+		<status value="generated"/>
+		<div xmlns="http://www.w3.org/1999/xhtml">
+			<h2>OPERATION: Convert Format</h2>
+			<p>This is the WildFHIR CE R4 Global Convert Format operation. It provides a standardized mechanism to convert a posted FHIR resource instance to a specific FHIR syntax format. The operation simply returns the FHIR resource instance in the format specified by the request HTTP Accept Header.</p>
+			<p>URL: [base]/$convert-format</p>
+			<p>Parameters</p>
+			<table class="grid">
+				<tr>
+					<td>
+						<b>Use</b>
+					</td>
+					<td>
+						<b>Name</b>
+					</td>
+					<td>
+						<b>Cardinality</b>
+					</td>
+					<td>
+						<b>Type</b>
+					</td>
+					<td>
+						<b>Binding</b>
+					</td>
+					<td>
+						<b>Documentation</b>
+					</td>
+				</tr>
+				<tr>
+					<td>IN</td>
+					<td>input</td>
+					<td>0..1</td>
+					<td>Resource</td>
+					<td>
+					</td>
+					<td>
+						<div>
+							<p>The FHIR resource instance in a specific FHIR syntax format.</p>
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td>OUT</td>
+					<td>return</td>
+					<td>0..1</td>
+					<td>Resource</td>
+					<td/>
+					<td>
+						<div>
+							<p>If successful, the resource instance in the requested FHIR syntax format.</p>
+							<p>If the operation was unsuccessful, then an OperationOutcome may be returned along with a BadRequest status Code (e.g. reference integrity issue, security issue, or insufficient privileges).</p>
+						</div>
+					</td>
+				</tr>
+			</table>
+			<div>
+
+			</div>
+		</div>
+	</text>
+	<url value="http://wildfhir.aegis.net/ig/wildfhirce/OperationDefinition/wildfhir-operation-convert-format"/>
+	<name value="AEGISWildFHIRCER4ConvertFormat"/>
+	<title value="AEGIS WildFHIR CE R4 Convert Format"/>
+	<status value="draft"/>
+	<kind value="operation"/>
+	<date value="2024-09-16T14:30:00-04:00"/>
+	<publisher value="AEGIS"/>
+	<contact>
+		<name value="Touchstone Support"/>
+		<telecom>
+			<system value="email"/>
+			<value value="touchstone_support@aegis.net"/>
+		</telecom>
+	</contact>
+	<description value="This is the WildFHIR CE R4 Global Convert Format operation. It provides a standardized mechanism to convert a posted FHIR resource instance to a specific FHIR syntax format. The operation simply returns the FHIR resource instance in the format specified by the request HTTP Accept Header."/>
+	<code value="convert-format"/>
+	<resource value="Resource"/>
+	<system value="true"/>
+	<type value="false"/>
+	<instance value="false"/>
+	<parameter>
+		<name value="input"/>
+		<use value="in"/>
+		<min value="0"/>
+		<max value="1"/>
+		<documentation value="The FHIR resource instance in a specific FHIR syntax format."/>
+		<type value="Resource"/>
+	</parameter>
+	<parameter>
+		<name value="return"/>
+		<use value="out"/>
+		<min value="0"/>
+		<max value="1"/>
+		<documentation value="If successful, the resource instance in the requested FHIR syntax format.\n\nIf the operation was unsuccessful, then an OperationOutcome may be returned along with a BadRequest status Code (e.g. reference integrity issue, security issue, or insufficient privileges)."/>
+		<type value="Resource"/>
+	</parameter>
+</OperationDefinition>
