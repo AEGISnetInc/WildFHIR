@@ -14,7 +14,7 @@ Otherwise the POST transaction is used as follows:
 **Request the purge of all related data for a patient using `GET` syntax**
 
 ~~~
-GET [base]/Patient/[id]/$purge?start=2015-01-01
+GET [base]/Patient/[id]/$purge?start=2015-01-01&end=2018-12-31
 [other headers]
 ~~~
 
@@ -42,14 +42,14 @@ POST [base]/Patient/[id]/$purge
     </Parameters>
 ~~~
 
-**Response**
+**Response** (for both GET and POST)
 
 ~~~
 HTTP/1.1 200 OK
 [other headers]
 ~~~
 
-**Response body:**
+**Response body:** (for both GET and POST)
 
 ~~~
     <?xml version="1.0" encoding="UTF-8"?>
