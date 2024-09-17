@@ -29,6 +29,8 @@ Docker images may be found here:
 
 Complete project documentation is available on our [Wiki][link-docs].
 
+The WildFHIR CE R4 Implementation Guide is available here: [wildfhir.aegis.net/ig/wildfhirce]( https://wildfhir.aegis.net/ig/wildfhirce)
+
 A demonstration of this project is available here: [wildfhir.aegis.net/r4]( https://wildfhir.aegis.net/r4)
 
 Please see [this wiki page][Link-wiki] for information on where to get help with WildFHIR.
