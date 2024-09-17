@@ -56,13 +56,15 @@ public class InitializeCodeConfiguration extends HttpServlet {
 	private static final Logger log = LoggerFactory.getLogger(InitializeCodeConfiguration.class);
 
 	private static final Map<String, String> envCodeMap = new HashMap<String, String>(Map.of(
+		"WILDFHIR_BASEURL", "baseUrl",
 		"WILDFHIR_CONDITIONALDELETE", "conditionalDelete",
 		"WILDFHIR_CONDITIONALREAD", "conditionalRead",
 		"WILDFHIR_CONDITIONALCREATE", "conditionalCreate",
 		"WILDFHIR_CONDITIONALUPDATE", "conditionalUpdate",
 		"WILDFHIR_CREATERESPONSEPAYLOAD", "createResponsePayload",
 		"WILDFHIR_SEARCHRESPONSEPAYLOAD", "searchResponsePayload",
-		"WILDFHIR_UPDATERESPONSEPAYLOAD", "updateResponsePayload"
+		"WILDFHIR_UPDATERESPONSEPAYLOAD", "updateResponsePayload",
+		"WILDFHIR_RESOURCEPURGEALLENABLED", "resourcePurgeAllEnabled"
 	));
 
 	@Inject

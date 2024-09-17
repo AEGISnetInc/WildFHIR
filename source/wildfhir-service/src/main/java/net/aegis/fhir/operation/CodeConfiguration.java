@@ -143,7 +143,7 @@ public class CodeConfiguration extends ResourceOperationProxy {
 				/*
 				 * code configuration check
 				 * - list operation - operation input parameter is required, all other input parameters are ignored
-				 * - update operation - all input parameters are required
+				 * - update operation - codeName is required; all other input parameters are optional
 				 */
 				if (operationString != null) {
 					// list operation
