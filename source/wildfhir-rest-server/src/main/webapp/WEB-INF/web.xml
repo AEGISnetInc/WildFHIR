@@ -71,17 +71,17 @@
 		<load-on-startup>2</load-on-startup>
 	</servlet>
 
-	<!-- Initialize WildFHIR CapabilityStatement -->
-	<servlet>
-		<servlet-name>fhirCapabilityStatementInitializeServlet</servlet-name>
-		<servlet-class>net.aegis.fhir.rest.init.InitializeCapabilityStatement</servlet-class>
-		<load-on-startup>3</load-on-startup>
-	</servlet>
-
 	<!-- Initialize WildFHIR Code Configuration -->
 	<servlet>
 		<servlet-name>fhirCodeConfigurationInitializeServlet</servlet-name>
 		<servlet-class>net.aegis.fhir.rest.init.InitializeCodeConfiguration</servlet-class>
+		<load-on-startup>3</load-on-startup>
+	</servlet>
+
+	<!-- Initialize WildFHIR CapabilityStatement -->
+	<servlet>
+		<servlet-name>fhirCapabilityStatementInitializeServlet</servlet-name>
+		<servlet-class>net.aegis.fhir.rest.init.InitializeCapabilityStatement</servlet-class>
 		<load-on-startup>4</load-on-startup>
 	</servlet>
 
