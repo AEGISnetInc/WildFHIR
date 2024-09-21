@@ -24,7 +24,7 @@ Class-Path: httpclient-4.5.10.jar httpcore-4.4.13.jar commons-logging-1.
  -elm-2.11.0.jar jackson-module-jaxb-annotations-2.13.2.jar quick-2.11.0
  .jar qdm-2.11.0.jar byte-buddy-1.14.9.jar thymeleaf-3.1.2.RELEASE.jar o
  gnl-3.3.4.jar javassist-3.29.0-GA.jar attoparser-2.0.7.RELEASE.jar unbe
- scape-1.1.6.RELEASE.jar wildfhir-model-0.3.1.jar wildfhir-service-0.3.1
+ scape-1.1.6.RELEASE.jar wildfhir-model-0.3.2.jar wildfhir-service-0.3.2
  .jar jta-1.1.jar javax.servlet-api-4.0.1.jar joda-time-2.12.5.jar okhtt
  p-4.10.0.jar okio-jvm-3.0.0.jar kotlin-stdlib-jdk8-1.6.10.jar kotlin-st
  dlib-1.6.20.jar annotations-13.0.jar kotlin-stdlib-common-1.5.31.jar ko
