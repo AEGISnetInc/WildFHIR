@@ -771,6 +771,7 @@ public class ResourceType {
 		globalOperations.add(new LabelKeyValueBean("meta-add", "mixed", "http://hl7.org/fhir/OperationDefinition/Resource-meta-add", "write"));
 		globalOperations.add(new LabelKeyValueBean("meta-delete", "mixed", "http://hl7.org/fhir/OperationDefinition/Resource-meta-delete", "write"));
 		globalOperations.add(new LabelKeyValueBean("purge-all", "external", "", "write")); // WildFHIR global operation; does not match existing FHIR global operation
+		globalOperations.add(new LabelKeyValueBean("validate", "mixed", "http://hl7.org/fhir/OperationDefinition/Resource-validate", "read"));
 		globalOperations.add(new LabelKeyValueBean("versions", "global", "http://hl7.org/fhir/OperationDefinition/Resource-versions", "read"));
 
 		/*
