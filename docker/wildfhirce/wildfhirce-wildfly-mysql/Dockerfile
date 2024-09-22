@@ -31,6 +31,9 @@ RUN /opt/jboss/wildfly/bin/add-user.sh admin admin --silent
 # Add MySQL 8.0 connector library
 ADD mysql $JBOSS_HOME/modules/system/layers/base/com/mysql
 
+# Copy standalone conf for start up with JAVA_OPTS settings
+COPY ./standalone.conf $JBOSS_HOME/bin
+
 # Copy standalone configuration with datasource connection to wildfhirce-mysql and https access using a self-signed certificate
 COPY ./standalone.xml $JBOSS_HOME/standalone/configuration
 
