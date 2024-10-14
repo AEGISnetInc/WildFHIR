@@ -64,14 +64,14 @@ public class ResourcemetadataDocumentReference extends ResourcemetadataProxy {
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -101,8 +101,10 @@ public class ResourcemetadataDocumentReference extends ResourcemetadataProxy {
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", documentReference.getId());
-			resourcemetadataList.add(_id);
+			if (documentReference.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", documentReference.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (documentReference.getLanguage() != null) {
@@ -124,7 +126,7 @@ public class ResourcemetadataDocumentReference extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters for any
-					List<Resourcemetadata> rAuthenticatorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "authenticator", 0, documentReference.getAuthenticator().getReference());
+					List<Resourcemetadata> rAuthenticatorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "authenticator", 0, documentReference.getAuthenticator().getReference(), null);
 					resourcemetadataList.addAll(rAuthenticatorChain);
 				}
 			}
@@ -142,7 +144,7 @@ public class ResourcemetadataDocumentReference extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rAuthorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "author", 0, author.getReference());
+							rAuthorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "author", 0, author.getReference(), null);
 							resourcemetadataList.addAll(rAuthorChain);
 						}
 					}
@@ -171,7 +173,7 @@ public class ResourcemetadataDocumentReference extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rCustodianChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "custodian", 0, documentReference.getCustodian().getReference());
+					List<Resourcemetadata> rCustodianChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "custodian", 0, documentReference.getCustodian().getReference(), null);
 					resourcemetadataList.addAll(rCustodianChain);
 				}
 			}
@@ -200,7 +202,7 @@ public class ResourcemetadataDocumentReference extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, encounter.getReference());
+							rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, encounter.getReference(), null);
 							resourcemetadataList.addAll(rEncounterChain);
 						}
 					}
@@ -261,7 +263,7 @@ public class ResourcemetadataDocumentReference extends ResourcemetadataProxy {
 
 							if (chainedResource == null) {
 								// Add chained parameters for any
-								rRelatedChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "related-", 0, related.getReference());
+								rRelatedChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "related-", 0, related.getReference(), null);
 								resourcemetadataList.addAll(rRelatedChain);
 							}
 						}
@@ -328,7 +330,7 @@ public class ResourcemetadataDocumentReference extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, documentReference.getSubject().getReference());
+					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, documentReference.getSubject().getReference(), null);
 					resourcemetadataList.addAll(rSubjectChain);
 				}
 
@@ -338,7 +340,7 @@ public class ResourcemetadataDocumentReference extends ResourcemetadataProxy {
 
 					if (chainedResource == null) {
 						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, documentReference.getSubject().getReference());
+						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, documentReference.getSubject().getReference(), null);
 						resourcemetadataList.addAll(rPatientChain);
 					}
 				}
@@ -374,7 +376,7 @@ public class ResourcemetadataDocumentReference extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rRelatesToChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "relatesto", 0, relatesTo.getTarget().getReference());
+							rRelatesToChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "relatesto", 0, relatesTo.getTarget().getReference(), null);
 							resourcemetadataList.addAll(rRelatesToChain);
 						}
 					}

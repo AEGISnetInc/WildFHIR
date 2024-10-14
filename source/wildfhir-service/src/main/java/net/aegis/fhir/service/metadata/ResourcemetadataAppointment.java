@@ -63,14 +63,14 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -100,8 +100,10 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", appointment.getId());
-			resourcemetadataList.add(_id);
+			if (appointment.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", appointment.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (appointment.getLanguage() != null) {
@@ -141,7 +143,7 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters
-							rBasedOnChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "based-on", 0, basedOn.getReference());
+							rBasedOnChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "based-on", 0, basedOn.getReference(), null);
 							resourcemetadataList.addAll(rBasedOnChain);
 						}
 					}
@@ -186,7 +188,7 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters
-							rParticipantChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "actor", 0, participant.getActor().getReference());
+							rParticipantChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "actor", 0, participant.getActor().getReference(), null);
 							resourcemetadataList.addAll(rParticipantChain);
 						}
 
@@ -201,7 +203,7 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 
 							if (chainedResource == null) {
 								// Add chained parameters
-								rParticipantChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, participant.getActor().getReference());
+								rParticipantChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, participant.getActor().getReference(), null);
 								resourcemetadataList.addAll(rParticipantChain);
 							}
 						}
@@ -212,7 +214,7 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 
 							if (chainedResource == null) {
 								// Add chained parameters
-								rParticipantChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, participant.getActor().getReference());
+								rParticipantChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, participant.getActor().getReference(), null);
 								resourcemetadataList.addAll(rParticipantChain);
 							}
 						}
@@ -223,7 +225,7 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 
 							if (chainedResource == null) {
 								// Add chained parameters
-								rParticipantChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "practitioner", 0, participant.getActor().getReference());
+								rParticipantChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "practitioner", 0, participant.getActor().getReference(), null);
 								resourcemetadataList.addAll(rParticipantChain);
 							}
 						}
@@ -262,7 +264,7 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rReasonRefChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "reason-reference", 0, reasonRef.getReference());
+							rReasonRefChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "reason-reference", 0, reasonRef.getReference(), null);
 							resourcemetadataList.addAll(rReasonRefChain);
 						}
 					}
@@ -315,7 +317,7 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters
-							rSlotChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "slot", 0, slot.getReference());
+							rSlotChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "slot", 0, slot.getReference(), null);
 							resourcemetadataList.addAll(rSlotChain);
 						}
 					}
@@ -359,7 +361,7 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rSupportingInformationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "supporting-info", 0, supportingInformation.getReference());
+							rSupportingInformationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "supporting-info", 0, supportingInformation.getReference(), null);
 							resourcemetadataList.addAll(rSupportingInformationChain);
 						}
 					}

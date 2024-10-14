@@ -66,14 +66,14 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -103,8 +103,10 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", conceptMap.getId());
-			resourcemetadataList.add(_id);
+			if (conceptMap.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", conceptMap.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (conceptMap.getLanguage() != null) {
@@ -344,7 +346,7 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rSourceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "source", 0, conceptMap.getSourceCanonicalType().getValue());
+					List<Resourcemetadata> rSourceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "source", 0, conceptMap.getSourceCanonicalType().getValue(), null);
 					resourcemetadataList.addAll(rSourceChain);
 				}
 			}
@@ -370,7 +372,7 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rTargetChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "target", 0, conceptMap.getTargetCanonicalType().getValue());
+					List<Resourcemetadata> rTargetChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "target", 0, conceptMap.getTargetCanonicalType().getValue(), null);
 					resourcemetadataList.addAll(rTargetChain);
 				}
 			}

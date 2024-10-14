@@ -62,14 +62,14 @@ public class ResourcemetadataDocumentManifest extends ResourcemetadataProxy {
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -99,8 +99,10 @@ public class ResourcemetadataDocumentManifest extends ResourcemetadataProxy {
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", documentManifest.getId());
-			resourcemetadataList.add(_id);
+			if (documentManifest.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", documentManifest.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (documentManifest.getLanguage() != null) {
@@ -127,7 +129,7 @@ public class ResourcemetadataDocumentManifest extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rAuthorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "author", 0, author.getReference());
+							rAuthorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "author", 0, author.getReference(), null);
 							resourcemetadataList.addAll(rAuthorChain);
 						}
 					}
@@ -173,7 +175,7 @@ public class ResourcemetadataDocumentManifest extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rContentChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "item", 0, content.getReference());
+							rContentChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "item", 0, content.getReference(), null);
 							resourcemetadataList.addAll(rContentChain);
 						}
 					}
@@ -192,7 +194,7 @@ public class ResourcemetadataDocumentManifest extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rRecipientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "recipient", 0, recipient.getReference());
+							rRecipientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "recipient", 0, recipient.getReference(), null);
 							resourcemetadataList.addAll(rRecipientChain);
 						}
 					}
@@ -221,7 +223,7 @@ public class ResourcemetadataDocumentManifest extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, documentManifest.getSubject().getReference());
+					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, documentManifest.getSubject().getReference(), null);
 					resourcemetadataList.addAll(rSubjectChain);
 				}
 
@@ -231,7 +233,7 @@ public class ResourcemetadataDocumentManifest extends ResourcemetadataProxy {
 
 					if (chainedResource == null) {
 						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, documentManifest.getSubject().getReference());
+						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, documentManifest.getSubject().getReference(), null);
 						resourcemetadataList.addAll(rPatientChain);
 					}
 				}
@@ -266,7 +268,7 @@ public class ResourcemetadataDocumentManifest extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rRelatedChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "related-ref", 0, related.getRef().getReference());
+							rRelatedChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "related-ref", 0, related.getRef().getReference(), null);
 							resourcemetadataList.addAll(rRelatedChain);
 						}
 					}

@@ -3995,19 +3995,44 @@ public class ResourceType {
 		if (resourceCriteriaKey != null && !resourceCriteriaKey.isEmpty()) {
 			// Trim resourceCriteriaKey of any chained parameter prefixes
 			int prefixEnd = resourceCriteriaKey.lastIndexOf(".");
+			int chainedResourceEnd = resourceCriteriaKey.lastIndexOf(":");
 			if (prefixEnd >= 0) {
 				lookupResourceTypeName = "";
+				String chainPrefix = "";
 //				System.out.println("     --> prefixEnd [" + prefixEnd + "]");
-				// reset lookupResourceTypeName and lookupResourceCriteriaKey
-				lookupResourceCriteriaKey = resourceCriteriaKey.substring(prefixEnd + 1, resourceCriteriaKey.length());
-//				System.out.println("     --> lookupResourceCriteriaKey [" + lookupResourceCriteriaKey + "]");
+//				System.out.println("     --> chainedResourceEnd [" + chainedResourceEnd + "]");
 
-				String chainPrefix = resourceCriteriaKey.substring(0, prefixEnd);
-//				System.out.println("     --> chainPrefix [" + chainPrefix + "]");
-				int delimPos = chainPrefix.indexOf(":");
-				if (delimPos >= 0) {
-					chainedResourceTypeName = chainPrefix.substring(delimPos + 1, chainPrefix.length());
-//					System.out.println("     --> chainedResourceTypeName [" + chainedResourceTypeName + "]");
+				if (prefixEnd < chainedResourceEnd) {
+					// Special case where no chained parameter after chained resource name
+					// Need to fallback to parameter before chained resource which is the original reference
+
+					// reset lookupResourceTypeName and lookupResourceCriteriaKey
+					lookupResourceCriteriaKey = resourceCriteriaKey.substring(prefixEnd + 1, chainedResourceEnd);
+//					System.out.println("     --> lookupResourceCriteriaKey [" + lookupResourceCriteriaKey + "] (special case)");
+
+					chainedResourceTypeName = resourceTypeName;
+//					System.out.println("     --> chainedResourceTypeName [" + chainedResourceTypeName + "] (special case)");
+				}
+				else {
+					// reset lookupResourceTypeName and lookupResourceCriteriaKey
+					lookupResourceCriteriaKey = resourceCriteriaKey.substring(prefixEnd + 1, resourceCriteriaKey.length());
+//					System.out.println("     --> lookupResourceCriteriaKey [" + lookupResourceCriteriaKey + "]");
+
+					chainPrefix = resourceCriteriaKey.substring(0, prefixEnd);
+
+//					System.out.println("     --> chainPrefix [" + chainPrefix + "]");
+					int delimPos = chainPrefix.indexOf(":");
+					if (delimPos >= 0) {
+						chainedResourceTypeName = chainPrefix.substring(delimPos + 1, chainPrefix.length());
+//						System.out.println("     --> chainedResourceTypeName [" + chainedResourceTypeName + "]");
+					}
+
+					// Additional special check for nested chained parameter
+					prefixEnd = chainPrefix.lastIndexOf(".");
+					if (prefixEnd >= 0) {
+						chainPrefix = chainPrefix.substring(prefixEnd + 1);
+//						System.out.println("     --> chainPrefix (nested) [" + chainPrefix + "]");
+					}
 				}
 
 				// If chainedResourceTypeName.isEmpty() then chain parameter prefix did not contain explicit chain resource type

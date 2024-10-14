@@ -63,14 +63,14 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -100,8 +100,10 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", diagnosticReport.getId());
-			resourcemetadataList.add(_id);
+			if (diagnosticReport.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", diagnosticReport.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (diagnosticReport.getLanguage() != null) {
@@ -127,7 +129,7 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rBasedOnChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "based-on", 0, basedOn.getReference());
+							rBasedOnChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "based-on", 0, basedOn.getReference(), null);
 							resourcemetadataList.addAll(rBasedOnChain);
 						}
 					}
@@ -166,7 +168,7 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, diagnosticReport.getEncounter().getReference());
+					List<Resourcemetadata> rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, diagnosticReport.getEncounter().getReference(), null);
 					resourcemetadataList.addAll(rEncounterChain);
 				}
 			}
@@ -223,7 +225,7 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							List<Resourcemetadata> rPerformerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "performer", 0, performer.getReference());
+							List<Resourcemetadata> rPerformerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "performer", 0, performer.getReference(), null);
 							resourcemetadataList.addAll(rPerformerChain);
 						}
 					}
@@ -241,7 +243,7 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters
-							List<Resourcemetadata> rResultChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "result", 0, result.getReference());
+							List<Resourcemetadata> rResultChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "result", 0, result.getReference(), null);
 							resourcemetadataList.addAll(rResultChain);
 						}
 					}
@@ -259,7 +261,7 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							List<Resourcemetadata> rResultsInterpreterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "results-interpreter", 0, resultsInterpreter.getReference());
+							List<Resourcemetadata> rResultsInterpreterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "results-interpreter", 0, resultsInterpreter.getReference(), null);
 							resourcemetadataList.addAll(rResultsInterpreterChain);
 						}
 					}
@@ -277,7 +279,7 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters
-							List<Resourcemetadata> rSpecimenChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "specimen", 0, specimen.getReference());
+							List<Resourcemetadata> rSpecimenChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "specimen", 0, specimen.getReference(), null);
 							resourcemetadataList.addAll(rSpecimenChain);
 						}
 					}
@@ -300,7 +302,7 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, diagnosticReport.getSubject().getReference());
+					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, diagnosticReport.getSubject().getReference(), null);
 					resourcemetadataList.addAll(rSubjectChain);
 				}
 
@@ -310,7 +312,7 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 
 					if (chainedResource == null) {
 						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, diagnosticReport.getSubject().getReference());
+						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, diagnosticReport.getSubject().getReference(), null);
 						resourcemetadataList.addAll(rPatientChain);
 					}
 				}

@@ -64,14 +64,14 @@ public class ResourcemetadataProvenance extends ResourcemetadataProxy {
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -101,8 +101,10 @@ public class ResourcemetadataProvenance extends ResourcemetadataProxy {
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", provenance.getId());
-			resourcemetadataList.add(_id);
+			if (provenance.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", provenance.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (provenance.getLanguage() != null) {
@@ -129,7 +131,7 @@ public class ResourcemetadataProvenance extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rAgentChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "agent", 0, agent.getWho().getReference());
+							rAgentChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "agent", 0, agent.getWho().getReference(), null);
 							resourcemetadataList.addAll(rAgentChain);
 						}
 					}
@@ -170,7 +172,7 @@ public class ResourcemetadataProvenance extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rEntityChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "entity", 0, entity.getWhat().getReference());
+							rEntityChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "entity", 0, entity.getWhat().getReference(), null);
 							resourcemetadataList.addAll(rEntityChain);
 						}
 					}
@@ -184,7 +186,7 @@ public class ResourcemetadataProvenance extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rLocationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, provenance.getLocation().getReference());
+					List<Resourcemetadata> rLocationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, provenance.getLocation().getReference(), null);
 					resourcemetadataList.addAll(rLocationChain);
 				}
 			}
@@ -205,7 +207,7 @@ public class ResourcemetadataProvenance extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rTargetChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "target", 0, target.getReference());
+							rTargetChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "target", 0, target.getReference(), null);
 							resourcemetadataList.addAll(rTargetChain);
 						}
 
@@ -215,7 +217,7 @@ public class ResourcemetadataProvenance extends ResourcemetadataProxy {
 
 							if (chainedResource == null) {
 								// Add chained parameters
-								rTargetChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, target.getReference());
+								rTargetChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, target.getReference(), null);
 								resourcemetadataList.addAll(rTargetChain);
 							}
 						}

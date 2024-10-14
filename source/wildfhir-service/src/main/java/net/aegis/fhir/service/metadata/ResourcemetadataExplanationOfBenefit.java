@@ -63,14 +63,14 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -100,8 +100,10 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", explanationOfBenefit.getId());
-			resourcemetadataList.add(_id);
+			if (explanationOfBenefit.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", explanationOfBenefit.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (explanationOfBenefit.getLanguage() != null) {
@@ -128,7 +130,7 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rCareTeamRequestChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "care-team.", 0, careTeam.getProvider().getReference());
+							rCareTeamRequestChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "care-team.", 0, careTeam.getProvider().getReference(), null);
 							resourcemetadataList.addAll(rCareTeamRequestChain);
 						}
 					}
@@ -142,7 +144,7 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rClaimChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "claim", 0, explanationOfBenefit.getClaim().getReference());
+					List<Resourcemetadata> rClaimChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "claim", 0, explanationOfBenefit.getClaim().getReference(), null);
 					resourcemetadataList.addAll(rClaimChain);
 				}
 			}
@@ -160,7 +162,7 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 
 						if (chainedResource == null) {
 							// Add chained parameters
-							rCoverageChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "coverage", 0, insurance.getCoverage().getReference());
+							rCoverageChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "coverage", 0, insurance.getCoverage().getReference(), null);
 							resourcemetadataList.addAll(rCoverageChain);
 						}
 					}
@@ -200,7 +202,7 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 
 								if (chainedResource == null) {
 									// Add chained parameters for any
-									rItemChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, encounter.getReference());
+									rItemChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, encounter.getReference(), null);
 									resourcemetadataList.addAll(rItemChain);
 								}
 							}
@@ -220,7 +222,7 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 
 								if (chainedResource == null) {
 									// Add chained parameters for any
-									rItemChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "item-udi", 0, itemUdi.getReference());
+									rItemChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "item-udi", 0, itemUdi.getReference(), null);
 									resourcemetadataList.addAll(rItemChain);
 								}
 							}
@@ -244,7 +246,7 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 
 										if (chainedResource == null) {
 											// Add chained parameters for any
-											rItemChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "detail-udi", 0, detailUdi.getReference());
+											rItemChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "detail-udi", 0, detailUdi.getReference(), null);
 											resourcemetadataList.addAll(rItemChain);
 										}
 									}
@@ -268,7 +270,7 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 
 												if (chainedResource == null) {
 													// Add chained parameters for any
-													rItemChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subdetail-udi", 0, subDetailUdi.getReference());
+													rItemChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subdetail-udi", 0, subDetailUdi.getReference(), null);
 													resourcemetadataList.addAll(rItemChain);
 												}
 											}
@@ -288,7 +290,7 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rEntererReferenceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "enterer", 0, explanationOfBenefit.getFacility().getReference());
+					List<Resourcemetadata> rEntererReferenceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "enterer", 0, explanationOfBenefit.getFacility().getReference(), null);
 					resourcemetadataList.addAll(rEntererReferenceChain);
 				}
 			}
@@ -300,7 +302,7 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rFacilityChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "facility", 0, explanationOfBenefit.getFacility().getReference());
+					List<Resourcemetadata> rFacilityChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "facility", 0, explanationOfBenefit.getFacility().getReference(), null);
 					resourcemetadataList.addAll(rFacilityChain);
 				}
 			}
@@ -322,7 +324,7 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, explanationOfBenefit.getPatient().getReference());
+					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, explanationOfBenefit.getPatient().getReference(), null);
 					resourcemetadataList.addAll(rPatientChain);
 				}
 			}
@@ -334,7 +336,7 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 
 				if (chainedResource == null) {
 					// Add chained parameters for any
-					List<Resourcemetadata> rPayeeChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "payee", 0, explanationOfBenefit.getPayee().getParty().getReference());
+					List<Resourcemetadata> rPayeeChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "payee", 0, explanationOfBenefit.getPayee().getParty().getReference(), null);
 					resourcemetadataList.addAll(rPayeeChain);
 				}
 			}
@@ -359,7 +361,7 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 
 								if (chainedResource == null) {
 									// Add chained parameters for any
-									rProcedureUdiChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "procedure-udi", 0, procedureUdi.getReference());
+									rProcedureUdiChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "procedure-udi", 0, procedureUdi.getReference(), null);
 									resourcemetadataList.addAll(rProcedureUdiChain);
 								}
 							}
@@ -375,7 +377,7 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rProviderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "provider", 0, explanationOfBenefit.getProvider().getReference());
+					List<Resourcemetadata> rProviderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "provider", 0, explanationOfBenefit.getProvider().getReference(), null);
 					resourcemetadataList.addAll(rProviderChain);
 				}
 			}

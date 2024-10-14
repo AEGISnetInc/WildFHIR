@@ -62,14 +62,14 @@ public class ResourcemetadataHealthcareService extends ResourcemetadataProxy {
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -99,8 +99,10 @@ public class ResourcemetadataHealthcareService extends ResourcemetadataProxy {
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", healthcareService.getId());
-			resourcemetadataList.add(_id);
+			if (healthcareService.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", healthcareService.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (healthcareService.getLanguage() != null) {
@@ -147,7 +149,7 @@ public class ResourcemetadataHealthcareService extends ResourcemetadataProxy {
 
 					if (chainedResource == null) {
 						// Add chained parameters
-						rCoverageAreaChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "coverage-area", 0, coverageArea.getReference());
+						rCoverageAreaChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "coverage-area", 0, coverageArea.getReference(), null);
 						resourcemetadataList.addAll(rCoverageAreaChain);
 					}
 				}
@@ -169,7 +171,7 @@ public class ResourcemetadataHealthcareService extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters
-							rEndpointChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "endpoint", 0, endpoint.getReference());
+							rEndpointChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "endpoint", 0, endpoint.getReference(), null);
 							resourcemetadataList.addAll(rEndpointChain);
 						}
 					}
@@ -199,7 +201,7 @@ public class ResourcemetadataHealthcareService extends ResourcemetadataProxy {
 
 					if (chainedResource == null) {
 						// Add chained parameters
-						rLocationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, location.getReference());
+						rLocationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, location.getReference(), null);
 						resourcemetadataList.addAll(rLocationChain);
 					}
 				}
@@ -218,7 +220,7 @@ public class ResourcemetadataHealthcareService extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rOrganizationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "organization", 0, healthcareService.getProvidedBy().getReference());
+					List<Resourcemetadata> rOrganizationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "organization", 0, healthcareService.getProvidedBy().getReference(), null);
 					resourcemetadataList.addAll(rOrganizationChain);
 				}
 			}

@@ -62,14 +62,14 @@ public class ResourcemetadataCoverage extends ResourcemetadataProxy {
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -100,8 +100,10 @@ public class ResourcemetadataCoverage extends ResourcemetadataProxy {
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", coverage.getId());
-			resourcemetadataList.add(_id);
+			if (coverage.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", coverage.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (coverage.getLanguage() != null) {
@@ -122,7 +124,7 @@ public class ResourcemetadataCoverage extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rBeneficiaryChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "beneficiary", 0, coverage.getBeneficiary().getReference());
+					List<Resourcemetadata> rBeneficiaryChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "beneficiary", 0, coverage.getBeneficiary().getReference(), null);
 					resourcemetadataList.addAll(rBeneficiaryChain);
 				}
 			}
@@ -171,7 +173,7 @@ public class ResourcemetadataCoverage extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, coverage.getBeneficiary().getReference());
+					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, coverage.getBeneficiary().getReference(), null);
 					resourcemetadataList.addAll(rPatientChain);
 				}
 			}
@@ -191,7 +193,7 @@ public class ResourcemetadataCoverage extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rPayorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "payor", 0, payor.getReference());
+							rPayorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "payor", 0, payor.getReference(), null);
 							resourcemetadataList.addAll(rPayorChain);
 						}
 					}
@@ -211,7 +213,7 @@ public class ResourcemetadataCoverage extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters for any
-					List<Resourcemetadata> rPolicyHolderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "policyholder", 0, coverage.getPolicyHolder().getReference());
+					List<Resourcemetadata> rPolicyHolderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "policyholder", 0, coverage.getPolicyHolder().getReference(), null);
 					resourcemetadataList.addAll(rPolicyHolderChain);
 				}
 			}
@@ -229,7 +231,7 @@ public class ResourcemetadataCoverage extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters for any
-					List<Resourcemetadata> rSubscriberChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subscriber", 0, coverage.getSubscriber().getReference());
+					List<Resourcemetadata> rSubscriberChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subscriber", 0, coverage.getSubscriber().getReference(), null);
 					resourcemetadataList.addAll(rSubscriberChain);
 				}
 			}

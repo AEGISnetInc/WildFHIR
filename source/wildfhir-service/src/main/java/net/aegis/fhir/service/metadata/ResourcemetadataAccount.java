@@ -62,14 +62,14 @@ public class ResourcemetadataAccount extends ResourcemetadataProxy {
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -99,8 +99,10 @@ public class ResourcemetadataAccount extends ResourcemetadataProxy {
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", account.getId());
-			resourcemetadataList.add(_id);
+			if (account.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", account.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (account.getLanguage() != null) {
@@ -139,7 +141,7 @@ public class ResourcemetadataAccount extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rOwnerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "owner", 0, account.getOwner().getReference());
+					List<Resourcemetadata> rOwnerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "owner", 0, account.getOwner().getReference(), null);
 					resourcemetadataList.addAll(rOwnerChain);
 				}
 			}
@@ -172,7 +174,7 @@ public class ResourcemetadataAccount extends ResourcemetadataProxy {
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, subject.getReference());
+							rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, subject.getReference(), null);
 							resourcemetadataList.addAll(rSubjectChain);
 						}
 
@@ -183,7 +185,7 @@ public class ResourcemetadataAccount extends ResourcemetadataProxy {
 
 							if (chainedResource == null) {
 								// Add chained parameters
-								rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, subject.getReference());
+								rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, subject.getReference(), null);
 								resourcemetadataList.addAll(rSubjectChain);
 							}
 						}

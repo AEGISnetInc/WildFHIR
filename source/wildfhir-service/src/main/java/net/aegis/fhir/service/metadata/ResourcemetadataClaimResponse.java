@@ -59,14 +59,14 @@ public class ResourcemetadataClaimResponse extends ResourcemetadataProxy {
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -96,8 +96,10 @@ public class ResourcemetadataClaimResponse extends ResourcemetadataProxy {
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", claimResponse.getId());
-			resourcemetadataList.add(_id);
+			if (claimResponse.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", claimResponse.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (claimResponse.getLanguage() != null) {
@@ -141,7 +143,7 @@ public class ResourcemetadataClaimResponse extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rInsurerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "insurer", 0, claimResponse.getInsurer().getReference());
+					List<Resourcemetadata> rInsurerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "insurer", 0, claimResponse.getInsurer().getReference(), null);
 					resourcemetadataList.addAll(rInsurerChain);
 				}
 			}
@@ -160,7 +162,7 @@ public class ResourcemetadataClaimResponse extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, claimResponse.getPatient().getReference());
+					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, claimResponse.getPatient().getReference(), null);
 					resourcemetadataList.addAll(rPatientChain);
 				}
 			}
@@ -178,7 +180,7 @@ public class ResourcemetadataClaimResponse extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rRequestReferenceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "request", 0, claimResponse.getRequest().getReference());
+					List<Resourcemetadata> rRequestReferenceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "request", 0, claimResponse.getRequest().getReference(), null);
 					resourcemetadataList.addAll(rRequestReferenceChain);
 				}
 			}
@@ -191,7 +193,7 @@ public class ResourcemetadataClaimResponse extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters for any
-					List<Resourcemetadata> rRequestProviderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "requestor", 0, claimResponse.getRequestor().getReference());
+					List<Resourcemetadata> rRequestProviderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "requestor", 0, claimResponse.getRequestor().getReference(), null);
 					resourcemetadataList.addAll(rRequestProviderChain);
 				}
 			}

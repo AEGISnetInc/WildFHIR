@@ -85,10 +85,11 @@ public abstract class ResourcemetadataProxy {
 	 * @param chainedResource
 	 * @param chainedParameter
 	 * @param chainedIndex
+	 * @param fhirResource
 	 * @return <code>List<Resourcemetadata></code>
 	 * @throws Exception
 	 */
-	public abstract List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception;
+	public abstract List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception;
 
 	/**
 	 * (Overloaded) Generate a new Resourcemetadata instance initialized with all properties where system is
@@ -167,7 +168,8 @@ public abstract class ResourcemetadataProxy {
 	 */
 	protected Resourcemetadata generateResourcemetadata(Resource resource, Resource chainedResource, String name, String value, String systemValue, String codeValue, String textValue, String overrideType) {
 
-//		System.out.println("generateResourcemetadata( " + resource.getResourceType() + ", " + ((chainedResource != null) ? chainedResource.getResourceType() : "null") + ", " + name + " )");
+//		System.out.println("");
+//		System.out.println("generateResourcemetadata( " + resource.getResourceType() + ", " + ((chainedResource != null) ? "chainedResource:" : "null:") + ((chainedResource != null && !chainedResource.getResourceType().isEmpty()) ? chainedResource.getResourceType() : "null") + ", " + name + " )");
 
 		Resourcemetadata r = new Resourcemetadata();
 
@@ -181,15 +183,8 @@ public abstract class ResourcemetadataProxy {
 		}
 		// Otherwise, determine type from Resource Type and Metadata name
 		else {
-			String type = null;
-			if (chainedResource != null) {
-				type = ResourceType.findResourceTypeResourceCriteriaType(chainedResource.getResourceType(), name);
-//				System.out.println("  --> (chained) " + type);
-			}
-			else {
-				type = ResourceType.findResourceTypeResourceCriteriaType(resource.getResourceType(), name);
-//				System.out.println("  --> " + type);
-			}
+			String type = ResourceType.findResourceTypeResourceCriteriaType(resource.getResourceType(), name);
+//			System.out.println("  --> " + type);
 			r.setParamType(type);
 		}
 
@@ -224,9 +219,19 @@ public abstract class ResourcemetadataProxy {
 	 * @param chainedIndex
 	 * @param chainedResourceType
 	 * @param reference
+	 * @param fhirResource
 	 * @return Generated <code>List<Resourcemetadata></code>
 	 */
-	protected List<Resourcemetadata> generateChainedResourcemetadataAny(Resource resource, String baseUrl, ResourceService resourceService, String chainedParameter, int chainedIndex, String reference) throws Exception {
+	protected List<Resourcemetadata> generateChainedResourcemetadataAny(Resource resource, String baseUrl, ResourceService resourceService, String chainedParameter, int chainedIndex, String reference, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
+
+//		System.out.println("");
+//		System.out.println(">> generateChainedResourcemetadataAny");
+//		System.out.println("   -- resource:            " + (resource != null ? resource.getResourceType() : "null"));
+//		System.out.println("   -- baseUrl:             " + baseUrl);
+//		System.out.println("   -- chainedParameter:    " + chainedParameter);
+//		System.out.println("   -- chainedIndex:        " + chainedIndex);
+//		System.out.println("   -- reference:           " + reference);
+//		System.out.println("   -- fhirResource:        " + (fhirResource != null ? fhirResource.fhirType() : "null"));
 
 		List<Resourcemetadata> rList = new ArrayList<Resourcemetadata>();
 
@@ -234,16 +239,23 @@ public abstract class ResourcemetadataProxy {
 				// Determine resource type from reference
 				String chainedResourceType = ServicesUtil.INSTANCE.getResourceTypeFromReference(reference);
 
+				if ((chainedResourceType == null || chainedResourceType.isEmpty()) && fhirResource != null) {
+					// Use fhirResource type if chainedResourceType not found from reference; this happens if reference is not http based
+					chainedResourceType = fhirResource.fhirType();
+				}
+
 				if (chainedResourceType != null) {
+//					System.out.println("   -- chainedResourceType: " + chainedResourceType);
 
 					// Check reference resource type; if single resource type, generate chained parameters without explicit chained resource type
 					LabelKeyValueBean resourceSearchParam = ResourceType.findResourceTypeResourceCriteria(resource.getResourceType(), chainedParameter);
 					if (resourceSearchParam != null && resourceSearchParam.getRefType() != null && !resourceSearchParam.getRefType().isEmpty() && !resourceSearchParam.getRefType().equals("*")) {
+//						System.out.println("   -- search param type:   " + resourceSearchParam.getRefType());
 
 						if (resourceSearchParam.getRefType().equals(chainedResourceType)) {
 							String chainedParameterSingle = chainedParameter + ".";
 
-							List<Resourcemetadata> rList1 = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, chainedParameterSingle, chainedIndex, chainedResourceType, reference);
+							List<Resourcemetadata> rList1 = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, chainedParameterSingle, chainedIndex, chainedResourceType, reference, fhirResource);
 
 							rList.addAll(rList1);
 						}
@@ -257,7 +269,7 @@ public abstract class ResourcemetadataProxy {
 					// Generate chained parameters with explicit chained resource type
 					String chainedParameterAny = chainedParameter + ":" + chainedResourceType + ".";
 
-					List<Resourcemetadata> rList2 = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, chainedParameterAny, chainedIndex, chainedResourceType, reference);
+					List<Resourcemetadata> rList2 = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, chainedParameterAny, chainedIndex, chainedResourceType, reference, fhirResource);
 
 					rList.addAll(rList2);
 				}
@@ -280,9 +292,19 @@ public abstract class ResourcemetadataProxy {
 	 * @param chainedIndex
 	 * @param chainedResourceType
 	 * @param reference
+	 * @param fhirResource
 	 * @return Generated <code>List<Resourcemetadata></code>
 	 */
-	protected List<Resourcemetadata> generateChainedResourcemetadata(Resource resource, String baseUrl, ResourceService resourceService, String chainedParameter, int chainedIndex, String chainedResourceType, String reference) throws Exception {
+	protected List<Resourcemetadata> generateChainedResourcemetadata(Resource resource, String baseUrl, ResourceService resourceService, String chainedParameter, int chainedIndex, String chainedResourceType, String reference, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
+
+//		System.out.println("");
+//		System.out.println(">> generateChainedResourcemetadata [normal]");
+//		System.out.println("   -- resource:            " + (resource != null ? resource.getResourceType() : "null"));
+//		System.out.println("   -- baseUrl:             " + baseUrl);
+//		System.out.println("   -- chainedParameter:    " + chainedParameter);
+//		System.out.println("   -- chainedIndex:        " + chainedIndex);
+//		System.out.println("   -- chainedResourceType: " + chainedResourceType);
+//		System.out.println("   -- fhirResource:        " + (fhirResource != null ? fhirResource.fhirType() : "null"));
 
 		List<Resourcemetadata> rList = new ArrayList<Resourcemetadata>();
 
@@ -291,16 +313,36 @@ public abstract class ResourcemetadataProxy {
 
 		if (proxy != null) {
 			try {
-				// Read chained resource - for now expect the resource on this local server
-				String resourceId = ServicesUtil.INSTANCE.extractResourceIdFromURL(reference);
+				// Check for fhirResource - should only get from Bundle Composition or MessageHeader
+				if (fhirResource != null) {
+					// Use provided chained resource and build the required WildFHIR Resource
+					Resource chainedResource = new Resource();
+					chainedResource.setResourceId(fhirResource.getId());
 
-				ResourceContainer chainedResourceContainer = resourceService.read(chainedResourceType, resourceId, null);
+					// Convert the Resource to XML byte[]
+					ByteArrayOutputStream oResource = new ByteArrayOutputStream();
+					XmlParser xmlParser = new XmlParser();
+					xmlParser.setOutputStyle(OutputStyle.PRETTY);
+					xmlParser.compose(oResource, fhirResource, true);
+					byte[] bResource = oResource.toByteArray();
 
-				if (chainedResourceContainer != null &&
-						chainedResourceContainer.getResponseStatus().equals(Response.Status.OK) &&
-						chainedResourceContainer.getResource() != null) {
+					chainedResource.setResourceContents(bResource);
+					chainedResource.setResourceType(fhirResource.getResourceType().name());
 
-					rList = proxy.generateAllForResource(resource, baseUrl, resourceService, chainedResourceContainer.getResource(), chainedParameter, chainedIndex);
+					rList = proxy.generateAllForResource(resource, baseUrl, resourceService, chainedResource, chainedParameter, chainedIndex, fhirResource);
+				}
+				else {
+					// Read chained resource - for now expect the resource on this local server
+					String resourceId = ServicesUtil.INSTANCE.extractResourceIdFromURL(reference);
+
+					ResourceContainer chainedResourceContainer = resourceService.read(chainedResourceType, resourceId, null);
+
+					if (chainedResourceContainer != null &&
+							chainedResourceContainer.getResponseStatus().equals(Response.Status.OK) &&
+							chainedResourceContainer.getResource() != null) {
+
+						rList = proxy.generateAllForResource(resource, baseUrl, resourceService, chainedResourceContainer.getResource(), chainedParameter, chainedIndex, fhirResource);
+					}
 				}
 			}
 			catch (Exception e) {
@@ -321,9 +363,19 @@ public abstract class ResourcemetadataProxy {
 	 * @param chainedParameter
 	 * @param chainedResourceType
 	 * @param chainedFHIRResource
+	 * @param fhirResource
 	 * @return Generated <code>List<Resourcemetadata></code>
 	 */
-	protected List<Resourcemetadata> generateChainedResourcemetadata(Resource resource, String baseUrl, ResourceService resourceService, String chainedParameter, String chainedResourceType, org.hl7.fhir.r4.model.Resource chainedFHIRResource) throws Exception {
+	protected List<Resourcemetadata> generateChainedResourcemetadata(Resource resource, String baseUrl, ResourceService resourceService, String chainedParameter, String chainedResourceType, org.hl7.fhir.r4.model.Resource chainedFHIRResource, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
+
+//		System.out.println("");
+//		System.out.println(">> generateChainedResourcemetadata [nested]");
+//		System.out.println("   -- resource:            " + (resource != null ? resource.getResourceType() : "null"));
+//		System.out.println("   -- baseUrl:             " + baseUrl);
+//		System.out.println("   -- chainedParameter:    " + chainedParameter);
+//		System.out.println("   -- chainedResourceType: " + chainedResourceType);
+//		System.out.println("   -- chainedFHIRResource: " + (chainedFHIRResource != null ? chainedFHIRResource.fhirType() : "null"));
+//		System.out.println("   -- fhirResource:        " + (fhirResource != null ? fhirResource.fhirType() : "null"));
 
 		List<Resourcemetadata> rList = new ArrayList<Resourcemetadata>();
 
@@ -347,7 +399,7 @@ public abstract class ResourcemetadataProxy {
 					chainedResource.setResourceContents(bResource);
 					chainedResource.setResourceType(chainedResourceType);
 
-					rList = proxy.generateAllForResource(resource, baseUrl, resourceService, chainedResource, chainedParameter, 0);
+					rList = proxy.generateAllForResource(resource, baseUrl, resourceService, chainedResource, chainedParameter, 0, fhirResource);
 				}
 			}
 			catch (Exception e) {
@@ -532,7 +584,7 @@ public abstract class ResourcemetadataProxy {
 	protected String generateFullLocalReference(String referenceUrl, String baseUrl) {
 		String fullLocalReference = referenceUrl;
 
-		if (referenceUrl != null && !referenceUrl.contains("http") && !referenceUrl.startsWith("#")) {
+		if (baseUrl != null && !baseUrl.isEmpty() && referenceUrl != null && !referenceUrl.contains("http") && !referenceUrl.startsWith("#")) {
 
 			if (baseUrl.endsWith("/")) {
 				baseUrl = baseUrl.substring(0, baseUrl.length() - 1);

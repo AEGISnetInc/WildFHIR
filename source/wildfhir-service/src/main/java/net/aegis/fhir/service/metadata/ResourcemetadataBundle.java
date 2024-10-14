@@ -60,14 +60,14 @@ public class ResourcemetadataBundle extends ResourcemetadataProxy {
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -97,8 +97,10 @@ public class ResourcemetadataBundle extends ResourcemetadataProxy {
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", bundle.getId());
-			resourcemetadataList.add(_id);
+			if (bundle.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", bundle.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (bundle.getLanguage() != null) {
@@ -124,21 +126,43 @@ public class ResourcemetadataBundle extends ResourcemetadataProxy {
 				BundleEntryComponent firstEntry = bundle.getEntry().get(0);
 
 				if (firstEntry.hasResource()) {
-					org.hl7.fhir.r4.model.Resource first = bundle.getEntry().get(0).getResource();
+					org.hl7.fhir.r4.model.Resource first = firstEntry.getResource();
 
 					if (first != null) {
 
-						if (chainedResource == null) {
-							// Add chained parameters
-							List<Resourcemetadata> rFirstEntryChain = null;
-							if (first.getResourceType().equals(ResourceType.Composition)) {
+						String entryReference = null;
+						Resourcemetadata rFirst = null;
+						// Add reference and chained parameters
+						List<Resourcemetadata> rFirstEntryChain = null;
+						if (first.getResourceType().equals(ResourceType.Composition)) {
+							// Add Composition reference search parameter constructed from Composition.id
+							if (first.hasId()) {
+								entryReference = "Composition/" + first.getId();
+							}
+							if (entryReference != null) {
+								rFirst = generateResourcemetadata(resource, chainedResource, chainedParameter+"composition", entryReference);
+								resourcemetadataList.add(rFirst);
+							}
+
+							if (chainedResource == null) {
 								// Add Composition chained parameters
-								rFirstEntryChain = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, "composition.", org.hl7.fhir.r4.model.Enumerations.ResourceType.COMPOSITION.toCode(), first);
+								rFirstEntryChain = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, "composition.", ResourceType.Composition.name(), first, null);
 								resourcemetadataList.addAll(rFirstEntryChain);
 							}
-							else if (first.getResourceType().equals(ResourceType.MessageHeader)) {
+						}
+						else if (first.getResourceType().equals(ResourceType.MessageHeader)) {
+							// Add MessageHeader reference search parameter constructed from MessageHeader.id
+							if (first.hasId()) {
+								entryReference = "MessageHeader/" + first.getId();
+							}
+							if (entryReference != null) {
+								rFirst = generateResourcemetadata(resource, chainedResource, chainedParameter+"message", entryReference);
+								resourcemetadataList.add(rFirst);
+							}
+
+							if (chainedResource == null) {
 								// Add MessageHeader chained parameters
-								rFirstEntryChain = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, "message.", org.hl7.fhir.r4.model.Enumerations.ResourceType.MESSAGEHEADER.toCode(), first);
+								rFirstEntryChain = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, "message.", ResourceType.MessageHeader.name(), first, null);
 								resourcemetadataList.addAll(rFirstEntryChain);
 							}
 						}

@@ -67,14 +67,14 @@ public class ResourcemetadataCapabilityStatement extends ResourcemetadataProxy {
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -104,8 +104,10 @@ public class ResourcemetadataCapabilityStatement extends ResourcemetadataProxy {
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", capabilityStatement.getId());
-			resourcemetadataList.add(_id);
+			if (capabilityStatement.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", capabilityStatement.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (capabilityStatement.getLanguage() != null) {
@@ -296,7 +298,7 @@ public class ResourcemetadataCapabilityStatement extends ResourcemetadataProxy {
 
 									if (chainedResource == null) {
 										// Add chained parameters
-										List<Resourcemetadata> rSupportedProfileChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "supported-profile", 0, profile.getValue());
+										List<Resourcemetadata> rSupportedProfileChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "supported-profile", 0, profile.getValue(), null);
 										resourcemetadataList.addAll(rSupportedProfileChain);
 									}
 								}
@@ -315,7 +317,7 @@ public class ResourcemetadataCapabilityStatement extends ResourcemetadataProxy {
 
 								if (chainedResource == null) {
 									// Add chained parameters
-									List<Resourcemetadata> rResourceProfileChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "resource-profile", 0, restResource.getProfile());
+									List<Resourcemetadata> rResourceProfileChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "resource-profile", 0, restResource.getProfile(), null);
 									resourcemetadataList.addAll(rResourceProfileChain);
 								}
 							}

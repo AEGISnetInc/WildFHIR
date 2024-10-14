@@ -59,14 +59,14 @@ public class ResourcemetadataCoverageEligibilityRequest extends Resourcemetadata
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -96,8 +96,10 @@ public class ResourcemetadataCoverageEligibilityRequest extends Resourcemetadata
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", coverageEligibilityRequest.getId());
-			resourcemetadataList.add(_id);
+			if (coverageEligibilityRequest.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", coverageEligibilityRequest.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (coverageEligibilityRequest.getLanguage() != null) {
@@ -124,7 +126,7 @@ public class ResourcemetadataCoverageEligibilityRequest extends Resourcemetadata
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rEntererChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "enterer", 0, coverageEligibilityRequest.getEnterer().getReference());
+					List<Resourcemetadata> rEntererChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "enterer", 0, coverageEligibilityRequest.getEnterer().getReference(), null);
 					resourcemetadataList.addAll(rEntererChain);
 				}
 			}
@@ -136,7 +138,7 @@ public class ResourcemetadataCoverageEligibilityRequest extends Resourcemetadata
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rFacilityChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "facility", 0, coverageEligibilityRequest.getFacility().getReference());
+					List<Resourcemetadata> rFacilityChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "facility", 0, coverageEligibilityRequest.getFacility().getReference(), null);
 					resourcemetadataList.addAll(rFacilityChain);
 				}
 			}
@@ -158,7 +160,7 @@ public class ResourcemetadataCoverageEligibilityRequest extends Resourcemetadata
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, coverageEligibilityRequest.getPatient().getReference());
+					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, coverageEligibilityRequest.getPatient().getReference(), null);
 					resourcemetadataList.addAll(rPatientChain);
 				}
 			}
@@ -170,7 +172,7 @@ public class ResourcemetadataCoverageEligibilityRequest extends Resourcemetadata
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rProviderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "provider", 0, coverageEligibilityRequest.getProvider().getReference());
+					List<Resourcemetadata> rProviderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "provider", 0, coverageEligibilityRequest.getProvider().getReference(), null);
 					resourcemetadataList.addAll(rProviderChain);
 				}
 			}

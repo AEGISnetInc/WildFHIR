@@ -67,14 +67,14 @@ public class ResourcemetadataActivityDefinition extends ResourcemetadataProxy {
 	 */
 	@Override
 	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService) throws Exception {
-		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0);
+		return generateAllForResource(resource, baseUrl, resourceService, null, null, 0, null);
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int)
+	 * @see net.aegis.fhir.service.metadata.ResourcemetadataProxy#generateAllForResource(net.aegis.fhir.model.Resource, java.lang.String, net.aegis.fhir.service.ResourceService, net.aegis.fhir.model.Resource, java.lang.String, int, org.hl7.fhir.r4.model.Resource)
 	 */
 	@Override
-	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex) throws Exception {
+	public List<Resourcemetadata> generateAllForResource(Resource resource, String baseUrl, ResourceService resourceService, Resource chainedResource, String chainedParameter, int chainedIndex, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
 
 		if (StringUtils.isEmpty(chainedParameter)) {
 			chainedParameter = "";
@@ -104,8 +104,10 @@ public class ResourcemetadataActivityDefinition extends ResourcemetadataProxy {
 			resourcemetadataList.addAll(tagMetadataList);
 
 			// _id : token
-			Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", activityDefinition.getId());
-			resourcemetadataList.add(_id);
+			if (activityDefinition.getId() != null) {
+				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", activityDefinition.getId());
+				resourcemetadataList.add(_id);
+			}
 
 			// _language : token
 			if (activityDefinition.getLanguage() != null) {
@@ -230,7 +232,7 @@ public class ResourcemetadataActivityDefinition extends ResourcemetadataProxy {
 
 					if (chainedResource == null) {
 						// Add chained parameters
-						List<Resourcemetadata> rDependsOnChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "depends-on", 0, dependsOn.getValue());
+						List<Resourcemetadata> rDependsOnChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "depends-on", 0, dependsOn.getValue(), null);
 						resourcemetadataList.addAll(rDependsOnChain);
 					}
 				}
@@ -347,7 +349,7 @@ public class ResourcemetadataActivityDefinition extends ResourcemetadataProxy {
 
 							if (chainedResource == null) {
 								// Add chained parameters for any
-								List<Resourcemetadata> rRelatedArtifactChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "composed-of", 0, relatedArtifact.getResource());
+								List<Resourcemetadata> rRelatedArtifactChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "composed-of", 0, relatedArtifact.getResource(), null);
 								resourcemetadataList.addAll(rRelatedArtifactChain);
 							}
 
@@ -361,7 +363,7 @@ public class ResourcemetadataActivityDefinition extends ResourcemetadataProxy {
 
 							if (chainedResource == null) {
 								// Add chained parameters for any
-								List<Resourcemetadata> rRelatedArtifactChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "depends-on", 0, relatedArtifact.getResource());
+								List<Resourcemetadata> rRelatedArtifactChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "depends-on", 0, relatedArtifact.getResource(), null);
 								resourcemetadataList.addAll(rRelatedArtifactChain);
 							}
 
@@ -375,7 +377,7 @@ public class ResourcemetadataActivityDefinition extends ResourcemetadataProxy {
 
 							if (chainedResource == null) {
 								// Add chained parameters for any
-								List<Resourcemetadata> rRelatedArtifactChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "derived-from", 0, relatedArtifact.getResource());
+								List<Resourcemetadata> rRelatedArtifactChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "derived-from", 0, relatedArtifact.getResource(), null);
 								resourcemetadataList.addAll(rRelatedArtifactChain);
 							}
 
@@ -389,7 +391,7 @@ public class ResourcemetadataActivityDefinition extends ResourcemetadataProxy {
 
 							if (chainedResource == null) {
 								// Add chained parameters for any
-								List<Resourcemetadata> rRelatedArtifactChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "predecessor", 0, relatedArtifact.getResource());
+								List<Resourcemetadata> rRelatedArtifactChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "predecessor", 0, relatedArtifact.getResource(), null);
 								resourcemetadataList.addAll(rRelatedArtifactChain);
 							}
 
@@ -403,7 +405,7 @@ public class ResourcemetadataActivityDefinition extends ResourcemetadataProxy {
 
 							if (chainedResource == null) {
 								// Add chained parameters for any
-								List<Resourcemetadata> rRelatedArtifactChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "successor", 0, relatedArtifact.getResource());
+								List<Resourcemetadata> rRelatedArtifactChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "successor", 0, relatedArtifact.getResource(), null);
 								resourcemetadataList.addAll(rRelatedArtifactChain);
 							}
 
