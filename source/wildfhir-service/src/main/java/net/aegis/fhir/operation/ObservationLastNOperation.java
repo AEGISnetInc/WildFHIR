@@ -37,6 +37,7 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -131,7 +132,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 				}
 			}
 
-			Bundle observationLastNResults = getObservationLastN(context, resourceService, resourcemetadataService, maxValue);
+			Bundle observationLastNResults = getObservationLastN(context, resourceService, resourcemetadataService, codeService, maxValue);
 
 			if (observationLastNResults == null) {
 				// results came back null; throw exception with error message
@@ -157,7 +158,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 	 * @return Constructed Bundle response
 	 * @throws Exception
 	 */
-	private Bundle getObservationLastN(UriInfo context, ResourceService resourceService, ResourcemetadataService resourcemetadataService, IntegerType maxValue) throws Exception {
+	private Bundle getObservationLastN(UriInfo context, ResourceService resourceService, ResourcemetadataService resourcemetadataService, CodeService codeService, IntegerType maxValue) throws Exception {
 
 		log.fine("[START] ObservationLastNOperation.getObservationLastN()");
 
@@ -258,16 +259,40 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 			}
 		}
 
-		// Process any invalidParams into a Bundle.entry.resource OperationOutcome
+		Date effectiveDefault = null;
+		String effectiveDefaultException = null;
+		if (codeService.isSupported("lastnProcessEmptyDate")) {
+			// Assign default 'early' date value so Observations without an effective value get processed
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			// Use code setting 'lastnEmptyDateValue' if defined, else 1900-01-01
+			String lastnEmptyDateValue = codeService.getCodeValue("lastnEmptyDateValue");
+			try {
+				effectiveDefault = sdf.parse(lastnEmptyDateValue);
+			}
+			catch (Exception e) {
+				effectiveDefaultException = e.getMessage();
+				effectiveDefault = sdf.parse("1900-01-01");
+			}
+		}
+
+		// Process any invalidParams or undefined lastnEmptyDateValue into a Bundle.entry.resource OperationOutcome
 		BundleEntryComponent bundleEntryOutcome = null;
-		if (!invalidParams.isEmpty()) {
+		if (!invalidParams.isEmpty() || effectiveDefaultException != null) {
 			bundleEntryOutcome = new BundleEntryComponent();
 			OperationOutcome outcome = null;
 			OperationOutcome.OperationOutcomeIssueComponent issue = null;
 			List<OperationOutcome.OperationOutcomeIssueComponent> issues = new ArrayList<OperationOutcome.OperationOutcomeIssueComponent>();
 
-			for (String[] invalidParam : invalidParams) {
-				issue = ServicesUtil.INSTANCE.getOperationOutcomeIssueComponent(OperationOutcome.IssueSeverity.WARNING, OperationOutcome.IssueType.INVALID, "Invalid search parameter '" + invalidParam[0] + "' included in search criteria." + (invalidParam.length > 1 && invalidParam[1] != null ? " " + invalidParam[1] : ""), null, invalidParam[0]);
+			if (!invalidParams.isEmpty()) {
+				for (String[] invalidParam : invalidParams) {
+					issue = ServicesUtil.INSTANCE.getOperationOutcomeIssueComponent(OperationOutcome.IssueSeverity.WARNING, OperationOutcome.IssueType.INVALID, "Invalid search parameter '" + invalidParam[0] + "' included in search criteria." + (invalidParam.length > 1 && invalidParam[1] != null ? " " + invalidParam[1] : ""), null, invalidParam[0]);
+					if (issue != null) {
+						issues.add(issue);
+					}
+				}
+			}
+			if (effectiveDefaultException != null) {
+				issue = ServicesUtil.INSTANCE.getOperationOutcomeIssueComponent(OperationOutcome.IssueSeverity.WARNING, OperationOutcome.IssueType.INVALID, "Process of empty Observation.effective is true but default effective date value is invalid.", null, effectiveDefaultException);
 				if (issue != null) {
 					issues.add(issue);
 				}
@@ -371,7 +396,12 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 						}
 					}
 
-					// FHIR-261 - Skip Observations without a code value and without an effective[x] value
+					if (effectiveValue == null && codeService.isSupported("lastnProcessEmptyDate")) {
+						// Assign default 'early' date value so Observations without an effective value get processed
+						effectiveValue = effectiveDefault;
+					}
+
+					// Skip Observations without a code value and without an effective[x] value
 					if (codeValue != null && effectiveValue != null) {
 						log.fine("  --> Observation code[0] = '" + codeValue + "' effectiveValue = '" + utcDateUtil.formatDate(effectiveValue, UTCDateUtil.DATE_PARAMETER_FORMAT, null) + "'");
 

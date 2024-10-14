@@ -55,16 +55,18 @@ public class InitializeCodeConfiguration extends HttpServlet {
 
 	private static final Logger log = LoggerFactory.getLogger(InitializeCodeConfiguration.class);
 
-	private static final Map<String, String> envCodeMap = new HashMap<String, String>(Map.of(
-		"WILDFHIR_BASEURL", "baseUrl",
-		"WILDFHIR_CONDITIONALDELETE", "conditionalDelete",
-		"WILDFHIR_CONDITIONALREAD", "conditionalRead",
-		"WILDFHIR_CONDITIONALCREATE", "conditionalCreate",
-		"WILDFHIR_CONDITIONALUPDATE", "conditionalUpdate",
-		"WILDFHIR_CREATERESPONSEPAYLOAD", "createResponsePayload",
-		"WILDFHIR_SEARCHRESPONSEPAYLOAD", "searchResponsePayload",
-		"WILDFHIR_UPDATERESPONSEPAYLOAD", "updateResponsePayload",
-		"WILDFHIR_RESOURCEPURGEALLENABLED", "resourcePurgeAllEnabled"
+	private static final Map<String, String> envCodeMap = new HashMap<String, String>(Map.ofEntries(
+		Map.entry("WILDFHIR_BASEURL", "baseUrl"),
+		Map.entry("WILDFHIR_CONDITIONALDELETE", "conditionalDelete"),
+		Map.entry("WILDFHIR_CONDITIONALREAD", "conditionalRead"),
+		Map.entry("WILDFHIR_CONDITIONALCREATE", "conditionalCreate"),
+		Map.entry("WILDFHIR_CONDITIONALUPDATE", "conditionalUpdate"),
+		Map.entry("WILDFHIR_CREATERESPONSEPAYLOAD", "createResponsePayload"),
+		Map.entry("WILDFHIR_SEARCHRESPONSEPAYLOAD", "searchResponsePayload"),
+		Map.entry("WILDFHIR_UPDATERESPONSEPAYLOAD", "updateResponsePayload"),
+		Map.entry("WILDFHIR_RESOURCEPURGEALLENABLED", "resourcePurgeAllEnabled"),
+		Map.entry("WILDFHIR_LASTNPROCESSEMPTYDATE", "lastnProcessEmptyDate"),
+		Map.entry("WILDFHIR_LASTNEMPTYDATEVALUE", "lastnEmptyDateValue")
 	));
 
 	@Inject
