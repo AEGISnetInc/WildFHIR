@@ -37,6 +37,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -2175,7 +2176,7 @@ public class RESTResourceOps {
 
             if (resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
                 // Define URI location
-                URI resourceLocation = new URI(locationPath);
+                URI resourceLocation = new URI(URLEncoder.encode(locationPath, StandardCharsets.UTF_8.toString()));
                 builder = builder.contentLocation(resourceLocation);
 
                 if (resourceContainer.getBundle() != null) {
@@ -2268,7 +2269,7 @@ public class RESTResourceOps {
 
 			if (resourceContainer.getResource() != null || opsCode.equals(Ops.DELETE)) {
 				// Define URI location
-				URI resourceLocation = new URI(locationPath);
+                URI resourceLocation = new URI(URLEncoder.encode(locationPath, StandardCharsets.UTF_8.toString()));
 
 				if (resourceContainer.getResource() != null) {
 					// Get last update date
@@ -2281,8 +2282,7 @@ public class RESTResourceOps {
 						log.info("Last Update UTC Date: " + sLastUpdate);
 					}
 
-					// ETag to hold the resource version id
-					//eTagVersion = "W/\"" + resourceContainer.getResource().getVersionId() + "\"";
+					// ETag to hold the resource version id; format "W/##"
 					eTagVersion = resourceContainer.getResource().getVersionId().toString();
 					eTag = new EntityTag(eTagVersion, true);
 				}
