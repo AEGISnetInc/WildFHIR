@@ -144,7 +144,7 @@ public class ResourcemetadataMedicinalProduct extends ResourcemetadataProxy {
 
 							if (countryLanguage.hasLanguage() && countryLanguage.getLanguage().hasCoding()) {
 								for (Coding code : countryLanguage.getLanguage().getCoding()) {
-									rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"country", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+									rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"name-language", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
 									resourcemetadataList.add(rCode);
 
 								}

@@ -186,7 +186,7 @@ public class ResourcemetadataMolecularSequence extends ResourcemetadataProxy {
 				if (chromosome != null) {
 					sbChromosomeWindowCoordinate = new StringBuffer(chromosome).append(":").append(sbChromosomeCoordinate.toString());
 
-					rwindowCoordinate = generateResourcemetadata(resource, chainedResource, chainedParameter+"chromosome-window-coordinate", sbChromosomeWindowCoordinate.toString());
+					rwindowCoordinate = generateResourcemetadata(resource, chainedResource, chainedParameter+"chromosome-window-coordinate", sbChromosomeWindowCoordinate.toString(), null, null, null, "COMPOSITE");
 					resourcemetadataList.add(rwindowCoordinate);
 				}
 
@@ -194,7 +194,7 @@ public class ResourcemetadataMolecularSequence extends ResourcemetadataProxy {
 				if (referenceseqid != null) {
 					sbReferenceSeqIdWindowCoordinate = new StringBuffer(referenceseqid).append(":").append(sbChromosomeCoordinate.toString());;
 
-					rwindowCoordinate = generateResourcemetadata(resource, chainedResource, chainedParameter+"referenceseqid-window-coordinate", sbReferenceSeqIdWindowCoordinate.toString());
+					rwindowCoordinate = generateResourcemetadata(resource, chainedResource, chainedParameter+"referenceseqid-window-coordinate", sbReferenceSeqIdWindowCoordinate.toString(), null, null, null, "COMPOSITE");
 					resourcemetadataList.add(rwindowCoordinate);
 				}
 			}
@@ -238,7 +238,7 @@ public class ResourcemetadataMolecularSequence extends ResourcemetadataProxy {
 					if (chromosome != null) {
 						sbChromosomeVariantCoordinate = new StringBuffer(chromosome).append(":").append(sbVariantCoordinate.toString());
 
-						rVariantCoordinate = generateResourcemetadata(resource, chainedResource, chainedParameter+"chromosome-variant-coordinate", sbChromosomeVariantCoordinate.toString());
+						rVariantCoordinate = generateResourcemetadata(resource, chainedResource, chainedParameter+"chromosome-variant-coordinate", sbChromosomeVariantCoordinate.toString(), null, null, null, "COMPOSITE");
 						resourcemetadataList.add(rVariantCoordinate);
 					}
 
@@ -246,7 +246,7 @@ public class ResourcemetadataMolecularSequence extends ResourcemetadataProxy {
 					if (referenceseqid != null) {
 						sbReferenceSeqIdVariantCoordinate = new StringBuffer(referenceseqid).append(":").append(sbVariantCoordinate.toString());;
 
-						rVariantCoordinate = generateResourcemetadata(resource, chainedResource, chainedParameter+"referenceseqid-variant-coordinate", sbReferenceSeqIdVariantCoordinate.toString());
+						rVariantCoordinate = generateResourcemetadata(resource, chainedResource, chainedParameter+"referenceseqid-variant-coordinate", sbReferenceSeqIdVariantCoordinate.toString(), null, null, null, "COMPOSITE");
 						resourcemetadataList.add(rVariantCoordinate);
 					}
 

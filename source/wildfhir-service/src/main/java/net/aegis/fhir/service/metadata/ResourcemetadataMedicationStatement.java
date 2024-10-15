@@ -145,7 +145,7 @@ public class ResourcemetadataMedicationStatement extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rContextChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "context.", 0, medicationStatement.getContext().getReference(), null);
+					List<Resourcemetadata> rContextChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "context", 0, medicationStatement.getContext().getReference(), null);
 					resourcemetadataList.addAll(rContextChain);
 				}
 			}

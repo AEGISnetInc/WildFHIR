@@ -148,7 +148,7 @@ public class ResourcemetadataCoverageEligibilityRequest extends Resourcemetadata
 
 				for (Identifier identifier : coverageEligibilityRequest.getIdentifier()) {
 
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier[" + 0 + "]", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
 					resourcemetadataList.add(rIdentifier);
 				}
 			}

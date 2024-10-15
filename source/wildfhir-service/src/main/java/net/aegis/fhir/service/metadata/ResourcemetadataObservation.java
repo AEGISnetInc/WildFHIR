@@ -423,10 +423,10 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 					}
 					codeValueComposite.append("|").append(observation.getValueCodeableConcept().getCodingFirstRep().getCode());
 
-					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-concept", codeValueComposite.toString());
+					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-concept", codeValueComposite.toString(), null, null, null, "COMPOSITE");
 					resourcemetadataList.add(rCodeValueCodeableConcept);
 
-					rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-concept", codeValueComposite.toString());
+					rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-concept", codeValueComposite.toString(), null, null, null, "COMPOSITE");
 					resourcemetadataList.add(rCodeValueCodeableConcept);
 				}
 				// value-date : date
@@ -441,7 +441,7 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 					codeValueDateAsIsText.append("$");
 					codeValueDateAsIsText.append(utcDateUtil.formatDate(observation.getValueDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
 
-					rValueDateTime = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-date", codeValueDateGMTText.toString(), null, codeValueDateAsIsText.toString());
+					rValueDateTime = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-date", codeValueDateGMTText.toString(), null, codeValueDateAsIsText.toString(), null, "COMPOSITE");
 					resourcemetadataList.add(rValueDateTime);
 				}
 				// value-date : date(period)
@@ -462,7 +462,7 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 					codeValueDateEndAsIsText.append("$");
 					codeValueDateEndAsIsText.append(utcDateUtil.formatDate(observation.getValuePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
 
-					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-date", codeValueDateStartGMTText.toString(), codeValueDateEndGMTText.toString(), codeValueDateStartAsIsText.toString(), codeValueDateEndAsIsText.toString());
+					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-date", codeValueDateStartGMTText.toString(), codeValueDateEndGMTText.toString(), codeValueDateStartAsIsText.toString(), codeValueDateEndAsIsText.toString(), "COMPOSITE");
 					resourcemetadataList.add(rCodeValueCodeableConcept);
 				}
 				// value-quantity : quantity
@@ -480,10 +480,10 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 					}
 					codeValueComposite.append("|").append(observation.getValueQuantity().getValue().toString());
 
-					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-quantity", codeValueComposite.toString());
+					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-quantity", codeValueComposite.toString(), null, null, null, "COMPOSITE");
 					resourcemetadataList.add(rCodeValueCodeableConcept);
 
-					rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", codeValueComposite.toString());
+					rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", codeValueComposite.toString(), null, null, null, "COMPOSITE");
 					resourcemetadataList.add(rCodeValueCodeableConcept);
 				}
 				// value-quantity : quantity(sampled data)
@@ -497,10 +497,10 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 					codeValueComposite.append("$");
 					codeValueComposite.append(observation.getValueSampledData().getLowerLimit().toString());
 
-					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-quantity", codeValueComposite.toString());
+					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-quantity", codeValueComposite.toString(), null, null, null, "COMPOSITE");
 					resourcemetadataList.add(rCodeValueCodeableConcept);
 
-					rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", codeValueComposite.toString());
+					rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", codeValueComposite.toString(), null, null, null, "COMPOSITE");
 					resourcemetadataList.add(rCodeValueCodeableConcept);
 				}
 				// value-string : string
@@ -511,7 +511,7 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 					codeValueComposite.append("$");
 					codeValueComposite.append(observation.getValueStringType().getValue());
 
-					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-string", codeValueComposite.toString());
+					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-string", codeValueComposite.toString(), null, null, null, "COMPOSITE");
 					resourcemetadataList.add(rCodeValueCodeableConcept);
 				}
 			}
@@ -570,10 +570,10 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 								StringBuilder componentCodeValueCompositeConceptText = new StringBuilder(componentCodeValueComposite.toString());
 								componentCodeValueCompositeConceptText.append("$").append(component.getValueCodeableConcept().getText());
 
-								Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-string", componentCodeValueCompositeConceptText.toString());
+								Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-string", componentCodeValueCompositeConceptText.toString(), null, null, null, "COMPOSITE");
 								resourcemetadataList.add(rCodeValueCodeableConcept);
 
-								rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-string", componentCodeValueCompositeConceptText.toString());
+								rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-string", componentCodeValueCompositeConceptText.toString(), null, null, null, "COMPOSITE");
 								resourcemetadataList.add(rCodeValueCodeableConcept);
 							}
 
@@ -583,10 +583,10 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 							}
 							componentCodeValueComposite.append("|").append(component.getValueCodeableConcept().getCodingFirstRep().getCode());
 
-							Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-concept", componentCodeValueComposite.toString());
+							Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-concept", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
 							resourcemetadataList.add(rCodeValueCodeableConcept);
 
-							rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-concept", componentCodeValueComposite.toString());
+							rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-concept", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
 							resourcemetadataList.add(rCodeValueCodeableConcept);
 						}
 						// component-value-quantity : quantity
@@ -604,10 +604,10 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 							}
 							componentCodeValueComposite.append("|").append(component.getValueQuantity().getValue().toString());
 
-							Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-quantity", componentCodeValueComposite.toString());
+							Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-quantity", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
 							resourcemetadataList.add(rCodeValueCodeableConcept);
 
-							rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", componentCodeValueComposite.toString());
+							rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
 							resourcemetadataList.add(rCodeValueCodeableConcept);
 						}
 						// component-value-quantity : quantity(sampled data)
@@ -621,10 +621,10 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 							componentCodeValueComposite.append("$");
 							componentCodeValueComposite.append(component.getValueSampledData().getLowerLimit().toString());
 
-							Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-quantity", componentCodeValueComposite.toString());
+							Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-quantity", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
 							resourcemetadataList.add(rCodeValueCodeableConcept);
 
-							rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", componentCodeValueComposite.toString());
+							rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
 							resourcemetadataList.add(rCodeValueCodeableConcept);
 						}
 						// component-value-string : string
@@ -638,10 +638,10 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 							componentCodeValueComposite.append("$");
 							componentCodeValueComposite.append(component.getValueStringType().getValue());
 
-							Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-string", componentCodeValueComposite.toString());
+							Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-string", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
 							resourcemetadataList.add(rCodeValueCodeableConcept);
 
-							rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-string", componentCodeValueComposite.toString());
+							rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-string", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
 							resourcemetadataList.add(rCodeValueCodeableConcept);
 						}
 					}
