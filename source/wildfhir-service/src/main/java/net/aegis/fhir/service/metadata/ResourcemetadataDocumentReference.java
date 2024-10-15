@@ -263,7 +263,7 @@ public class ResourcemetadataDocumentReference extends ResourcemetadataProxy {
 
 							if (chainedResource == null) {
 								// Add chained parameters for any
-								rRelatedChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "related-", 0, related.getReference(), null);
+								rRelatedChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "related", 0, related.getReference(), null);
 								resourcemetadataList.addAll(rRelatedChain);
 							}
 						}

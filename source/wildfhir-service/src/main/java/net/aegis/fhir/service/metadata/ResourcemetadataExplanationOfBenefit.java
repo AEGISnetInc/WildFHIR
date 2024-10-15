@@ -130,7 +130,7 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rCareTeamRequestChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "care-team.", 0, careTeam.getProvider().getReference(), null);
+							rCareTeamRequestChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "care-team", 0, careTeam.getProvider().getReference(), null);
 							resourcemetadataList.addAll(rCareTeamRequestChain);
 						}
 					}

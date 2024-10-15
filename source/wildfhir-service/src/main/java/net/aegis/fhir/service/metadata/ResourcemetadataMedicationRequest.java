@@ -210,7 +210,7 @@ public class ResourcemetadataMedicationRequest extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rPerformerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "intended-performer.", 0, medicationRequest.getPerformer().getReference(), null);
+					List<Resourcemetadata> rPerformerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "intended-performer", 0, medicationRequest.getPerformer().getReference(), null);
 					resourcemetadataList.addAll(rPerformerChain);
 				}
 			}

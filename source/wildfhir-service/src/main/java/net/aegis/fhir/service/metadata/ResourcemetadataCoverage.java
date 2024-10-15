@@ -213,7 +213,7 @@ public class ResourcemetadataCoverage extends ResourcemetadataProxy {
 
 				if (chainedResource == null) {
 					// Add chained parameters for any
-					List<Resourcemetadata> rPolicyHolderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "policyholder", 0, coverage.getPolicyHolder().getReference(), null);
+					List<Resourcemetadata> rPolicyHolderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "policy-holder", 0, coverage.getPolicyHolder().getReference(), null);
 					resourcemetadataList.addAll(rPolicyHolderChain);
 				}
 			}
