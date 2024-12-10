@@ -3762,6 +3762,34 @@ public class ResourceType {
 			// Special case for page parameter
 			isSupported = true;
 		}
+		else if (criteriaName.startsWith("_include:")) {
+			// Special case for global _include parameter with modifier; only allow iterate modifier
+			if (criteriaName.equals("_include:iterate")) {
+				isSupported = true;
+			}
+		}
+		else if (criteriaName.startsWith("_id:") ||
+				criteriaName.startsWith("_lastUpdated:") ||
+				criteriaName.startsWith("_tag:") ||
+				criteriaName.startsWith("_profile:") ||
+				criteriaName.startsWith("_security:") ||
+				criteriaName.startsWith("_text:") ||
+				criteriaName.startsWith("_content:") ||
+				criteriaName.startsWith("_list:") ||
+				criteriaName.startsWith("_has:") ||
+				criteriaName.startsWith("_type:") ||
+				criteriaName.startsWith("_sort:") ||
+				criteriaName.startsWith("_count:") ||
+				criteriaName.startsWith("_revinclude:") ||
+				criteriaName.startsWith("_summary:") ||
+				criteriaName.startsWith("_total:") ||
+				criteriaName.startsWith("_elements:") ||
+				criteriaName.startsWith("_contained:") ||
+				criteriaName.startsWith("_containedType:")
+			) {
+			// Special case for global and result parameters with modifier; no modifier allowed
+			isSupported = false;
+		}
 		else if (resourceType == null) {
 			// Only check global parameters
 			for (LabelKeyValueBean resourceCriteria : allGlobalResourceCriteria) {

@@ -213,14 +213,14 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 		List<String> _matchedId = new ArrayList<String>();
 		List<String[]> _include = new ArrayList<String[]>();
 		List<String> _includedId = new ArrayList<String>();
-		List<String[]> _includeRecurse = new ArrayList<String[]>();
+		List<String[]> _includeIterate = new ArrayList<String[]>();
 		List<String[]> _revinclude = new ArrayList<String[]>();
 		List<String> _revincludedId = new ArrayList<String>();
 		List<String[]> validParams = new ArrayList<String[]>();
 		List<String[]> invalidParams = new ArrayList<String[]>();
 
 		// Execute search query with lastn parameters
-		List<Resource> resources = resourceService.searchQuery(lastnParams, null, authPatientParams, "Observation", false, _include, _includeRecurse, _revinclude, validParams, invalidParams);
+		List<Resource> resources = resourceService.searchQuery(lastnParams, null, authPatientParams, "Observation", false, _include, _includeIterate, _revinclude, validParams, invalidParams);
 
 		log.info("ObservationLastNOperation - resources.size() = " + resources.size());
 
@@ -478,7 +478,12 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 									for (String[] include : _include) {
 										// Extract include parameter parts
 										source = include[0];
-										parameter = include[1];
+										if (include.length > 1) {
+											parameter = include[1];
+										}
+										else {
+											parameter = null;
+										}
 										if (include.length > 2) {
 											type = include[2];
 										}
@@ -486,10 +491,10 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 											type = null;
 										}
 
-										log.fine("--> _include is '" + source + ":" + parameter + ":" + (type != null ? type : "null") + "'");
+										log.fine("--> _include is '" + source + ":" + (parameter != null ? parameter : "null") + ":" + (type != null ? type : "null") + "'");
 
-										// Proceed only if current resource type matches include source
-										if (resourceEntry.getResourceType().equals(source)) {
+										// Proceed only if current resource type matches include source and we have a parameter
+										if (resourceEntry.getResourceType().equals(source) && parameter != null) {
 											log.fine("-->--> _include resource type match (" + source + "); _include parameter is reference (" + parameter + ")");
 
 											boolean isParamRef = false;
@@ -591,30 +596,35 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 									}
 								}
 
-								// Process _include:recurse
-								if (_includeRecurse != null && _includeRecurse.size() > 0) {
-									log.fine("Processing _include:recurse...");
+								// Process _include:iterate
+								if (_includeIterate != null && _includeIterate.size() > 0) {
+									log.fine("Processing _include:iterate...");
 
 									String source = null;
 									String parameter = null;
 									String type = null;
 
-									for (String[] includeRecurse : _includeRecurse) {
+									for (String[] includeIterate : _includeIterate) {
 										// Extract include parameter parts
-										source = includeRecurse[0];
-										parameter = includeRecurse[1];
-										if (includeRecurse.length > 2) {
-											type = includeRecurse[2];
+										source = includeIterate[0];
+										if (includeIterate.length > 1) {
+											parameter = includeIterate[1];
+										}
+										else {
+											parameter = null;
+										}
+										if (includeIterate.length > 2) {
+											type = includeIterate[2];
 										}
 										else {
 											type = null;
 										}
 
-										log.fine("--> _include:recurse is '" + source + ":" + parameter + ":" + (type != null ? type : "null") + "'");
+										log.fine("--> _include:iterate is '" + source + ":" + (parameter != null ? parameter : "null") + ":" + (type != null ? type : "null") + "'");
 
-										// Proceed only if current resource type matches include source
-										if (resourceEntry.getResourceType().equals(source)) {
-											log.fine("-->--> _include:recurse resource type match (" + source + "); _include:recurse parameter is reference (" + parameter + ")");
+										// Proceed only if current resource type matches include source and we have a parameter
+										if (resourceEntry.getResourceType().equals(source) && parameter != null) {
+											log.fine("-->--> _include:iterate resource type match (" + source + "); _include:iterate parameter is reference (" + parameter + ")");
 
 											boolean isParamRef = false;
 											String resolvedParameter = null;
@@ -632,7 +642,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 											}
 
 											if (paramMetaData != null && paramMetaData.size() > 0) {
-												log.fine("-->-->-->--> _include:recurse parameter meta data found");
+												log.fine("-->-->-->--> _include:iterate parameter meta data found");
 
 												for (Resourcemetadata metadata : paramMetaData) {
 													if (parameter.equals("*")) {
@@ -648,7 +658,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 													isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, resolvedParameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
 													if (isParamRef == true && !metadata.getParamValue().isEmpty()) {
-														log.fine("-->-->-->--> _include:recurse parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
+														log.fine("-->-->-->--> _include:iterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
 
 														// Extract resource type and id
 														String[] refParts = metadata.getParamValue().split("/");
@@ -661,17 +671,17 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 															// Check already _includedId and _matchedId lists for this included resource; if found, skip
 															String refResourceCheckId = refResourceType + "/" + refResourceId;
 															if (!_includedId.contains(refResourceCheckId) && !_matchedId.contains(refResourceCheckId)) {
-																log.fine("-->-->-->-->--> _include:recurse resource (" + refResourceCheckId + ")");
+																log.fine("-->-->-->-->--> _include:iterate resource (" + refResourceCheckId + ")");
 
 																// If type defined, check for match
 																if (type == null || refResourceType.equals(type)) {
 																	if (type != null) {
-																		log.fine("-->-->-->-->--> _include:recurse type match (" + type + ")");
+																		log.fine("-->-->-->-->--> _include:iterate type match (" + type + ")");
 																	}
 																	ResourceContainer refResource = resourceService.read(refResourceType, refResourceId, summaryString);
 
 																	if (refResource.getResponseStatus().equals(Response.Status.OK)) {
-																		log.fine("-->-->-->-->--> _include:recurse resource read OK (" + refResourceId + ")");
+																		log.fine("-->-->-->-->--> _include:iterate resource read OK (" + refResourceId + ")");
 
 																		// Create and add bundle entry for included resource
 																		bundleEntry = new BundleEntryComponent();
@@ -696,19 +706,19 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 																		// Add to _includedId
 																		_includedId.add(refResourceCheckId);
 
-																		// Call includeRecurse for this resource instance
-																		includeRecurse(resourceService, resourcemetadataService, bundle, _includedId, refResourceId, source, parameter, type, summaryString, baseUrl, xmlP);
+																		// Call includeIterate for this resource instance
+																		includeIterate(resourceService, resourcemetadataService, bundle, _includedId, refResourceId, source, parameter, type, summaryString, baseUrl, xmlP);
 																	}
 																	else {
-																		log.fine("-->-->-->-->--> _include:recurse resource read NOT OK (" + refResourceId + ") --> " + refResource.getResponseStatus().name());
+																		log.fine("-->-->-->-->--> _include:iterate resource read NOT OK (" + refResourceId + ") --> " + refResource.getResponseStatus().name());
 																	}
 																}
 																else {
-																	log.fine("-->-->-->-->--> _include:recurse _type mismatch! refResourceType = '" + refResourceType + "', type = '" + (type != null ? type : "null") + "'");
+																	log.fine("-->-->-->-->--> _include:iterate _type mismatch! refResourceType = '" + refResourceType + "', type = '" + (type != null ? type : "null") + "'");
 																}
 															}
 															else {
-																log.fine("-->-->-->-->--> _include:recurse resource (" + refResourceCheckId + ") - already included!");
+																log.fine("-->-->-->-->--> _include:iterate resource (" + refResourceCheckId + ") - already included!");
 															}
 														}
 													}
@@ -731,7 +741,12 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 
 										// Extract revinclude parameter parts
 										source = revinclude[0];
-										parameter = revinclude[1];
+										if (revinclude.length > 1) {
+											parameter = revinclude[1];
+										}
+										else {
+											parameter = null;
+										}
 										if (revinclude.length > 2) {
 											type = revinclude[2];
 										}
@@ -742,73 +757,76 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 										// Proceed based on revinclude source and current resource type
 										log.fine("-->--> _revinclude resource type (" + source + "); current resource type (" + resourceEntry.getResourceType() + ")");
 
-										boolean isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, parameter).equalsIgnoreCase("REFERENCE") ? true : false);
+										// Proceed only if we have a parameter
+										if (parameter != null) {
+											boolean isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, parameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
-										if (isParamRef) {
-											log.fine("-->-->--> _revinclude parameter is reference (" + parameter + "); current resource id entry (" + resourceEntry.getResourceId() + ")");
+											if (isParamRef) {
+												log.fine("-->-->--> _revinclude parameter is reference (" + parameter + "); current resource id entry (" + resourceEntry.getResourceId() + ")");
 
-											// If type defined, check for current resource type match
-											if (type == null || resourceEntry.getResourceType().equals(type)) {
-												if (type != null) {
-													log.fine("-->-->-->-->--> _revinclude type match (" + type + ")");
-												}
+												// If type defined, check for current resource type match
+												if (type == null || resourceEntry.getResourceType().equals(type)) {
+													if (type != null) {
+														log.fine("-->-->-->-->--> _revinclude type match (" + type + ")");
+													}
 
-												// Build reverse search parameter
-												String revSearchParameter = parameter + "=" + resourceEntry.getResourceType() + "/" + resourceEntry.getResourceId();
+													// Build reverse search parameter
+													String revSearchParameter = parameter + "=" + resourceEntry.getResourceType() + "/" + resourceEntry.getResourceId();
 
-												// Convert search parameter string into queryParams map
-												List<NameValuePair> params = URLEncodedUtils.parse(revSearchParameter, Charset.defaultCharset());
-												MultivaluedMap<String, String> revQueryParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
+													// Convert search parameter string into queryParams map
+													List<NameValuePair> params = URLEncodedUtils.parse(revSearchParameter, Charset.defaultCharset());
+													MultivaluedMap<String, String> revQueryParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
 
-												// Search for resources with reverse search
-												List<Resource> revSearch = resourceService.searchQuery(revQueryParams, null, null, source, false, null, null, null, null, null);
+													// Search for resources with reverse search
+													List<Resource> revSearch = resourceService.searchQuery(revQueryParams, null, null, source, false, null, null, null, null, null);
 
-												if (revSearch != null && revSearch.size() > 0) {
-													log.fine("-->-->-->--> _revinclude reverse search found matches (" + revSearch.size() + ")");
+													if (revSearch != null && revSearch.size() > 0) {
+														log.fine("-->-->-->--> _revinclude reverse search found matches (" + revSearch.size() + ")");
 
-													for (Resource revResource : revSearch) {
-														String revResourceCheckId = revResource.getResourceType() + "/" + revResource.getResourceId();
-														log.fine("-->-->-->-->--> _revinclude resource (" + revResourceCheckId + ")");
+														for (Resource revResource : revSearch) {
+															String revResourceCheckId = revResource.getResourceType() + "/" + revResource.getResourceId();
+															log.fine("-->-->-->-->--> _revinclude resource (" + revResourceCheckId + ")");
 
-														// Check already _revincludedId and _matchedId lists for this revincluded resource; if found, skip
-														if (!_revincludedId.contains(revResourceCheckId) && !_matchedId.contains(revResourceCheckId)) {
+															// Check already _revincludedId and _matchedId lists for this revincluded resource; if found, skip
+															if (!_revincludedId.contains(revResourceCheckId) && !_matchedId.contains(revResourceCheckId)) {
 
-															// Create and add bundle entry for included resource
-															bundleEntry = new BundleEntryComponent();
+																// Create and add bundle entry for included resource
+																bundleEntry = new BundleEntryComponent();
 
-															// Set Bundle.entry.fullUrl
-															bundleEntry.setFullUrl(includeBaseUrl + revResourceCheckId);
+																// Set Bundle.entry.fullUrl
+																bundleEntry.setFullUrl(includeBaseUrl + revResourceCheckId);
 
-															// Check for _summary
-															if (!StringUtils.isEmpty(summaryString)) {
-																// Summary requested, modify copy of found resource
-																Resource foundRevResource = revResource.copy();
+																// Check for _summary
+																if (!StringUtils.isEmpty(summaryString)) {
+																	// Summary requested, modify copy of found resource
+																	Resource foundRevResource = revResource.copy();
 
-																SummaryUtil.INSTANCE.generateResourceSummary(foundRevResource, summaryString);
+																	SummaryUtil.INSTANCE.generateResourceSummary(foundRevResource, summaryString);
 
-																// Convert XML contents of copy to Resource object
-																iResource = new ByteArrayInputStream(foundRevResource.getResourceContents());
+																	// Convert XML contents of copy to Resource object
+																	iResource = new ByteArrayInputStream(foundRevResource.getResourceContents());
+																}
+																else {
+																	// Convert XML contents to Resource object
+																	iResource = new ByteArrayInputStream(revResource.getResourceContents());
+																}
+
+																resourceObject = xmlP.parse(iResource);
+
+																bundleEntry.setResource(resourceObject);
+
+																bundleEntrySearch = new BundleEntrySearchComponent();
+																bundleEntrySearch.setMode(SearchEntryMode.INCLUDE);
+																bundleEntry.setSearch(bundleEntrySearch);
+
+																bundle.getEntry().add(bundleEntry);
+
+																// Add to _revincludedId
+																_revincludedId.add(revResourceCheckId);
 															}
 															else {
-																// Convert XML contents to Resource object
-																iResource = new ByteArrayInputStream(revResource.getResourceContents());
+																log.fine("-->-->-->-->--> _revinclude resource (" + revResourceCheckId + ") - already included!");
 															}
-
-															resourceObject = xmlP.parse(iResource);
-
-															bundleEntry.setResource(resourceObject);
-
-															bundleEntrySearch = new BundleEntrySearchComponent();
-															bundleEntrySearch.setMode(SearchEntryMode.INCLUDE);
-															bundleEntry.setSearch(bundleEntrySearch);
-
-															bundle.getEntry().add(bundleEntry);
-
-															// Add to _revincludedId
-															_revincludedId.add(revResourceCheckId);
-														}
-														else {
-															log.fine("-->-->-->-->--> _revinclude resource (" + revResourceCheckId + ") - already included!");
 														}
 													}
 												}
@@ -829,6 +847,9 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 				}
 			}
 
+			// Call processIncluded
+			processIncluded(0, resourceService, resourcemetadataService, bundle, _includedId, _matchedId, _include, _includeIterate, summaryString, baseUrl, xmlP);
+
 			if (bundleEntryOutcome != null) {
 				bundle.getEntry().add(bundleEntryOutcome);
 			}
@@ -839,9 +860,316 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 		return bundle;
 	}
 
-	private void includeRecurse(ResourceService resourceService, ResourcemetadataService resourcemetadataService, Bundle bundle, List<String> _includedId, String resourceId, String source, String parameter, String type, String summary_, String baseUrl, XmlParser xmlP) throws Exception {
+	/*
+	 * Called after processing initial search results. This method processes any
+	 * additional _include parameters based on just those included resources.
+	 */
+	private void processIncluded(int recurseLevel, ResourceService resourceService, ResourcemetadataService resourcemetadataService, Bundle bundle, List<String> _includedId, List<String> _matchedId, List<String[]> _include, List<String[]> _includeIterate, String summary_, String baseUrl, XmlParser xmlP) throws Exception {
 
-		log.fine("[START] ObservationLastNOperation.includeRecurse(bundle, _includedId, '" + resourceId + "', '" + source + "', '" + parameter + "', '" + (type == null ? "null" : type) + "', '");
+		log.fine("[START] ResourceService.processIncluded(" + recurseLevel + ", bundle, _includedId, _include, '" + summary_ + "', '" + baseUrl + "', xmlP)");
+
+		boolean isParamRef = false;
+		String resolvedParameter = null;
+		int resolvedParamEnd = -1;
+		BundleEntryComponent bundleEntry = null;
+		String fullUrl = "";
+		ByteArrayInputStream iResource = null;
+		org.hl7.fhir.r4.model.Resource resourceObject = null;
+		BundleEntrySearchComponent bundleEntrySearch = null;
+
+		List<Resourcemetadata> paramMetaData = null;
+
+		// Use traditional for loop to avoid ConcurrentModificationException
+		for (int i = 0; i < _includedId.size(); i++) {
+			String includedId = _includedId.get(i);
+
+			/*
+			 * 1. Process _include parameters against _includedId
+			 * 2. Process _includeIterate parameters against _includedId
+			 * 
+			 * Recursive call to the method is not needed. The _includeId
+			 * list will increase with additional included resources which
+			 * will be processed via the traditional for loop logic.
+			 */
+
+			// Extract resource type and id
+			String[] includedIdParts = includedId.split("/");
+
+			int includedIdPartsLength = includedIdParts.length;
+			
+			// This shouldn't be an issue but, it's always good to double-check
+			if (includedIdPartsLength > 1) {
+				String includedIdResourceType = includedIdParts[includedIdPartsLength - 2];
+				String includedIdResourceId = includedIdParts[includedIdPartsLength - 1];
+
+				// Process _include
+				if (_include != null && _include.size() > 0) {
+					log.fine("Processing _include for " + includedId + "...");
+
+					String source = null;
+					String parameter = null;
+					String type = null;
+
+					for (String[] include : _include) {
+						// Extract include parameter parts
+						source = include[0];
+						if (include.length > 1) {
+							parameter = include[1];
+						}
+						else {
+							parameter = null;
+						}
+						if (include.length > 2) {
+							type = include[2];
+						}
+						else {
+							type = null;
+						}
+
+						log.fine("--> _include is '" + source + ":" + (parameter != null ? parameter : "null") + ":" + (type != null ? type : "null") + "'");
+
+						// Proceed only if current resource type matches include source and we have a parameter
+						if (includedIdResourceType.equals(source) && parameter != null) {
+							log.fine("-->--> _include resource type match (" + source + "); _include parameter is reference (" + parameter + ")");
+
+							isParamRef = false;
+							resolvedParameter = null;
+							resolvedParamEnd = -1;
+
+							paramMetaData = null;
+
+							// Check for wild card parameter
+							if (parameter.equals("*")) {
+								paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeLevel1Param(includedIdResourceId, source);
+							}
+							else {
+								// Query the resourcemetadata for the current resource parameter
+								paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeParam(includedIdResourceId, source, parameter);
+							}
+
+							if (paramMetaData != null && paramMetaData.size() > 0) {
+								log.fine("-->-->-->--> _include parameter meta data found");
+
+								for (Resourcemetadata metadata : paramMetaData) {
+									if (parameter.equals("*")) {
+										resolvedParamEnd = metadata.getParamName().indexOf("[");
+										if (resolvedParamEnd < 0) {
+											resolvedParamEnd = metadata.getParamName().length();
+										}
+										resolvedParameter = metadata.getParamName().substring(0, resolvedParamEnd);
+									}
+									else {
+										resolvedParameter = parameter;
+									}
+									isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, resolvedParameter).equalsIgnoreCase("REFERENCE") ? true : false);
+
+									if (isParamRef == true && !metadata.getParamValue().isEmpty()) {
+										log.fine("-->-->-->--> _include parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
+
+										// Extract resource type and id
+										String[] refParts = metadata.getParamValue().split("/");
+
+										int refPartsLength = refParts.length;
+										if (refPartsLength > 1) {
+											String refResourceType = refParts[refPartsLength - 2];
+											String refResourceId = refParts[refPartsLength - 1];
+
+											// Check already _includedId and _matchedId lists for this included resource; if found, skip
+											String refResourceCheckId = refResourceType + "/" + refResourceId;
+											if (!_includedId.contains(refResourceCheckId) && !_matchedId.contains(refResourceCheckId)) {
+												log.fine("-->-->-->-->--> _include resource (" + refResourceCheckId + ")");
+
+												// If type defined, check for match
+												if (type == null || refResourceType.equals(type)) {
+													if (type != null) {
+														log.fine("-->-->-->-->--> _include type match (" + type + ")");
+													}
+													ResourceContainer refResource = resourceService.read(refResourceType, refResourceId, summary_);
+
+													if (refResource.getResponseStatus().equals(Response.Status.OK)) {
+														log.fine("-->-->-->-->--> _include resource read OK (" + refResourceId + ")");
+
+														// Create and add bundle entry for included resource
+														bundleEntry = new BundleEntryComponent();
+
+														// Set Bundle.entry.fullUrl
+														fullUrl = baseUrl + refResourceType + "/" + refResourceId;
+														bundleEntry.setFullUrl(fullUrl);
+
+														// Convert XML contents to Resource object
+														iResource = new ByteArrayInputStream(refResource.getResource().getResourceContents());
+
+														resourceObject = xmlP.parse(iResource);
+
+														bundleEntry.setResource(resourceObject);
+
+														bundleEntrySearch = new BundleEntrySearchComponent();
+														bundleEntrySearch.setMode(SearchEntryMode.INCLUDE);
+														bundleEntry.setSearch(bundleEntrySearch);
+
+														bundle.getEntry().add(bundleEntry);
+
+														// Add to _includedId
+														_includedId.add(refResourceCheckId);
+													}
+													else {
+														log.fine("-->-->-->-->--> _include resource read NOT OK (" + refResourceId + ") --> " + refResource.getResponseStatus().name());
+													}
+												}
+												else {
+													log.fine("-->-->-->-->--> _type mismatch! refResourceType = '" + refResourceType + "', type = '" + (type != null ? type : "null") + "'");
+												}
+											}
+											else {
+												log.fine("-->-->-->-->--> _include resource (" + refResourceCheckId + ") - already included!");
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				} // End process _include
+
+				// Process _include:iterate
+				if (_includeIterate != null && _includeIterate.size() > 0) {
+					log.fine("Processing _include:iterate for " + includedId + "...");
+
+					String source = null;
+					String parameter = null;
+					String type = null;
+
+					for (String[] includeIterate : _includeIterate) {
+						// Extract include parameter parts
+						source = includeIterate[0];
+						if (includeIterate.length > 1) {
+							parameter = includeIterate[1];
+						}
+						else {
+							parameter = null;
+						}
+						if (includeIterate.length > 2) {
+							type = includeIterate[2];
+						}
+						else {
+							type = null;
+						}
+
+						log.fine("--> _include:iterate is '" + source + ":" + (parameter != null ? parameter : "null") + ":" + (type != null ? type : "null") + "'");
+
+						// Proceed only if current resource type matches include source and we have a parameter
+						if (includedIdResourceType.equals(source) && parameter != null) {
+							log.fine("-->--> _include:iterate resource type match (" + source + "); _include:iterate parameter is reference (" + parameter + ")");
+
+							isParamRef = false;
+							resolvedParameter = null;
+							resolvedParamEnd = -1;
+
+							paramMetaData = null;
+
+							// Check for wild card parameter
+							if (parameter.equals("*")) {
+								paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeLevel1Param(includedIdResourceId, source);
+							}
+							else {
+								// Query the resourcemetadata for the current resource parameter
+								paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeParam(includedIdResourceId, source, parameter);
+							}
+
+							if (paramMetaData != null && paramMetaData.size() > 0) {
+								log.fine("-->-->-->--> _include:iterate parameter meta data found");
+
+								for (Resourcemetadata metadata : paramMetaData) {
+									if (parameter.equals("*")) {
+										resolvedParamEnd = metadata.getParamName().indexOf("[");
+										if (resolvedParamEnd < 0) {
+											resolvedParamEnd = metadata.getParamName().length();
+										}
+										resolvedParameter = metadata.getParamName().substring(0, resolvedParamEnd);
+									}
+									else {
+										resolvedParameter = parameter;
+									}
+									isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, resolvedParameter).equalsIgnoreCase("REFERENCE") ? true : false);
+
+									if (isParamRef == true && !metadata.getParamValue().isEmpty()) {
+										log.fine("-->-->-->--> _include:iterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
+
+										// Extract resource type and id
+										String[] refParts = metadata.getParamValue().split("/");
+
+										int refPartsLength = refParts.length;
+										if (refPartsLength > 1) {
+											String refResourceType = refParts[refPartsLength - 2];
+											String refResourceId = refParts[refPartsLength - 1];
+
+											// Check already _includedId and _matchedId lists for this included resource; if found, skip
+											String refResourceCheckId = refResourceType + "/" + refResourceId;
+											if (!_includedId.contains(refResourceCheckId) && !_matchedId.contains(refResourceCheckId)) {
+												log.fine("-->-->-->-->--> _include:iterate resource (" + refResourceCheckId + ")");
+
+												// If type defined, check for match
+												if (type == null || refResourceType.equals(type)) {
+													if (type != null) {
+														log.fine("-->-->-->-->--> _include:iterate type match (" + type + ")");
+													}
+													ResourceContainer refResource = resourceService.read(refResourceType, refResourceId, summary_);
+
+													if (refResource.getResponseStatus().equals(Response.Status.OK)) {
+														log.fine("-->-->-->-->--> _include:iterate resource read OK (" + refResourceId + ")");
+
+														// Create and add bundle entry for included resource
+														bundleEntry = new BundleEntryComponent();
+
+														// Set Bundle.entry.fullUrl
+														fullUrl = baseUrl + refResourceType + "/" + refResourceId;
+														bundleEntry.setFullUrl(fullUrl);
+
+														// Convert XML contents to Resource object
+														iResource = new ByteArrayInputStream(refResource.getResource().getResourceContents());
+
+														resourceObject = xmlP.parse(iResource);
+
+														bundleEntry.setResource(resourceObject);
+
+														bundleEntrySearch = new BundleEntrySearchComponent();
+														bundleEntrySearch.setMode(SearchEntryMode.INCLUDE);
+														bundleEntry.setSearch(bundleEntrySearch);
+
+														bundle.getEntry().add(bundleEntry);
+
+														// Add to _includedId
+														_includedId.add(refResourceCheckId);
+
+														// Call includeIterate for this resource instance
+														includeIterate(resourceService, resourcemetadataService, bundle, _includedId, refResourceId, source, parameter, type, summary_, baseUrl, xmlP);
+													}
+													else {
+														log.fine("-->-->-->-->--> _include:iterate resource read NOT OK (" + refResourceId + ") --> " + refResource.getResponseStatus().name());
+													}
+												}
+												else {
+													log.fine("-->-->-->-->--> _include:iterate _type mismatch! refResourceType = '" + refResourceType + "', type = '" + (type != null ? type : "null") + "'");
+												}
+											}
+											else {
+												log.fine("-->-->-->-->--> _include:iterate resource (" + refResourceCheckId + ") - already included!");
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				} // End process _includeIterate
+
+			} // End if (includedIdPartsLength > 1)
+		} // End for (includeId)
+	}
+
+	private void includeIterate(ResourceService resourceService, ResourcemetadataService resourcemetadataService, Bundle bundle, List<String> _includedId, String resourceId, String source, String parameter, String type, String summary_, String baseUrl, XmlParser xmlP) throws Exception {
+
+		log.fine("[START] ObservationLastNOperation.includeIterate(bundle, _includedId, '" + resourceId + "', '" + source + "', '" + parameter + "', '" + (type == null ? "null" : type) + "', '");
 
 		boolean isParamRef = false;
 		String resolvedParameter = null;
@@ -864,7 +1192,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 		}
 
 		if (paramMetaData != null && paramMetaData.size() > 0) {
-			log.fine("-->-->-->--> includeRecurse parameter meta data found");
+			log.fine("-->-->-->--> includeIterate parameter meta data found");
 
 			for (Resourcemetadata metadata : paramMetaData) {
 				if (parameter.equals("*")) {
@@ -880,7 +1208,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 				isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, resolvedParameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
 				if (isParamRef == true && !metadata.getParamValue().isEmpty()) {
-					log.fine("-->-->-->--> includeRecurse parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
+					log.fine("-->-->-->--> includeIterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
 
 					// Extract resource type and id
 					String[] refParts = metadata.getParamValue().split("/");
@@ -893,17 +1221,17 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 						// Check already _includedId list for this included resource; if found, skip
 						String refResourceCheckId = refResourceType + "/" + refResourceId;
 						if (!_includedId.contains(refResourceCheckId)) {
-							log.fine("-->-->-->-->--> includeRecurse resource (" + refResourceCheckId + ")");
+							log.fine("-->-->-->-->--> includeIterate resource (" + refResourceCheckId + ")");
 
 							// If type defined, check for match
 							if (type == null || refResourceType.equals(type)) {
 								if (type != null) {
-									log.fine("-->-->-->-->--> includeRecurse type match (" + type + ")");
+									log.fine("-->-->-->-->--> includeIterate type match (" + type + ")");
 								}
 								ResourceContainer refResource = resourceService.read(refResourceType, refResourceId, summary_);
 
 								if (refResource.getResponseStatus().equals(Response.Status.OK)) {
-									log.fine("-->-->-->-->--> includeRecurse resource read OK (" + refResourceId + ")");
+									log.fine("-->-->-->-->--> includeIterate resource read OK (" + refResourceId + ")");
 
 									// Create and add bundle entry for included resource
 									bundleEntry = new BundleEntryComponent();
@@ -928,19 +1256,19 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 									// Add to _includedId
 									_includedId.add(refResourceCheckId);
 
-									// Call includeRecurse for this resource instance
-									includeRecurse(resourceService, resourcemetadataService, bundle, _includedId, refResourceId, source, parameter, type, summary_, baseUrl, xmlP);
+									// Call includeIterate for this resource instance
+									includeIterate(resourceService, resourcemetadataService, bundle, _includedId, refResourceId, source, parameter, type, summary_, baseUrl, xmlP);
 								}
 								else {
-									log.fine("-->-->-->-->--> includeRecurse resource read NOT OK (" + refResourceId + ") --> " + refResource.getResponseStatus().name());
+									log.fine("-->-->-->-->--> includeIterate resource read NOT OK (" + refResourceId + ") --> " + refResource.getResponseStatus().name());
 								}
 							}
 							else {
-								log.fine("-->-->-->-->--> includeRecurse _type mismatch! refResourceType = '" + refResourceType + "', type = '" + (type != null ? type : "null") + "'");
+								log.fine("-->-->-->-->--> includeIterate _type mismatch! refResourceType = '" + refResourceType + "', type = '" + (type != null ? type : "null") + "'");
 							}
 						}
 						else {
-							log.fine("-->-->-->-->--> includeRecurse resource (" + refResourceCheckId + ") - already included!");
+							log.fine("-->-->-->-->--> includeIterate resource (" + refResourceCheckId + ") - already included!");
 						}
 					}
 				}
