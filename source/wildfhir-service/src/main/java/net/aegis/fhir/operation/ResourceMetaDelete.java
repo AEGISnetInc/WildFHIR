@@ -132,7 +132,7 @@ public class ResourceMetaDelete extends ResourceOperationProxy {
 								keepInputProfile = true;
 								if (inputMeta.hasProfile()) {
 									for (CanonicalType inputProfile : inputMeta.getProfile()) {
-										if (resourceProfile.equals(inputProfile.getValue())) {
+										if (resourceProfile.getValue().equals(inputProfile.getValue())) {
 											keepInputProfile = false;
 											break;
 										}
@@ -161,7 +161,7 @@ public class ResourceMetaDelete extends ResourceOperationProxy {
 								keepInputSecurity = true;
 								if (inputMeta.hasSecurity()) {
 									for (Coding inputSecurity : inputMeta.getSecurity()) {
-										if (resourceSecurity.equalsDeep(inputSecurity)) {
+										if (inputSecurity.equalsDeep(resourceSecurity)) {
 											keepInputSecurity = false;
 											break;
 										}
@@ -190,7 +190,7 @@ public class ResourceMetaDelete extends ResourceOperationProxy {
 								keepInputTag = true;
 								if (inputMeta.hasTag()) {
 									for (Coding inputTag : inputMeta.getTag()) {
-										if (resourceTag.equalsDeep(inputTag)) {
+										if (inputTag.equalsDeep(resourceTag)) {
 											keepInputTag = false;
 											break;
 										}
@@ -222,16 +222,16 @@ public class ResourceMetaDelete extends ResourceOperationProxy {
 			net.aegis.fhir.model.Resource updateResource = resourceContainer.getResource();
 
 			Meta updateMeta = resource.getMeta();
+			updateMeta.getProfile().clear();
 			if (resourceMeta.hasProfile()) {
-				updateMeta.getProfile().clear();
 				updateMeta.getProfile().addAll(resourceMeta.getProfile());
 			}
+			updateMeta.getSecurity().clear();
 			if (resourceMeta.hasSecurity()) {
-				updateMeta.getSecurity().clear();
 				updateMeta.getSecurity().addAll(resourceMeta.getSecurity());
 			}
+			updateMeta.getTag().clear();
 			if (resourceMeta.hasTag()) {
-				updateMeta.getTag().clear();
 				updateMeta.getTag().addAll(resourceMeta.getTag());
 			}
 

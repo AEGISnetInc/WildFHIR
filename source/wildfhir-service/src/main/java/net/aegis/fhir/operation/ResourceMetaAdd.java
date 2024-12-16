@@ -130,7 +130,7 @@ public class ResourceMetaAdd extends ResourceOperationProxy {
 							addInputProfile = true;
 							if (resourceMeta.hasProfile()) {
 								for (CanonicalType resourceProfile : resourceMeta.getProfile()) {
-									if (inputProfile.equals(resourceProfile.getValue())) {
+									if (inputProfile.getValue().equals(resourceProfile.getValue())) {
 										addInputProfile = false;
 										break;
 									}

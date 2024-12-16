@@ -1252,27 +1252,32 @@ public class ResourceService {
 
 			Date updatedTime = new Date();
 
-			// update the last updated time
-			resource.setLastUpdate(updatedTime);
-
 			/*
 			 *  TRANSACTION BEGIN
 			 */
 			userTransaction.begin();
 
-			em.persist(resource);
-			resourceEventSrc.fire(resource);
+			// Read current resource record
+			net.aegis.fhir.model.Resource currentResource = em.find(net.aegis.fhir.model.Resource.class, resource.getId());
+
+			// Update resource record last updated time
+			currentResource.setLastUpdate(updatedTime);
+			// Assign updated resource contents
+			currentResource.setResourceContents(resource.getResourceContents());
+
+			em.merge(currentResource);
+			resourceEventSrc.fire(currentResource);
+
+			/*
+			 *  TRANSACTION COMMIT(END)
+			 */
+			userTransaction.commit();
 
 			// Generate the list of Resourcemetadata objects for the updated Resource
 			List<Resourcemetadata> resourcemetadataList = resourcemetadataService.generateAllForResource(resource, baseUrl, this);
 
 			// Create the new Resourcemetadata objects for the updated Resource
 			resourcemetadataService.createAllForResource(resource, resourcemetadataList);
-
-			/*
-			 *  TRANSACTION COMMIT(END)
-			 */
-			userTransaction.commit();
 		}
 		else {
 			throw new Exception("Resource to update is null!");
