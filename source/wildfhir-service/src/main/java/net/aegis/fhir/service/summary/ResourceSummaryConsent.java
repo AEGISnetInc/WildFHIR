@@ -34,7 +34,7 @@ package net.aegis.fhir.service.summary;
 
 import org.hl7.fhir.r4.model.Consent;
 import org.hl7.fhir.r4.model.Consent.ConsentVerificationComponent;
-import org.hl7.fhir.r4.model.Consent.provisionComponent;
+import org.hl7.fhir.r4.model.Consent.ProvisionComponent;
 import org.hl7.fhir.r4.model.Resource;
 
 /**
@@ -156,26 +156,26 @@ public class ResourceSummaryConsent extends ResourceSummaryProxy {
 		return summary;
 	}
 
-	private void setSummaryConsentProvision(provisionComponent provision) {
+	private void setSummaryConsentProvision(ProvisionComponent provision) {
 		if (provision != null) {
 			provision.setActor(null);
-			for (provisionComponent provisionProvision : provision.getProvision()) {
+			for (ProvisionComponent provisionProvision : provision.getProvision()) {
 				setSummaryConsentProvision(provisionProvision);
 			}
 		}
 	}
 
 
-	private provisionComponent getSummaryProvision(provisionComponent provision) {
-		provisionComponent summaryProvision = null;
+	private ProvisionComponent getSummaryProvision(ProvisionComponent provision) {
+		ProvisionComponent summaryProvision = null;
 
 		if (provision != null) {
-			summaryProvision = new provisionComponent();
+			summaryProvision = new ProvisionComponent();
 			summaryProvision.setActor(provision.getActor());
 			summaryProvision.setData(provision.getData());
 
 			if (provision.hasProvision()) {
-				for (provisionComponent provisionProvision : provision.getProvision()) {
+				for (ProvisionComponent provisionProvision : provision.getProvision()) {
 					summaryProvision.addProvision(getSummaryProvision(provisionProvision));
 				}
 			}
