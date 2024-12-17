@@ -39,7 +39,7 @@ import java.util.logging.Logger;
 import org.hl7.fhir.r4.model.Consent;
 import org.hl7.fhir.r4.model.Consent.ConsentVerificationComponent;
 import org.hl7.fhir.r4.model.Consent.provisionActorComponent;
-import org.hl7.fhir.r4.model.Consent.provisionComponent;
+import org.hl7.fhir.r4.model.Consent.ProvisionComponent;
 import org.hl7.fhir.r4.model.Consent.provisionDataComponent;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
@@ -173,7 +173,7 @@ public class LinkedResourceConsent extends LinkedResourceProxy {
 	 * @param linkedResources
 	 * @throws Exception
 	 */
-	private void getProvision(provisionComponent provision, ResourceService resourceService, List<Resource> linkedResources) throws Exception {
+	private void getProvision(ProvisionComponent provision, ResourceService resourceService, List<Resource> linkedResources) throws Exception {
 
 		String ref = null;
 		Resource linkedResource = null;
@@ -213,7 +213,7 @@ public class LinkedResourceConsent extends LinkedResourceProxy {
 		// provision.provision
 		if (provision.hasProvision()) {
 
-			for (provisionComponent provisionProvision : provision.getProvision()) {
+			for (ProvisionComponent provisionProvision : provision.getProvision()) {
 				this.getProvision(provisionProvision, resourceService, linkedResources);
 			}
 		}

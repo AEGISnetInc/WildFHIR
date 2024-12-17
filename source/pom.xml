@@ -20,7 +20,7 @@
     <properties>
         <release.version>0.4.1-SNAPSHOT</release.version>
 
-        <core.version>6.3.6</core.version>
+        <core.version>6.5.0</core.version>
 
         <!-- Explicitly declare encodings to avoid warning messages on build and to ensure consistent build -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

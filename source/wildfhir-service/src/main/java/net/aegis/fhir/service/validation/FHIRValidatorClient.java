@@ -47,6 +47,7 @@ import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.renderers.RendererFactory;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
+import org.hl7.fhir.r5.renderers.utils.ResourceWrapper;
 import org.hl7.fhir.utilities.FhirPublication;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.validation.ValidationEngine;
@@ -213,7 +214,7 @@ public class FHIRValidatorClient {
 	 * Load FHIR packages from environment variable FHIR_PACKAGES
 	 * Expect a string with comma delimited list of package#version, ...
 	 * NOTE - NO ERROR CHECKING IS DONE TO VERIFY THE PACKAGE NAME AND VERSION
-	 * 
+	 *
 	 * @param fhirPackages
 	 */
 	private void loadPackages(String fhirPackages) {
@@ -263,7 +264,7 @@ public class FHIRValidatorClient {
 
 			// Use Java Core Library RenderingContext
 			RenderingContext rc = new RenderingContext(engine.getContext(), null, null, "http://hl7.org/fhir", "", null, RenderingContext.ResourceRendererMode.END_USER, RenderingContext.GenerationRules.VALID_RESOURCE);
-			RendererFactory.factory(op, rc).render(op);
+			RendererFactory.factory(op, rc).renderResource(ResourceWrapper.forResource(rc.getContextUtilities(), op));
 
 			// Convert the OperationOutcome to XML or JSON string
 			ByteArrayOutputStream oOp = new ByteArrayOutputStream();
