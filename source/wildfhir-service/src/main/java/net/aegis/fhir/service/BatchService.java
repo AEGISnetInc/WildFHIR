@@ -32,7 +32,6 @@
  */
 package net.aegis.fhir.service;
 
-import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
@@ -355,9 +354,7 @@ public class BatchService {
 										boolean processResult = processVariableReferences(resourceString, postFullUrlMap, newResourceString);
 
 										if (processResult) {
-											ByteArrayInputStream iResource = new ByteArrayInputStream(newResourceString.toString().getBytes());
-
-											Response updateResponse = resourceOps.update(context, headers, requestHeaderParams, urlPathParams, resourceId, iResource, resourceType);
+											Response updateResponse = resourceOps.update(context, headers, requestHeaderParams, urlPathParams, resourceId, newResourceString.toString(), resourceType);
 
 											setResponseParams(updateResponse, bundlePutEntry, producesType, entryCount, postFullUrlMap);
 										}

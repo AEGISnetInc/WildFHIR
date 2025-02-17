@@ -63,7 +63,6 @@ import net.aegis.fhir.service.RESTResourceOps;
 import net.aegis.fhir.service.util.ServicesUtil;
 
 import org.apache.commons.io.IOUtils;
-//import org.hl7.fhir.r4.model.OperationOutcome;
 
 /**
  * JAX-RS Resource Service
@@ -80,6 +79,9 @@ public class ResourceRESTService {
 	private Logger log = Logger.getLogger("ResourceRESTService");
 
 	@Inject
+	CodeService codeService;
+
+	@Inject
 	RESTBatchTransactionOps batchTransactionOps;
 
 	@Inject
@@ -87,9 +89,6 @@ public class ResourceRESTService {
 
 	@Context
 	private UriInfo context;
-
-	@Inject
-	CodeService codeService;
 
 	/**
 	 * This method supports when the base path is invoked and handles two use cases:
@@ -317,14 +316,14 @@ public class ResourceRESTService {
 
 		Response response = null;
 
-		debugRequest(request, headers, null);
+		String payload = debugRequest(request, headers, resourceInputStream);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
 				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
 			} else {
-				response = resourceOps.update(context, headers, null, null, resourceId, resourceInputStream, resourceType);
+				response = resourceOps.update(context, headers, null, null, resourceId, payload, resourceType);
 			}
 		}
 		catch (Exception e) {
@@ -398,14 +397,14 @@ public class ResourceRESTService {
 
 		Response response = null;
 
-		debugRequest(request, headers, null);
+		String payload = debugRequest(request, headers, resourceInputStream);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
 				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
 			} else {
-				response = resourceOps.update(context, headers, null, null, null, resourceInputStream, resourceType);
+				response = resourceOps.update(context, headers, null, null, null, payload, resourceType);
 			}
 		}
 		catch (Exception e) {
