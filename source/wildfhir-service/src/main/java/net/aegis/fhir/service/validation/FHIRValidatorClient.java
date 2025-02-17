@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.hl7.fhir.convertors.factory.VersionConvertorFactory_40_50;
+import org.hl7.fhir.r5.fhirpath.FHIRPathEngine;
 import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
 import org.hl7.fhir.r5.formats.IParser.OutputStyle;
 import org.hl7.fhir.r5.formats.JsonParser;
@@ -206,6 +207,160 @@ public class FHIRValidatorClient {
 		return r4Outcome;
 	}
 
+	/**
+	 * Evaluate the fhirpath expression against the given resource contents and return the evaluated values.
+	 *
+	 * @param resourceContents
+	 * @param pathExpression
+	 * @return <code>List<Base></code>
+	 * @throws Exception
+	 */
+	public List<org.hl7.fhir.r4.model.Base> evaluate(byte[] resourceContents, String pathExpression) throws Exception {
+		long start = System.currentTimeMillis();
+
+		log.fine("FHIRValidatorClient.evaluate([Resource]) - START");
+
+		List<org.hl7.fhir.r4.model.Base> result = null;
+		List<org.hl7.fhir.r5.model.Base> resultR5 = null;
+
+		try {
+			org.hl7.fhir.r4.model.Resource resource = null;
+
+			FhirFormat cntType = getFhirFormat(resourceContents);
+
+			if (cntType.equals(FhirFormat.JSON)) {
+
+				resource = jsonParserR4.parse(resourceContents);
+			}
+			else if (cntType.equals(FhirFormat.TURTLE)) {
+
+				resource = rdfParserR4.parse(resourceContents);
+			}
+			else if (cntType.equals(FhirFormat.XML)) {
+
+				resource = xmlParserR4.parse(resourceContents);
+			}
+
+			org.hl7.fhir.r5.model.Resource resourceR5 = VersionConvertorFactory_40_50.convertResource(resource);
+			resultR5 = engine.getValidator(null).getFHIRPathEngine().evaluate((org.hl7.fhir.r5.model.Base)resourceR5, pathExpression);
+			result = this.convertR5ListBaseToR4(resultR5);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			throw new Exception("Exception evaluating fhirpath expression [" + pathExpression + "]. " + e.getMessage());
+		}
+
+		log.fine("FHIRValidatorClient.evaluate() - END");
+
+		log.info("FHIR Validator - evaluation of fhirpath expression completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
+
+		return result;
+	}
+
+	/**
+	 * Evaluate the fhirpath expression against the given resource contents into a boolean representation of
+	 * the evaluated values.
+	 *
+	 * @param resourceContents
+	 * @param pathExpression
+	 * @return boolean
+	 * @throws Exception
+	 */
+	public boolean evaluateToBoolean(byte[] resourceContents, String pathExpression) throws Exception {
+		long start = System.currentTimeMillis();
+
+		log.fine("FHIRValidatorClient.evaluateToBoolean([Resource]) - START");
+
+		boolean result = false;
+		List<org.hl7.fhir.r5.model.Base> resultR5 = null;
+
+		try {
+			org.hl7.fhir.r4.model.Resource resource = null;
+
+			FhirFormat cntType = getFhirFormat(resourceContents);
+
+			if (cntType.equals(FhirFormat.JSON)) {
+
+				resource = jsonParserR4.parse(resourceContents);
+			}
+			else if (cntType.equals(FhirFormat.TURTLE)) {
+
+				resource = rdfParserR4.parse(resourceContents);
+			}
+			else if (cntType.equals(FhirFormat.XML)) {
+
+				resource = xmlParserR4.parse(resourceContents);
+			}
+
+			org.hl7.fhir.r5.model.Resource resourceR5 = VersionConvertorFactory_40_50.convertResource(resource);
+			FHIRPathEngine fpe = engine.getValidator(null).getFHIRPathEngine();
+			resultR5 = fpe.evaluate((org.hl7.fhir.r5.model.Base)resourceR5, pathExpression);
+
+			result = fpe.convertToBoolean(resultR5);
+		}
+		catch (Exception e) {
+			throw new Exception("Evaluate To Boolean exception evaluating fhirpath expression [" + pathExpression + "]. " + e.getMessage());
+		}
+
+		log.fine("FHIRValidatorClient.evaluateToBoolean() - END");
+
+		log.info("FHIR Validator - evaluation of fhirpath expression completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
+
+		return result;
+	}
+
+	/**
+	 * Evaluate the fhirpath expression against the given resource contents into a String representation of
+	 * the evaluated values.
+	 *
+	 * @param resourceContents
+	 * @param pathExpression
+	 * @return String
+	 * @throws Exception
+	 */
+	public String evaluateToString(byte[] resourceContents, String pathExpression) throws Exception {
+		long start = System.currentTimeMillis();
+
+		log.fine("FHIRValidatorClient.evaluateToString([Resource]) - START");
+
+		String result = null;
+		List<org.hl7.fhir.r5.model.Base> resultR5 = null;
+
+		try {
+			org.hl7.fhir.r4.model.Resource resource = null;
+
+			FhirFormat cntType = getFhirFormat(resourceContents);
+
+			if (cntType.equals(FhirFormat.JSON)) {
+
+				resource = jsonParserR4.parse(resourceContents);
+			}
+			else if (cntType.equals(FhirFormat.TURTLE)) {
+
+				resource = rdfParserR4.parse(resourceContents);
+			}
+			else if (cntType.equals(FhirFormat.XML)) {
+
+				resource = xmlParserR4.parse(resourceContents);
+			}
+
+			org.hl7.fhir.r5.model.Resource resourceR5 = VersionConvertorFactory_40_50.convertResource(resource);
+			FHIRPathEngine fpe = engine.getValidator(null).getFHIRPathEngine();
+			resultR5 = fpe.evaluate((org.hl7.fhir.r5.model.Base)resourceR5, pathExpression);
+
+			result = fpe.convertToString(resultR5);
+		}
+		catch (Exception e) {
+			throw new Exception("Evaluate To String exception evaluating fhirpath expression [" + pathExpression + "]. " + e.getMessage());
+		}
+
+		log.fine("FHIRValidatorClient.evaluateToString() - END");
+
+		log.info("FHIR Validator - evaluation of fhirpath expression completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
+
+		return result;
+	}
+
 	/*
 	 * Private methods
 	 */
@@ -326,6 +481,23 @@ public class FHIRValidatorClient {
 		}
 
 		return issue;
+	}
+
+	private List<org.hl7.fhir.r4.model.Base> convertR5ListBaseToR4(List<org.hl7.fhir.r5.model.Base> listBaseR5) throws Exception {
+		List<org.hl7.fhir.r4.model.Base> listBaseR4 = new ArrayList<org.hl7.fhir.r4.model.Base>();
+
+		try {
+			for (org.hl7.fhir.r5.model.Base baseR5 : listBaseR5) {
+				org.hl7.fhir.r4.model.Resource resourceR4 = VersionConvertorFactory_40_50.convertResource((org.hl7.fhir.r5.model.Resource)baseR5);
+				listBaseR4.add(resourceR4);
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+
+		return listBaseR4;
 	}
 
 	private org.hl7.fhir.r4.model.OperationOutcome convertR5OOR4(OperationOutcome rOutcome) throws Exception {
