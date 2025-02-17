@@ -70,6 +70,9 @@ public class ResourceOperationProxyObjectFactory {
 		else if (operationName.equals("meta-delete")) {
 			proxy = new ResourceMetaDelete();
 		}
+		else if (operationName.equals("process-message")) {
+			proxy = new GlobalProcessMessage();
+		}
 		else if (operationName.equals("purge-all")) {
 			proxy = new ResourcePurgeAll();
 		}
