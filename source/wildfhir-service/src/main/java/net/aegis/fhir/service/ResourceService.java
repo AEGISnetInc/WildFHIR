@@ -86,6 +86,9 @@ import org.hl7.fhir.r4.model.Bundle.HTTPVerb;
 import org.hl7.fhir.r4.model.Bundle.SearchEntryMode;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.OperationOutcome;
+import org.hl7.fhir.r4.model.ResourceType;
+import org.hl7.fhir.r4.model.Subscription;
+import org.hl7.fhir.r4.model.Subscription.SubscriptionStatus;
 
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.model.Resourcemetadata;
@@ -223,6 +226,19 @@ public class ResourceService {
 			resourceMeta.setVersionId(Integer.toString(nextVersionId));
 			resourceMeta.setLastUpdated(updatedTime);
 			resourceObject.setMeta(resourceMeta);
+
+			/*
+			 * Subscription Framework - check for Subscription resource type and status of 'requested'
+			 * if found and SF enabled, change status to 'active'
+			 */
+			if (codeService.isSupported("subscriptionServiceEnabled")) {
+				if (resourceObject.getResourceType().equals(ResourceType.Subscription)) {
+					Subscription subscription = (Subscription)resourceObject;
+					if (subscription.getStatus().equals(SubscriptionStatus.REQUESTED)) {
+						subscription.setStatus(SubscriptionStatus.ACTIVE);
+					}
+				}
+			}
 
 			byte[] resourceBytes = xmlP.composeBytes(resourceObject);
 

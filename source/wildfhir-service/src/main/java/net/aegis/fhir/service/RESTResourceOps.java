@@ -77,7 +77,10 @@ import com.google.gson.JsonSyntaxException;
 import net.aegis.fhir.model.Constants;
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.model.ResourceType;
+import net.aegis.fhir.service.audit.AuditEventActionEnum;
+import net.aegis.fhir.service.audit.AuditEventService;
 import net.aegis.fhir.service.narrative.FHIRNarrativeGeneratorClient;
+import net.aegis.fhir.service.provenance.ProvenanceService;
 import net.aegis.fhir.service.util.ServicesUtil;
 import net.aegis.fhir.service.util.StringUtils;
 import net.aegis.fhir.service.util.UTCDateUtil;
@@ -93,10 +96,18 @@ public class RESTResourceOps {
 
     private Logger log = Logger.getLogger("RESTResourceOps");
 
+	@Inject
+	AuditEventService auditEventService;
+
     @Inject
     CodeService codeService;
+
+	@Inject
+	ProvenanceService provenanceService;
+
     @Inject
     ResourceService resourceService;
+
     @Inject
     UTCDateUtil utcDateUtil;
 
@@ -413,6 +424,7 @@ public class RESTResourceOps {
 
         log.fine("[START] RESTResourceOps.create()");
 
+		Response response = null;
         Response.ResponseBuilder builder = null;
         String contentType = null;
         String producesType = null;
@@ -707,7 +719,12 @@ public class RESTResourceOps {
             e.printStackTrace();
         }
 
-        return builder.build();
+        response = builder.build();
+
+		// Audit the create operation
+		auditEventService.createAuditEvent(context, headers, payload, resourceType, response , null, AuditEventActionEnum.CREATE.getCode());
+
+        return response;
 
     }
 
@@ -723,11 +740,12 @@ public class RESTResourceOps {
      * @param resourceType
      * @return <code>Response</code>
      */
-    public Response update(UriInfo context, HttpHeaders headers, MultivaluedMap<String,String> requestHeaderParams, MultivaluedMap<String,String> contextQueryParams, String id, InputStream resourceInputStream, String resourceType) {
+    public Response update(UriInfo context, HttpHeaders headers, MultivaluedMap<String,String> requestHeaderParams, MultivaluedMap<String,String> contextQueryParams, String id, String payload, String resourceType) {
 
         log.fine("[START] RESTResourceOps.update()");
 
         ResourceContainer resourceContainer = null;
+		Response response = null;
         Response.ResponseBuilder builder = null;
         String contentType = null;
         String producesType = null;
@@ -748,7 +766,7 @@ public class RESTResourceOps {
         }
 
         try {
-			// Get the content type based on the request Content-Type
+        	// Get the content type based on the request Content-Type
 			contentType = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.CONTENT_TYPE);
 
 			if (contentType != null && !contentType.equals(MediaType.APPLICATION_OCTET_STREAM)) {
@@ -863,8 +881,6 @@ public class RESTResourceOps {
 						if (okToCreate) {
 
 							// Call create logic and RETURN
-							String payload = IOUtils.toString(resourceInputStream, StandardCharsets.UTF_8.name());
-
 							return this.create(context, headers, null, payload, resourceType, id);
 
 						}
@@ -877,15 +893,13 @@ public class RESTResourceOps {
 							try {
 								if (contentType.indexOf("xml") >= 0) {
 									// Convert XML contents to Resource
-									resource = xmlP.parse(resourceInputStream);
+									resource = xmlP.parse(payload.getBytes());
 								}
 								else if (contentType.indexOf("json") >= 0) {
 									// Convert JSON contents to Resource
-									resource = jsonP.parse(resourceInputStream);
+									resource = jsonP.parse(payload.getBytes());
 								}
 								else {
-									// convert input stream to String
-									String payload = IOUtils.toString(resourceInputStream, "UTF-8");
 									// contentType did not contain a valid media type or was null; attempt to determine based on starting character
 									int firstValid = payload.indexOf("<"); // check for xml first
 									if (firstValid > -1 && firstValid < 5) {
@@ -1153,7 +1167,12 @@ public class RESTResourceOps {
             e.printStackTrace();
         }
 
-        return builder.build();
+        response = builder.build();
+
+		// Audit the update operation
+		auditEventService.createAuditEvent(context, headers, payload, resourceType, response, id, AuditEventActionEnum.UPDATE.getCode());
+
+        return response;
 
     }
 
