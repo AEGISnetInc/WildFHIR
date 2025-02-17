@@ -56,11 +56,4 @@ public class Constants {
 	public static final String JSON_PATCH_CONTENT = "application/json-patch+json";
 	public static final String XML_PATCH_CONTENT = "application/xml-patch+xml";
 
-	public static final String ID = "_id";
-	public static final String ACTIVE = "active";
-	public static final String ADDRESS = "address";
-	public static final String NAME_GIVEN = "given";
-	public static final String NAME = "name";
-	public static final String EMPTY_STRING = "";
-
 }
