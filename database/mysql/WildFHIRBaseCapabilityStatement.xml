@@ -2246,12 +2246,12 @@
     </div>
   </text>
   <url value="http://localhost:8080/r4/metadata"/>
-  <version value="0.1.0"/>
+  <version value="0.5.0"/>
   <name value="AEGISWildFHIR401"/>
   <title value="AEGIS WildFHIR Test Server FHIR R4"/>
   <status value="active"/>
   <experimental value="true"/>
-  <date value="2024-04-29T13:20:20Z"/>
+  <date value="2025-03-20T18:02:20Z"/>
   <publisher value="AEGIS.net, Inc."/>
   <contact>
     <telecom>
@@ -2263,8 +2263,8 @@
   <kind value="instance"/>
   <software>
     <name value="WildFHIR"/>
-    <version value="4.0.1"/>
-    <releaseDate value="2024-04-29T17:20:20-04:00"/>
+    <version value="0.5.0"/>
+    <releaseDate value="2025-03-20T14:02:20-04:00"/>
   </software>
   <implementation>
     <description value="AEGIS WildFHIR Test Server supporting the HL7 FHIR R4 (v4.0.1-Official) specification."/>
