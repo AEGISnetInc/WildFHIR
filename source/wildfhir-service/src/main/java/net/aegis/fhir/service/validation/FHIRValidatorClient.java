@@ -50,6 +50,7 @@ import org.hl7.fhir.r5.renderers.RendererFactory;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
 import org.hl7.fhir.r5.renderers.utils.ResourceWrapper;
 import org.hl7.fhir.utilities.FhirPublication;
+import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.validation.ValidationEngine;
 import org.hl7.fhir.validation.ValidationEngine.ValidationEngineBuilder;
@@ -71,6 +72,8 @@ public class FHIRValidatorClient {
     private static String FHIR_PACKAGES_ENV_VAR = "FHIR_PACKAGES";
 
 	private ValidationEngine engine = null;
+
+	private org.hl7.fhir.r4.context.SimpleWorkerContext contextR4 = null;
 
 	private JsonParser jsonParser = new JsonParser();
 	private org.hl7.fhir.r4.formats.JsonParser jsonParserR4 = new org.hl7.fhir.r4.formats.JsonParser();
@@ -132,6 +135,10 @@ public class FHIRValidatorClient {
 
 	public ValidationEngine getEngine() {
 		return engine;
+	}
+
+	public org.hl7.fhir.r4.context.SimpleWorkerContext getContextR4() {
+		return contextR4;
 	}
 
 	public void reload() {
@@ -372,7 +379,11 @@ public class FHIRValidatorClient {
 	 *
 	 * @param fhirPackages
 	 */
-	private void loadPackages(String fhirPackages) {
+	private void loadPackages(String fhirPackages) throws Exception {
+
+		// Instantiate R4 context
+		contextR4 = new org.hl7.fhir.r4.context.SimpleWorkerContext();
+		FilesystemPackageCacheManager pcm = new FilesystemPackageCacheManager.Builder().build();
 
 		// Split list of packages by comma
 		String[] packageList = fhirPackages.split(",");
@@ -389,6 +400,7 @@ public class FHIRValidatorClient {
 			try {
 				log.info("Load package " + pkgName + "#" + (pkgVersion != null ? pkgVersion : "null"));
 				engine.loadPackage(pkgName, pkgVersion);
+				contextR4.loadFromPackage(pcm.loadPackage(pkgName, pkgVersion), null);
 			} catch (Exception e) {
 				log.severe("Load package " + pkgName + "#" + (pkgVersion != null ? pkgVersion : "null") + " failed! " + e.getMessage());
 			}
