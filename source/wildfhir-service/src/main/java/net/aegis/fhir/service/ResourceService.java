@@ -1694,9 +1694,6 @@ public class ResourceService {
 		OperationOutcome outcome = null;
 		List<OperationOutcome.OperationOutcomeIssueComponent> issues = null;
 
-		boolean isNictizPeriodOfUse = false;
-		String patientParam = "";
-
 		try {
 			// Check for paged request; page parameter is not null
 			if (page_ != null && page_.intValue() > 0) {
@@ -1754,13 +1751,6 @@ public class ResourceService {
 								}
 								selfUrl.append(param.getName()).append("=").append(URLEncoder.encode(param.getValue(), StandardCharsets.UTF_8.toString()));
 								validCount++;
-
-								if (param.getName().equals("period-of-use")) {
-									isNictizPeriodOfUse = true;
-								}
-								if (param.getName().equals("patient")) {
-									patientParam = URLEncoder.encode(param.getValue(), StandardCharsets.UTF_8.toString());
-								}
 
 								log.info("      --> Adding " + param.getName() + " = '" + param.getValue() + "'");
 								break; // Only include first validParam match
@@ -1909,6 +1899,8 @@ public class ResourceService {
 						XmlParser xmlP = new XmlParser();
 
 						org.hl7.fhir.r4.model.Resource resourceObject = null;
+
+						List<String[]> placeHolderValidParams = null;
 
 						for (net.aegis.fhir.model.Resource resourceEntry : resources) {
 							resourceCount++;
@@ -2313,7 +2305,8 @@ public class ResourceService {
 												MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
 
 												// Search for resources with reverse search
-												List<net.aegis.fhir.model.Resource> revSearch = this.searchQuery(queryParams, null, null, source, false, null, null, null, null, null);
+												placeHolderValidParams = new ArrayList<String[]>();
+												List<net.aegis.fhir.model.Resource> revSearch = this.searchQuery(queryParams, null, null, source, false, null, null, null, placeHolderValidParams, null);
 
 												if (revSearch != null && revSearch.size() > 0) {
 													log.fine("-->-->-->--> _revinclude reverse search found matches (" + revSearch.size() + ")");
@@ -2373,140 +2366,6 @@ public class ResourceService {
 
 						// Call processIncluded
 						processIncluded(0, bundle, _includedId, _matchedId, _include, _includeIterate, summary_, baseUrl, xmlP);
-
-						// Nictiz period-of-use - special logic per http://nictiz.nl/fhir/SearchParameter/period-of-use
-						if (isNictizPeriodOfUse && (!patientParam.isEmpty() || (authPatientMap != null && authPatientMap.size() > 0))) {
-							/*
-							 *  Include the latest stopped MedicationDispense resource
-							 */
-
-							log.info("Nictiz period-of-use - special logic");
-
-							// Build MedicationDispense search parameters
-							String mdSearchParameter = "";
-							if (!patientParam.isEmpty()) {
-								mdSearchParameter = "patient=" + patientParam + "&";
-							}
-							mdSearchParameter += "stopped=true&_sort=-administration-agreement-datetime&_count=1";
-
-							// Convert search parameter string into queryParams map
-							List<NameValuePair> params = URLEncodedUtils.parse(mdSearchParameter, Charset.defaultCharset());
-							MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
-
-							// Search for resources with reverse search
-							List<net.aegis.fhir.model.Resource> mdSearch = this.searchQuery(queryParams, null, authPatientMap, "MedicationDispense", false, null, null, null, null, null);
-
-							if (mdSearch != null && mdSearch.size() > 0) {
-								log.info("-->-->-->--> Nictiz period-of-use MedicationDispense include latest stopped search found");
-
-								net.aegis.fhir.model.Resource mdResource = mdSearch.get(0);
-
-								String mdIncludeId = "MedicationDispense/" + mdResource.getResourceId();
-
-								// Check for MedicationDispense not already in matched or included resources
-								if (!_matchedId.contains(mdIncludeId) && !_includedId.contains(mdIncludeId) && !_revincludedId.contains(mdIncludeId)) {
-
-									// Create and add bundle entry for included resource
-									BundleEntryComponent bundleEntry = new BundleEntryComponent();
-
-									// Set Bundle.entry.fullUrl
-									bundleEntry.setFullUrl(revIncludeBaseUrl + mdIncludeId);
-
-									// Check for _summary
-									if (!StringUtils.isEmpty(summary_)) {
-										// Summary requested, modify copy of found resource
-										net.aegis.fhir.model.Resource foundMdResource = mdResource.copy();
-
-										SummaryUtil.INSTANCE.generateResourceSummary(foundMdResource, summary_);
-
-										// Convert XML contents of copy to Resource object
-										iResource = new ByteArrayInputStream(foundMdResource.getResourceContents());
-									}
-									else {
-										// Convert XML contents to Resource object
-										iResource = new ByteArrayInputStream(mdResource.getResourceContents());
-									}
-
-									resourceObject = xmlP.parse(iResource);
-
-									bundleEntry.setResource(resourceObject);
-
-									BundleEntrySearchComponent bundleEntrySearch = new BundleEntrySearchComponent();
-									bundleEntrySearch.setMode(SearchEntryMode.INCLUDE);
-									bundleEntry.setSearch(bundleEntrySearch);
-
-									bundle.getEntry().add(bundleEntry);
-								}
-								else {
-									log.info("-->-->-->-->--> Nictiz period-of-use MedicationDispense resource (" + mdIncludeId + ") - already included!");
-								}
-							}
-
-							/*
-							 *  Include the latest stopped MedicationRequest resource
-							 */
-
-							// Build MedicationRequest search parameters
-							String mrSearchParameter = "";
-							if (!patientParam.isEmpty()) {
-								mrSearchParameter = "patient=" + patientParam + "&";
-							}
-							mrSearchParameter = "stopped=true&_sort=-authoredon&_count=1";
-
-							// Convert search parameter string into queryParams map
-							params = URLEncodedUtils.parse(mrSearchParameter, Charset.defaultCharset());
-							queryParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
-
-							// Search for resources with reverse search
-							List<net.aegis.fhir.model.Resource> mrSearch = this.searchQuery(queryParams, null, authPatientMap, "MedicationRequest", false, null, null, null, null, null);
-
-							if (mrSearch != null && mrSearch.size() > 0) {
-								log.info("-->-->-->--> Nictiz period-of-use MedicationRequest include latest stopped search found");
-
-								net.aegis.fhir.model.Resource mrResource = mrSearch.get(0);
-
-								String mrIncludeId = "MedicationRequest/" + mrResource.getResourceId();
-
-								// Check for MedicationRequest not already in matched or included resources
-								if (!_matchedId.contains(mrIncludeId) && !_includedId.contains(mrIncludeId) && !_revincludedId.contains(mrIncludeId)) {
-
-									// Create and add bundle entry for included resource
-									BundleEntryComponent bundleEntry = new BundleEntryComponent();
-
-									// Set Bundle.entry.fullUrl
-									bundleEntry.setFullUrl(revIncludeBaseUrl + "MedicationRequest/" + mrResource.getResourceId());
-
-									// Check for _summary
-									if (!StringUtils.isEmpty(summary_)) {
-										// Summary requested, modify copy of found resource
-										net.aegis.fhir.model.Resource foundMrResource = mrResource.copy();
-
-										SummaryUtil.INSTANCE.generateResourceSummary(foundMrResource, summary_);
-
-										// Convert XML contents of copy to Resource object
-										iResource = new ByteArrayInputStream(foundMrResource.getResourceContents());
-									}
-									else {
-										// Convert XML contents to Resource object
-										iResource = new ByteArrayInputStream(mrResource.getResourceContents());
-									}
-
-									resourceObject = xmlP.parse(iResource);
-
-									bundleEntry.setResource(resourceObject);
-
-									BundleEntrySearchComponent bundleEntrySearch = new BundleEntrySearchComponent();
-									bundleEntrySearch.setMode(SearchEntryMode.INCLUDE);
-									bundleEntry.setSearch(bundleEntrySearch);
-
-									bundle.getEntry().add(bundleEntry);
-								}
-								else {
-									log.info("-->-->-->-->--> Nictiz period-of-use MedicationRequest resource (" + mrIncludeId + ") - already included!");
-								}
-							}
-
-						}
 
 						if (bundleEntryOutcome != null) {
 							bundle.getEntry().add(bundleEntryOutcome);
