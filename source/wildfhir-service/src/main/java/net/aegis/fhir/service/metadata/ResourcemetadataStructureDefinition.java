@@ -34,6 +34,7 @@ package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -342,26 +343,9 @@ public class ResourcemetadataStructureDefinition extends ResourcemetadataProxy {
 				resourcemetadataList.add(rVersion);
 			}
 
-			// base-path : token
-			// path : token
-			if (structureDefinition.hasDifferential()) {
-
-				if (structureDefinition.getDifferential().hasElement()) {
-
-					for (ElementDefinition differentialElement : structureDefinition.getDifferential().getElement()) {
-
-						if (differentialElement.hasBase() && differentialElement.getBase().hasPath()) {
-							Resourcemetadata rBasePath = generateResourcemetadata(resource, chainedResource, chainedParameter+"base-path", differentialElement.getBase().getPath());
-							resourcemetadataList.add(rBasePath);
-						}
-
-						if (differentialElement.hasPath()) {
-							Resourcemetadata rPath = generateResourcemetadata(resource, chainedResource, chainedParameter+"path", differentialElement.getPath());
-							resourcemetadataList.add(rPath);
-						}
-					}
-				}
-			}
+			// Prevent duplicate 'base-path' and 'path' parameter entries
+			HashSet<String> basePathList = new HashSet<String>();
+			HashSet<String> pathList = new HashSet<String>();
 
 			// base-path : token (continued)
 			// path : token (continued)
@@ -372,19 +356,44 @@ public class ResourcemetadataStructureDefinition extends ResourcemetadataProxy {
 
 					for (ElementDefinition snapshotElement : structureDefinition.getSnapshot().getElement()) {
 
-						if (snapshotElement.hasBase() && snapshotElement.getBase().hasPath()) {
+						if (snapshotElement.hasBase() && snapshotElement.getBase().hasPath() && !basePathList.contains(snapshotElement.getBase().getPath())) {
 							Resourcemetadata rBasePath = generateResourcemetadata(resource, chainedResource, chainedParameter+"base-path", snapshotElement.getBase().getPath());
 							resourcemetadataList.add(rBasePath);
+							basePathList.add(snapshotElement.getBase().getPath());
 						}
 
-						if (snapshotElement.hasPath()) {
+						if (snapshotElement.hasPath() && !basePathList.contains(snapshotElement.getPath())) {
 							Resourcemetadata rPath = generateResourcemetadata(resource, chainedResource, chainedParameter+"path", snapshotElement.getPath());
 							resourcemetadataList.add(rPath);
+							pathList.add(snapshotElement.getPath());
 						}
 
 						if (snapshotElement.hasBinding() && snapshotElement.getBinding().hasValueSet()) {
 							Resourcemetadata rValueSet = generateResourcemetadata(resource, chainedResource, chainedParameter+"valueset", snapshotElement.getBinding().getValueSet());
 							resourcemetadataList.add(rValueSet);
+						}
+					}
+				}
+			}
+
+			// base-path : token
+			// path : token
+			if (structureDefinition.hasDifferential()) {
+
+				if (structureDefinition.getDifferential().hasElement()) {
+
+					for (ElementDefinition differentialElement : structureDefinition.getDifferential().getElement()) {
+
+						if (differentialElement.hasBase() && differentialElement.getBase().hasPath() && !basePathList.contains(differentialElement.getBase().getPath())) {
+							Resourcemetadata rBasePath = generateResourcemetadata(resource, chainedResource, chainedParameter+"base-path", differentialElement.getBase().getPath());
+							resourcemetadataList.add(rBasePath);
+							basePathList.add(differentialElement.getBase().getPath());
+						}
+
+						if (differentialElement.hasPath() && !pathList.contains(differentialElement.getPath())) {
+							Resourcemetadata rPath = generateResourcemetadata(resource, chainedResource, chainedParameter+"path", differentialElement.getPath());
+							resourcemetadataList.add(rPath);
+							pathList.add(differentialElement.getPath());
 						}
 					}
 				}
