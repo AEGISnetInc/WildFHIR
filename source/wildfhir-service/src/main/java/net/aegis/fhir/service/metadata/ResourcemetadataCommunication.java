@@ -174,7 +174,7 @@ public class ResourcemetadataCommunication extends ResourcemetadataProxy {
 
 				for (Identifier identifier : communication.getIdentifier()) {
 
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"recipient", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
 					resourcemetadataList.add(rIdentifier);
 				}
 			}
