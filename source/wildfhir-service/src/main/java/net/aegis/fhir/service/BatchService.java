@@ -51,6 +51,9 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.hl7.fhir.r4.context.IWorkerContext;
+import org.hl7.fhir.r4.elementmodel.Element;
+import org.hl7.fhir.r4.elementmodel.ObjectConverter;
 import org.hl7.fhir.r4.formats.JsonParser;
 import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.model.Bundle;
@@ -70,6 +73,7 @@ import net.aegis.fhir.model.ResourceType;
 import net.aegis.fhir.service.util.ServicesUtil;
 import net.aegis.fhir.service.util.UTCDateUtil;
 import net.aegis.fhir.service.util.UUIDUtil;
+import net.aegis.fhir.service.validation.FHIRValidatorClient;
 
 /**
  * Batch services for performing a set of independent actions. Multiple actions on multiple
@@ -80,6 +84,7 @@ import net.aegis.fhir.service.util.UUIDUtil;
  * @author richard.ettema
  *
  */
+@SuppressWarnings("deprecation")
 @Stateless
 public class BatchService {
 
@@ -255,21 +260,13 @@ public class BatchService {
 
 										// Check for resource
 										if (bundlePostEntry.hasResource()) {
-											String resourceString = null;
-											if (contentType.indexOf("xml") >= 0) {
-												resourceString = xmlP.composeString(bundlePostEntry.getResource());
-											}
-											else {
-												resourceString = jsonP.composeString(bundlePostEntry.getResource());
-											}
-
 											/*
 											 *  Process resource contents to locate any variable references, urn:
 											 *  If all replacements are successful, continue with create; otherwise, skip
 											 *  and try again in the next cycle
 											 */
 											StringBuilder newResourceString = new StringBuilder("");
-											boolean processResult = processVariableReferences(resourceString, postFullUrlMap, newResourceString);
+											boolean processResult = processVariableReferences(bundlePostEntry.getResource(), postFullUrlMap, contentType, newResourceString);
 
 											if (processResult) {
 												Response createResponse = resourceOps.create(context, headers, requestHeaderParams, newResourceString.toString(), resourceType, resourceId);
@@ -337,21 +334,13 @@ public class BatchService {
 
 									// Check for resource
 									if (bundlePutEntry.hasResource()) {
-										String resourceString = null;
-										if (contentType.indexOf("xml") >= 0) {
-											resourceString = xmlP.composeString(bundlePutEntry.getResource());
-										}
-										else {
-											resourceString = jsonP.composeString(bundlePutEntry.getResource());
-										}
-
 										/*
 										 *  Process resource contents to locate any variable references, urn:
 										 *  If all replacements are successful, continue with update; otherwise, skip
 										 *  and try again in the next cycle
 										 */
 										StringBuilder newResourceString = new StringBuilder("");
-										boolean processResult = processVariableReferences(resourceString, postFullUrlMap, newResourceString);
+										boolean processResult = processVariableReferences(bundlePutEntry.getResource(), postFullUrlMap, contentType, newResourceString);
 
 										if (processResult) {
 											Response updateResponse = resourceOps.update(context, headers, requestHeaderParams, urlPathParams, resourceId, newResourceString.toString(), resourceType);
@@ -621,30 +610,55 @@ public class BatchService {
 	 * @param newResourceString
 	 * @return
 	 */
-	private boolean processVariableReferences(String resourceString, Map<String,String> postFullUrlMap, StringBuilder newResourceString) {
-		log.fine("===== BatchService - processVariableReferences - START");
+	private boolean processVariableReferences(Resource resource, Map<String,String> postFullUrlMap, String contentType, StringBuilder newResourceString) throws Exception {
+		log.info("===== BatchService - processVariableReferences(resource) - START");
 		boolean result = true;
 		String missingKey = "??";
 
+		// Convert resource to Element
+		IWorkerContext context = FHIRValidatorClient.instance().getContextR4();
+		ObjectConverter oc = new ObjectConverter(context);
+		Element resourceElement = oc.convert(resource);
+		List<Element> childrenToUpdate = this.getAllElementNestedChildren(resourceElement, "reference");
+
+		// Check id and reference elements for map key; if found, replace with map value if defined
 		for (Entry<String, String> e : postFullUrlMap.entrySet()) {
+			log.info("     ----- process map value [" + e.getValue() + "] for key [" + e.getKey() + "]");
+			for (Element childToUpdate : childrenToUpdate) {
+				log.info("           ----- process child element [" + childToUpdate.getName() + "]");
+				if (childToUpdate.hasValue()) {
+					String childValue = childToUpdate.getValue();
+					log.info("           ----- process child value [" + childValue + "]");
+					if (childValue.contains(e.getKey())) {
 
-			// Check for resource containing map key
-			if (resourceString.contains(e.getKey())) {
-
-				log.fine("     ----- BatchService - processVariableReferences - found map key [" + e.getKey() + "]");
-
-				if (e.getValue() != null && !e.getValue().isEmpty()) {
-					log.fine("     ----- BatchService - processVariableReferences - found map value [" + e.getValue() + "]");
-					resourceString = resourceString.replace(e.getKey(), e.getValue());
-					log.fine(resourceString);
-				}
-				else {
-					log.fine("     ----- BatchService - processVariableReferences - DID NOT FIND map value for key [" + e.getKey() + "]");
-					result = false;
-					missingKey = e.getKey();
-					break;
+						if (e.getValue() != null && !e.getValue().isEmpty()) {
+							log.info("     ----- BatchService - processVariableReferences - found map value [" + e.getValue() + "] for key [" + e.getKey() + "]");
+							childValue = childValue.replace(e.getKey(), e.getValue());
+							childToUpdate.setValue(childValue);
+							log.info(childValue);
+						}
+						else {
+							log.info("     ----- BatchService - processVariableReferences - DID NOT FIND map value for key [" + e.getKey() + "]");
+							result = false;
+							missingKey = e.getKey();
+							break;
+						}
+					}
 				}
 			}
+			if (result == false) {
+				break;
+			}
+		}
+
+		// Convert resourceElement back to resource and compose to string
+		Resource newResource = oc.convert(resourceElement);
+		String resourceString = null;
+		if (contentType.indexOf("xml") >= 0) {
+			resourceString = xmlP.composeString(newResource);
+		}
+		else {
+			resourceString = jsonP.composeString(newResource);
 		}
 
 		if (result) {
@@ -655,6 +669,26 @@ public class BatchService {
 		}
 
 		return result;
+	}
+
+	private List<Element> getAllElementNestedChildren(Element element, String name) {
+		List<Element> allChildren = new ArrayList<Element>();
+
+		// Start with element and recursively add all nested children with name
+		List<Element> elementChildren = element.getChildren();
+		for (Element childElement : elementChildren) {
+			if (childElement.getName().equals(name)) {
+				allChildren.add(childElement);
+			}
+			if (childElement.hasChildren()) {
+				List<Element> nestedChildren = this.getAllElementNestedChildren(childElement, name);
+				if (nestedChildren.size() > 0) {
+					allChildren.addAll(nestedChildren);
+				}
+			}
+		}
+
+		return allChildren;
 	}
 
 	/**
