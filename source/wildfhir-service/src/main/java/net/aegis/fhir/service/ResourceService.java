@@ -2962,14 +2962,13 @@ public class ResourceService {
 				sbCriteria.append(" and r1.versionId = (select max(r2.versionId) from resource r2 where r2.resourceType = r1.resourceType and r2.resourceId = r1.resourceId)");
 			}
 
+			List<Entry<String, List<String>>> compartmentSet = new ArrayList<Entry<String, List<String>>>();
+
+			Set<Entry<String, List<String>>> paramSet = new HashSet<Entry<String, List<String>>>();
 
 			if ((parameterMap != null && parameterMap.size() > 0) || (formMap != null && formMap.size() > 0) || (authPatientMap != null && authPatientMap.size() > 0)) {
 
 				HashMap<String, String[]> nearParams = new HashMap<String, String[]>();
-
-				List<Entry<String, List<String>>> compartmentSet = new ArrayList<Entry<String, List<String>>>();
-
-				Set<Entry<String, List<String>>> paramSet = new HashSet<Entry<String, List<String>>>();
 
 				// Include parameters from parameterMap if present
 				if (parameterMap != null) {
@@ -3033,23 +3032,6 @@ public class ResourceService {
 					}
 				}
 
-				// Nictiz Enhancement
-				// Iterate thru the parameter map for the pharmaceutical-treatment-identifier criteria if the resource type is null/empty
-				if (resourceType == null || resourceType.isEmpty()) {
-
-					for (Entry<String, List<String>> entry : paramSet) {
-
-						String key = entry.getKey();
-
-						for (String value : entry.getValue()) {
-
-							if (key.equals("pharmaceutical-treatment-identifier") && value != null && value.length() > 0) {
-								sbCriteria.append(" and r1.resourceType IN ('MedicationAdministration','MedicationDispense','MedicationRequest','MedicationStatement')");
-							}
-						}
-					}
-				}
-
 				int iExists = 0;
 				String sExistsBase = "rm";
 				String sExists = "rm";
@@ -3105,6 +3087,9 @@ public class ResourceService {
 						if (!isValidSearchParameter) {
 							//log.info("   -->  Resource Type is null and _type not defined; check for global parameter");
 							isValidSearchParameter = net.aegis.fhir.model.ResourceType.isSupportedResourceCriteriaType(null, key);
+							if (criteriaType == null || criteriaType.isEmpty()) {
+								criteriaType = net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(null, key);
+							}
 						}
 					}
 
@@ -4619,14 +4604,30 @@ public class ResourceService {
 			resourcesReturned = new ArrayList<net.aegis.fhir.model.Resource>();
 
 			if (parameterCount > 0 && !isValidSearchParameters) {
-				// ERROR - At least one parameter was processed but none were valid; return ERROR invalidParam and empty resources
+				/*
+				 * ERROR - return ERROR invalidParam and empty resources
+				 * - At least one parameter was processed but none were valid
+				 */
 				if (invalidParams != null) {
 					String[] invalidParam = new String[2];
 					invalidParam[0] = "ERROR";
 					invalidParam[1] = "Search operation processing stopped! No valid search parameters or values found!";
 					invalidParams.add(invalidParam);
-					log.severe("   --> Search operation processing stopped! No valid search parameters or values found!");
 				}
+				log.severe("   --> Search operation processing stopped! No valid search parameters or values found! (At least one parameter was processed but none were valid)");
+			}
+			else if ((validParams == null || validParams.isEmpty()) && !paramSet.isEmpty()) {
+				/*
+				 * ERROR - return ERROR invalidParam and empty resources
+				 * - At least one parameter was sent but none were valid
+				 */
+				if (invalidParams != null) {
+					String[] invalidParam = new String[2];
+					invalidParam[0] = "ERROR";
+					invalidParam[1] = "Search operation processing stopped! No valid search parameters or values found!";
+					invalidParams.add(invalidParam);
+				}
+				log.severe("   --> Search operation processing stopped! No valid search parameters or values found! (At least one parameter was sent but none were valid)");
 			}
 			else {
 				boolean needTransaction = false;
