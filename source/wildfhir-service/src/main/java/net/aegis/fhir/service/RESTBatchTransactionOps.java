@@ -85,6 +85,7 @@ public class RESTBatchTransactionOps {
 
         log.fine("[START] RESTBatchTransactionOps.batchTransaction()");
 
+        boolean txConcurrentLimitEnabled = false;
         Response.ResponseBuilder builder = null;
         String contentType = null;
         String producesType = null;
@@ -101,92 +102,133 @@ public class RESTBatchTransactionOps {
         }
 
 		try {
-			// Get the content type based on the request Content-Type
-			contentType = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.CONTENT_TYPE);
+			// Get the produces type based on the request Accept
+			producesType = ServicesUtil.INSTANCE.getProducesType(headers, context);
 
-			if (contentType != null && !contentType.equals(MediaType.APPLICATION_OCTET_STREAM)) {
-				// Get the produces type based on the request Accept
-				producesType = ServicesUtil.INSTANCE.getProducesType(headers, context);
+			/*
+			 * Global Batch, Transaction Concurrency Check
+			 * If concurrency limit is not enabled or
+			 *     (concurrency limit is enabled and limit is not exceeded)
+			 *   If concurrency limit is enabled
+			 *     Increment number of concurrent requests
+			 *   End If
+			 *   Allow processing to continue
+			 *   When this batch/transaction process is complete
+			 *     Always decrement number of concurrent requests
+			 * Else
+			 *   If concurrency limit is enabled
+			 *     Return 503 Service Unavailable
+			 *   End If
+			 * End If
+			 */
 
-				// Validate input format check; instantiate the Resource
-				Resource resource = null;
+			txConcurrentLimitEnabled = codeService.isSupported("txConcurrentLimit");
+			Integer txConcurrentLimitValue = codeService.findCodeIntValueByName("txConcurrentLimit");
 
-				if (contentType.indexOf("xml") >= 0) {
-					// Convert XML contents to Resource
-					XmlParser xmlP = new XmlParser();
-					resource = xmlP.parse(payload.getBytes());
+			if (txConcurrentLimitEnabled == false ||
+					(txConcurrentLimitEnabled == true && !BatchTransactionConcurrencyService.instance().isLimitExceeded(txConcurrentLimitValue))) {
+
+				if (txConcurrentLimitEnabled == true) {
+					BatchTransactionConcurrencyService.instance().increment();
 				}
-				else if (contentType.indexOf("json") >= 0) {
-					// Convert JSON contents to Resource
-					JsonParser jsonP = new JsonParser();
-					resource = jsonP.parse(payload.getBytes());
-				}
-				else {
-					// contentType did not contain a valid media type or was null; attempt to determine based on starting character
-					int firstValid = payload.indexOf("<"); // check for xml first
-					if (firstValid > -1 && firstValid < 5) {
-						if (firstValid > 0) {
-							payload = payload.substring(firstValid);
-						}
+
+				// Get the content type based on the request Content-Type
+				contentType = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.CONTENT_TYPE);
+
+				if (contentType != null && !contentType.equals(MediaType.APPLICATION_OCTET_STREAM)) {
+
+					// Validate input format check; instantiate the Resource
+					Resource resource = null;
+
+					if (contentType.indexOf("xml") >= 0) {
 						// Convert XML contents to Resource
 						XmlParser xmlP = new XmlParser();
 						resource = xmlP.parse(payload.getBytes());
 					}
+					else if (contentType.indexOf("json") >= 0) {
+						// Convert JSON contents to Resource
+						JsonParser jsonP = new JsonParser();
+						resource = jsonP.parse(payload.getBytes());
+					}
 					else {
-						firstValid = payload.indexOf("{"); // check for json next
+						// contentType did not contain a valid media type or was null; attempt to determine based on starting character
+						int firstValid = payload.indexOf("<"); // check for xml first
 						if (firstValid > -1 && firstValid < 5) {
 							if (firstValid > 0) {
 								payload = payload.substring(firstValid);
 							}
-							// Convert JSON contents to Resource
-							JsonParser jsonP = new JsonParser();
-							resource = jsonP.parse(payload.getBytes());
+							// Convert XML contents to Resource
+							XmlParser xmlP = new XmlParser();
+							resource = xmlP.parse(payload.getBytes());
+						}
+						else {
+							firstValid = payload.indexOf("{"); // check for json next
+							if (firstValid > -1 && firstValid < 5) {
+								if (firstValid > 0) {
+									payload = payload.substring(firstValid);
+								}
+								// Convert JSON contents to Resource
+								JsonParser jsonP = new JsonParser();
+								resource = jsonP.parse(payload.getBytes());
+							}
 						}
 					}
-				}
 
-				// Verify resource contents are Bundle of type 'batch' or 'transaction'
-				if (resource != null && resource.getResourceType().equals(org.hl7.fhir.r4.model.ResourceType.Bundle)) {
+					// Verify resource contents are Bundle of type 'batch' or 'transaction'
+					if (resource != null && resource.getResourceType().equals(org.hl7.fhir.r4.model.ResourceType.Bundle)) {
 
-		        	List<String> authMapPatient = null;
+		        		List<String> authMapPatient = null;
 
-		        	String locationPath = context.getRequestUri().toString();
+		        		String locationPath = context.getRequestUri().toString();
 
-					Bundle bundleToProcess = (Bundle) resource;
+						Bundle bundleToProcess = (Bundle) resource;
 
-					// If 'batch', call batch processing
-					if (bundleToProcess.hasType() && bundleToProcess.getType().equals(BundleType.BATCH)) {
+						// If 'batch', call batch processing
+						if (bundleToProcess.hasType() && bundleToProcess.getType().equals(BundleType.BATCH)) {
 
-						ResourceContainer resourceContainer = batchService.batch(context, headers, contentType, producesType, bundleToProcess, locationPath, authMapPatient);
+							ResourceContainer resourceContainer = batchService.batch(context, headers, contentType, producesType, bundleToProcess, locationPath, authMapPatient);
 
-						builder = responseBundle(producesType, resourceContainer, locationPath, responseFhirVersion);
+							builder = responseBundle(producesType, resourceContainer, locationPath, responseFhirVersion);
+						}
+						// Else if 'transaction', call transaction processing
+						else if (bundleToProcess.hasType() && bundleToProcess.getType().equals(BundleType.TRANSACTION)) {
+
+							ResourceContainer resourceContainer = transactionService.transaction(context, headers, contentType, producesType, bundleToProcess, locationPath, authMapPatient);
+
+							builder = responseBundle(producesType, resourceContainer, locationPath, responseFhirVersion);
+						}
+						// Else report error 'invalid Bundle.type'
+						else {
+							outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, "Bundle resource type is undefined or not set to 'batch' or 'transaction'.", null, null, producesType);
+
+							builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+						}
 					}
-					// Else if 'transaction', call transaction processing
-					else if (bundleToProcess.hasType() && bundleToProcess.getType().equals(BundleType.TRANSACTION)) {
-
-						ResourceContainer resourceContainer = transactionService.transaction(context, headers, contentType, producesType, bundleToProcess, locationPath, authMapPatient);
-
-						builder = responseBundle(producesType, resourceContainer, locationPath, responseFhirVersion);
-					}
-					// Else report error 'invalid Bundle.type'
 					else {
-						outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, "Bundle resource type is undefined or not set to 'batch' or 'transaction'.", null, null, producesType);
+						// Resource is empty or not a Bundle, report error
+						outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, "Payload is empty or not a valid Bundle resource instance.", null, null, producesType);
 
 						builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 					}
 				}
 				else {
-					// Resource is empty or not a Bundle, report error
-					outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, "Payload is empty or not a valid Bundle resource instance.", null, null, producesType);
+					// Request Content-Type was empty or set to MediaType.APPLICATION_OCTET_STREAM, report error "415 (Unsupported Media Type)"
+					outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, "The required request Content-Type mime type is not defined or not supported.", null, "HTTP Header Content-Type", producesType);
 
-					builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+					builder = Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 				}
 			}
 			else {
-				// Request Content-Type was empty or set to MediaType.APPLICATION_OCTET_STREAM, report error "415 (Unsupported Media Type)"
-				outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, "The required request Content-Type mime type is not defined or not supported.", null, "HTTP Header Content-Type", producesType);
+				if (txConcurrentLimitEnabled == true) {
+			        log.warning("Concurrent processing enabled and limit exceeded, report error 503 (Service Unavailable)");
 
-				builder = Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+			        // Concurrent processing enabled and limit exceeded, report error "503 (Service Unavailable)"
+					outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.THROTTLED, "The request cannot be processed at this time. Too busy.", null, null, producesType);
+
+					builder = Response.status(Response.Status.SERVICE_UNAVAILABLE).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion).header("Retry-After", "120");
+
+					txConcurrentLimitEnabled = false;
+				}
 			}
 		}
 		catch (Exception e) {
@@ -196,6 +238,12 @@ public class RESTBatchTransactionOps {
 			builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 
 			e.printStackTrace();
+		}
+		finally {
+			if (txConcurrentLimitEnabled == true) {
+				// Always decrement concurrent number
+				BatchTransactionConcurrencyService.instance().decrement();
+			}
 		}
 
 		return builder.build();
