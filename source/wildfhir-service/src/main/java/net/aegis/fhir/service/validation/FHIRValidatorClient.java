@@ -49,11 +49,14 @@ import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.renderers.RendererFactory;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
 import org.hl7.fhir.r5.renderers.utils.ResourceWrapper;
+import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor;
+import org.hl7.fhir.r5.utils.validation.constants.ReferenceValidationPolicy;
 import org.hl7.fhir.utilities.FhirPublication;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
 import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.validation.ValidationEngine;
 import org.hl7.fhir.validation.ValidationEngine.ValidationEngineBuilder;
+import org.hl7.fhir.validation.instance.advisor.BasePolicyAdvisorForFullValidation;
 
 import net.aegis.fhir.service.util.ServicesUtil;
 
@@ -92,6 +95,9 @@ public class FHIRValidatorClient {
 
 			ValidationEngineBuilder builder = new ValidationEngine.ValidationEngineBuilder();
 			engine = builder.fromSource("hl7.fhir.r4.core");
+
+			IValidationPolicyAdvisor policyAdvisor = new BasePolicyAdvisorForFullValidation(ReferenceValidationPolicy.IGNORE);
+			engine.setPolicyAdvisor(policyAdvisor);
 
 			// Check for additional packages via environment variable
 			String fhirPackages = System.getenv(FHIR_PACKAGES_ENV_VAR);
