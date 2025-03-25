@@ -1,0 +1,62 @@
+{
+  "resourceType" : "Requirements",
+  "id" : "wildfhirce-responder-patient-purge",
+  "url": "http://wildfhir.aegis.net/ig/wildfhirce/Requirements/wildfhirce-responder-patient-purge",
+  "name": "WildFHIRCEResponderPatientPurge",
+  "title": "WildFHIR Community Edition R4 Requirements for Responder support of the Patient Purge operation",
+  "status" : "draft",
+  "date": "2025-03-24",
+  "publisher": "AEGIS.net, Inc.",
+  "contact": [
+    {
+      "name": "AEGIS.net, Inc.",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://www.aegis.net"
+        }
+      ]
+    }
+  ],
+  "description" : "WildFHIR Community Edition R4 Requirements for Patient Purge operation",
+  "copyright": "(c) AEGIS.net, Inc. 2025",
+  "actor" : [
+    "http://wildfhir.aegis.net/ig/wildfhirce/ActorDefinition/wildfhirce-responder"
+  ],
+  "statement" : [
+    {
+      "key" : "patient-purge-success",
+      "label" : "patient-purge-success",
+      "conformance" : [
+        "SHALL"
+      ],
+      "requirement" : "When supporting the Patient Purge operation, a WildFHIR Community Edition R4 Responder **SHALL** return an OperationOutcome with at least one information issue describing the success of the operation.",
+      "satisfiedBy" : [
+        "http://wildfhir.aegis.net/tg/wildfhirce/TestScript-wildfhircer4patientpurgejson.html",
+        "http://wildfhir.aegis.net/tg/wildfhirce/TestScript-wildfhircer4patientpurgexml.html"
+      ],
+      "source" : [
+        {
+          "display" : "AEGIS.net, Inc."
+        }
+      ]
+    },
+    {
+      "key" : "patient-purge-failure",
+      "label" : "patient-purge-failure",
+      "conformance" : [
+        "SHALL"
+      ],
+      "requirement" : "When supporting the Patient Purge operation, a WildFHIR Community Edition R4 Responder **SHALL** return an OperationOutcome with at least one error issue describing the failure of the operation.",
+      "satisfiedBy" : [
+        "http://wildfhir.aegis.net/tg/wildfhirce/TestScript-wildfhircer4patientpurgejson.html",
+        "http://wildfhir.aegis.net/tg/wildfhirce/TestScript-wildfhircer4patientpurgexml.html"
+      ],
+      "source" : [
+        {
+          "display" : "AEGIS.net, Inc."
+        }
+      ]
+    }
+  ]
+}

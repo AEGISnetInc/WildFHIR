@@ -1,25 +1,24 @@
 
 ### About This Guide
 
-The AEGIS WildFHIR Community Edition R4 Implementation Guide defines the custom operations that have been implemented on the deployed AEGIS WildFHIR CE R4 server, http://wildfhir.aegis.net/r4, and can optionally be implemented on other FHIR R4 servers.  
+The AEGIS WildFHIR Community Edition R4 Implementation Guide defines the minimum conformance requirements for implementing optional operations on a FHIR R4 server.  
 
 #### Actors
 
 The following actors are part of the AEGIS WildFHIR Community Edition R4 IG:
 
-* FHIR Client: An application that implements the sending of FHIR conformant request messages.
-* FHIR Server: An application that implements the receiving of FHIR conformant request messages.
+* [WildFHIR Community Edition R4 Requestor](ActorDefinition-wildfhirce-requestor.html): An application or product that initiates a custom operation request conformant to the AEGIS WildFHIR Community Edition R4 IG. This can be thought of as the client in a client-server interaction.
+* [WildFHIR Community Edition R4 Responder](ActorDefinition-wildfhirce-responder.html): An application or product that responds to a custom operation request conformant to the AEGIS WildFHIR Community Edition R4 IG. This can be thought of as the server in a client-server interaction.
 
 
 #### Operations
 
 The list of AEGIS WildFHIR Community Edition R4 Operations is shown below.
 
-|[Capability Reload Operation](OperationDefinition-wildfhir-operation-capability-reload.html)|
-|[Code Configuration Operation](OperationDefinition-wildfhir-operation-code-configuration.html)|
-|[Convert Format Operation](OperationDefinition-wildfhir-operation-convert-format.html)|
-|[Patient Purge Operation](OperationDefinition-wildfhir-operation-patient-purge.html)|
-|[Purge All Operation](OperationDefinition-wildfhir-operation-purge-all.html)|
+|[Convert Format Operation](OperationDefinition-wildfhirce-operation-convert-format.html)|
+|[Load Examples Operation](OperationDefinition-wildfhirce-operation-load-examples.html)|
+|[Patient Purge Operation](OperationDefinition-wildfhirce-operation-patient-purge.html)|
+|[Purge All Operation](OperationDefinition-wildfhirce-operation-purge-all.html)|
 
 
 ### Authors and Contributors
