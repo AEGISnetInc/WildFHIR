@@ -3,15 +3,16 @@
 # The AEGIS WildFHIR R4 IG is not intended to be published as an official HL7 IG
 WARNING: 1: The HTML fragment 'ip-statements.xhtml' is not included anywhere in the produced implementation guide
 WARNING: 2: An HTML fragment from the set [cross-version-analysis.xhtml, cross-version-analysis-inline.xhtml] is not included anywhere in the produced implementation guide
-WARNING: 3: An HTML fragment from the set [dependency-table.xhtml, dependency-table-short.xhtml] is not included anywhere in the produced implementation guide
+WARNING: 3: An HTML fragment from the set [dependency-table.xhtml, dependency-table-short.xhtml, dependency-table-nontech.xhtml] is not included anywhere in the produced implementation guide
 WARNING: 4: The HTML fragment 'globals-table.xhtml' is not included anywhere in the produced implementation guide
 
-# IG Publisher warnings when running without a terminology server "-tx n/a"
-WARNING: ImplementationGuide/net.aegis.wildfhir4.ig.wildfhir: ImplementationGuide.jurisdiction[0].coding[0].system: A definition for CodeSystem 'http://unstats.un.org/unsd/methods/m49/m49.htm' could not be found, so the code cannot be validated
-WARNING: ImplementationGuide/net.aegis.wildfhir4.ig.wildfhir: ImplementationGuide.jurisdiction[0]: Unable to check whether the code is in the value set 'http://hl7.org/fhir/ValueSet/jurisdiction|4.0.1' because the code system http://unstats.un.org/unsd/methods/m49/m49.htm was not found
-WARNING: OperationDefinition/wildfhir-operation-convert-format: OperationDefinition.jurisdiction[0].coding[0].system: A definition for CodeSystem 'http://unstats.un.org/unsd/methods/m49/m49.htm' could not be found, so the code cannot be validated
-WARNING: OperationDefinition/wildfhir-operation-convert-format: OperationDefinition.jurisdiction[0]: Unable to check whether the code is in the value set 'http://hl7.org/fhir/ValueSet/jurisdiction|4.0.1' because the code system http://unstats.un.org/unsd/methods/m49/m49.htm was not found
-WARNING: OperationDefinition/wildfhir-operation-patient-purge: OperationDefinition.jurisdiction[0].coding[0].system: A definition for CodeSystem 'http://unstats.un.org/unsd/methods/m49/m49.htm' could not be found, so the code cannot be validated
-WARNING: OperationDefinition/wildfhir-operation-patient-purge: OperationDefinition.jurisdiction[0]: Unable to check whether the code is in the value set 'http://hl7.org/fhir/ValueSet/jurisdiction|4.0.1' because the code system http://unstats.un.org/unsd/methods/m49/m49.htm was not found
-WARNING: OperationDefinition/wildfhir-operation-purge-all: OperationDefinition.jurisdiction[0].coding[0].system: A definition for CodeSystem 'http://unstats.un.org/unsd/methods/m49/m49.htm' could not be found, so the code cannot be validated
-WARNING: OperationDefinition/wildfhir-operation-purge-all: OperationDefinition.jurisdiction[0]: Unable to check whether the code is in the value set 'http://hl7.org/fhir/ValueSet/jurisdiction|4.0.1' because the code system http://unstats.un.org/unsd/methods/m49/m49.htm was not found
+# Use of FHIR R5 conformance resources in FHIR R4 IG
+INFORMATION: ActorDefinition/wildfhirce-requestor: ActorDefinition.jurisdiction[0]: Reference to deprecated ValueSet http://hl7.org/fhir/5.0/ValueSet/jurisdiction|5.0.0
+INFORMATION: ActorDefinition/wildfhirce-responder: ActorDefinition.jurisdiction[0]: Reference to deprecated ValueSet http://hl7.org/fhir/5.0/ValueSet/jurisdiction|5.0.0
+INFORMATION: Requirements/wildfhirce-responder-patient-purge: Requirements.jurisdiction[0]: Reference to deprecated ValueSet http://hl7.org/fhir/5.0/ValueSet/jurisdiction|5.0.0
+
+# Use of relative fixture reference in R4 TestScripts
+ERROR: TestScript/wildfhircer4patientpurgeusageexamplejson: TestScript.fixture[0].resource: Unable to resolve resource with reference './Patient-wildfhirce-patient-purge.json'
+ERROR: TestScript/wildfhircer4patientpurgeusageexamplejson: TestScript.fixture[1].resource: Unable to resolve resource with reference './Observation-wildfhirce-observation-purge.json'
+ERROR: TestScript/wildfhircer4patientpurgeusageexamplexml: TestScript.fixture[0].resource: Unable to resolve resource with reference './Patient-wildfhirce-patient-purge.xml'
+ERROR: TestScript/wildfhircer4patientpurgeusageexamplexml: TestScript.fixture[1].resource: Unable to resolve resource with reference './Observation-wildfhirce-observation-purge.xml'

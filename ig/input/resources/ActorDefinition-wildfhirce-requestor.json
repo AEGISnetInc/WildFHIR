@@ -1,0 +1,25 @@
+{
+  "resourceType" : "ActorDefinition",
+  "id" : "wildfhirce-requestor",
+  "url" : "http://wildfhir.aegis.net/ig/wildfhirce/ActorDefinition/wildfhirce-requestor",
+  "name" : "WildFHIRCER4Requestor",
+  "title" : "WildFHIR Community Edition R4 Requestor",
+  "status" : "draft",
+  "date": "2025-03-24",
+  "publisher": "AEGIS.net, Inc.",
+  "contact": [
+    {
+      "name": "AEGIS.net, Inc.",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://www.aegis.net"
+        }
+      ]
+    }
+  ],
+  "description" : "WildFHIR Community Edition R4 Requestor actor",
+  "copyright": "(c) AEGIS.net, Inc. 2025",
+  "type" : "system",
+  "documentation" : "An application or product that initiates a custom operation request conformant to the AEGIS WildFHIR Community Edition R4 IG. This can be thought of as the client in a client-server interaction."
+}

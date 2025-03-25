@@ -1,5 +1,8 @@
 
-The operation can be invoked using the GET Syntax as all parameters are primitive types:
+**WARNING** This operation purges ALL data for the specified Patient in the WildFHIR data repository and cannot be undone. Please use with caution.
+{:.dragon}
+
+The operation can be invoked using the GET Syntax if the complex type parameter is omitted:
 
 `GET [base]/Patient/[id]/$purge?{parameters}`
 
@@ -14,7 +17,7 @@ Otherwise the POST transaction is used as follows:
 **Request the purge of all related data for a patient using `GET` syntax**
 
 ~~~
-GET [base]/Patient/[id]/$purge?start=2015-01-01&end=2018-12-31
+GET [base]/Patient/[id]/$purge?start=2015-01-01
 [other headers]
 ~~~
 
@@ -42,14 +45,14 @@ POST [base]/Patient/[id]/$purge
     </Parameters>
 ~~~
 
-**Response** (for both GET and POST)
+**Response**
 
 ~~~
 HTTP/1.1 200 OK
 [other headers]
 ~~~
 
-**Response body:** (for both GET and POST)
+**Response body:**
 
 ~~~
     <?xml version="1.0" encoding="UTF-8"?>

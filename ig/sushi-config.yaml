@@ -5,14 +5,14 @@
 # │  configuration from now on. You may delete your package.json as it is no longer needed.        │
 # ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-# ╭──────────────────ImplementationGuide-net.aegis.touchstone.fhir.testing.json────────────────────╮
+# ╭──────────────────ImplementationGuide-net.aegis.wildfhir.ig.wildfhirce.json─────────────────────╮
 # │  The properties below are used to create the ImplementationGuide resource. For a list of       │
 # │  supported properties, see:                                                                    │
 # │  http://build.fhir.org/ig/HL7/fhir-shorthand/branches/beta/sushi.html#ig-development           │
 # ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
 id: net.aegis.wildfhir.ig.wildfhirce
 canonical: http://wildfhir.aegis.net/ig/wildfhirce
-version: 0.3.0
+version: 0.5.0
 name: WildFHIRCEIG
 title: WildFHIR CE IG
 status: active
@@ -47,7 +47,7 @@ parameters:
   excludemap: 'true'
   validation: 'allow-any-extensions'
 
-copyrightYear: 2024+
+copyrightYear: 2025+
 releaseLabel: current
 jurisdiction: http://unstats.un.org/unsd/methods/m49/m49.htm#001 "World"
 
@@ -58,6 +58,7 @@ jurisdiction: http://unstats.un.org/unsd/methods/m49/m49.htm#001 "World"
 menu:
   Home: index.html
   Contents: toc.html
+  Usage: usage.html
   Artifacts: artifacts.html
   Safety and Security: safety_security.html
   Support:
@@ -66,6 +67,8 @@ menu:
 pages:
   index.md:
     title: Home
+  usage.md:
+    title: Usage
   safety_security.md:
     title: Safety and Security
   downloads.md:
@@ -77,4 +80,13 @@ pages:
 # │  To control the package-list.json using this config, uncomment and set the "history" property. │
 # ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-# resources:
+resources:
+  Patient/wildfhirce-patient-purge:
+    name: Patient for WildFHIR CE Purge
+    description: Patient for WildFHIR CE Purge
+    exampleCanonical: http://hl7.org/fhir/StructureDefinition/Patient
+
+  Observation/wildfhirce-observation-purge:
+    name: Observation for WildFHIR CE Purge
+    description: Observation for WildFHIR CE Purge
+    exampleCanonical: http://hl7.org/fhir/StructureDefinition/Observation
