@@ -14,7 +14,7 @@ id: net.aegis.wildfhir.ig.wildfhirce
 canonical: http://wildfhir.aegis.net/ig/wildfhirce
 version: 0.5.0
 name: WildFHIRCEIG
-title: WildFHIR CE IG
+title: WildFHIR Community Edition Implementation Guide
 status: active
 publisher:
   name: 'AEGIS.net, Inc.'
