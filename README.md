@@ -11,10 +11,9 @@ This project is Open Source, licensed under the Apache Software License 2.0.
 
 ## CI/CD
 
-### [Touchstone Testing Results for 0.4.0](https://touchstone.aegis.net/touchstone/conformance/detail?suite=FHIR4-0-1-Basic-Server&sVersion=26&testSystem=663543e06ee10f32b53012de&supportedOnly=false&cb=%2fFHIR4-0-1-Basic&format=ALL&published=true)
+### [Touchstone Testing Results for 0.5.0](https://touchstone.aegis.net/touchstone/conformance/detail?suite=FHIR4-0-1-Basic-Server&sVersion=30&testSystem=663543e06ee10f32b53012de&supportedOnly=false&cb=%2fFHIR4-0-1-Standard-Server&format=ALL&published=true)
 
-<img src="100 percent TS WildFHIR CE.png" width="240" height="240">
-<img src="Interaction Details.png" width="240" height="240">
+<img src="WildFHIRCEv0.5.0Badge2025-03-27.png" width="286" height="430">
 
 
 ## Containerized Version of WildFHIR
@@ -29,9 +28,9 @@ Docker images may be found here:
 
 Complete project documentation is available on our [Wiki][link-docs].
 
-The WildFHIR CE R4 Implementation Guide is available here: [wildfhir.aegis.net/ig/wildfhirce]( https://wildfhir.aegis.net/ig/wildfhirce)
+The WildFHIR CE R4 Implementation Guide is available here: [wildfhir.aegis.net/ig/wildfhirce](https://wildfhir.aegis.net/ig/wildfhirce)
 
-A demonstration of this project is available here: [wildfhir.aegis.net/r4]( https://wildfhir.aegis.net/r4)
+A demonstration of this project is available here: [wildfhir.aegis.net/r4](https://wildfhir.aegis.net/r4)
 
 Please see [this wiki page][Link-wiki] for information on where to get help with WildFHIR.
 
