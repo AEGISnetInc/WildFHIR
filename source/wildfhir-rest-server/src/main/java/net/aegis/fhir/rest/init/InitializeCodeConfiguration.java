@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import net.aegis.fhir.model.Code;
 import net.aegis.fhir.service.CodeService;
+import net.aegis.fhir.service.util.StringUtils;
 
 /**
  * @author richard.ettema
@@ -66,7 +67,11 @@ public class InitializeCodeConfiguration extends HttpServlet {
 		Map.entry("WILDFHIR_UPDATERESPONSEPAYLOAD", "updateResponsePayload"),
 		Map.entry("WILDFHIR_RESOURCEPURGEALLENABLED", "resourcePurgeAllEnabled"),
 		Map.entry("WILDFHIR_LASTNPROCESSEMPTYDATE", "lastnProcessEmptyDate"),
-		Map.entry("WILDFHIR_LASTNEMPTYDATEVALUE", "lastnEmptyDateValue")
+		Map.entry("WILDFHIR_LASTNEMPTYDATEVALUE", "lastnEmptyDateValue"),
+		Map.entry("WILDFHIR_AUDITEVENTSERVICEENABLED", "auditEventServiceEnabled"),
+		Map.entry("WILDFHIR_PROVENANCESERVICEENABLED", "provenanceServiceEnabled"),
+		Map.entry("WILDFHIR_SUBSCRIPTIONSERVICEENABLED", "subscriptionServiceEnabled"),
+		Map.entry("WILDFHIR_TXCONCURRENTLIMIT", "txConcurrentLimit")
 	));
 
 	@Inject
@@ -97,30 +102,50 @@ public class InitializeCodeConfiguration extends HttpServlet {
 		String envValue;
 
 		try {
+			// Get the code configuration record
+			Code code = codeService.findCodeByName(v);
+
 			envValue = System.getenv(k);
 
-			if (envValue != null && !envValue.isEmpty()) {
-				// Get the code configuration record
-				Code code = codeService.findCodeByName(v);
+			if (code != null) {
 
-				if (code != null) {
-					code.setValue(envValue);
+				if (envValue != null && !envValue.isEmpty()) {
+
 					// Check for boolean value
 					if (envValue.equals("true")) {
+						code.setValue(envValue);
 						code.setIntValue(1);
 					}
 					else if (envValue.equals("false")) {
+						code.setValue(envValue);
 						code.setIntValue(0);
 					}
+					else if (StringUtils.isNumeric(envValue)) {
+						Integer intValue = Integer.getInteger(envValue);
+						code.setIntValue(intValue);
+						if (intValue > 0) {
+							code.setValue("true");
+						}
+						else {
+							code.setValue("false");
+						}
+					}
+					else {
+						code.setValue(envValue);
+						code.setIntValue(0);
+					}
+
+					// Update code configuration record
+					codeService.update(code);
+
+					log.info("Init Configuration - " + v + " = " + code.getValue() + " int = " + code.getIntValue());
 				}
-
-				// Update code configuration record
-				codeService.update(code);
-
-				log.info("InitializeCodeConfiguration - " + v + " = " + envValue);
+				else {
+					log.info("Init Configuration - " + v + " = " + code.getValue() + " int = " + code.getIntValue() + " unchanged");
+				}
 			}
 			else {
-				log.info("InitializeCodeConfiguration - " + v + " unchanged");
+				log.warn("Init Configuration - " + v + " = " + " code not defined!");
 			}
 		} catch (Exception e) {
 			log.error("InitializeCodeConfiguration - " + v + " error! " + e.getMessage());
