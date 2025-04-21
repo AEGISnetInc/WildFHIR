@@ -20,13 +20,13 @@ Class-Path: httpclient-4.5.10.jar httpcore-4.4.13.jar commons-logging-1.
  .1.3.jar xmlresolver-5.2.1-data.jar org.hl7.fhir.validation-6.5.17.jar 
  gson-2.8.9.jar commons-collections4-4.4.jar byte-buddy-1.14.9.jar thyme
  leaf-3.1.2.RELEASE.jar ognl-3.3.4.jar javassist-3.29.0-GA.jar attoparse
- r-2.0.7.RELEASE.jar unbescape-1.1.6.RELEASE.jar wildfhir-model-0.5.0.ja
- r wildfhir-service-0.5.0.jar jta-1.1.jar javax.servlet-api-4.0.1.jar jo
- da-time-2.12.5.jar okhttp-4.10.0.jar okio-jvm-3.0.0.jar kotlin-stdlib-j
- dk8-1.6.10.jar kotlin-stdlib-1.6.20.jar annotations-13.0.jar kotlin-std
- lib-common-1.5.31.jar kotlin-stdlib-jdk7-1.6.10.jar logging-interceptor
- -4.10.0.jar commons-jcs-core-2.0-beta-1.jar mysql-connector-j-8.0.33.ja
- r protobuf-java-3.21.9.jar commonmark-0.12.1.jar commonmark-ext-gfm-tab
- les-0.12.1.jar txtmark-0.13.jar zjsonpatch-0.4.11.jar xml-patch-0.3.1.j
- ar jdom2-2.0.6.jar
+ r-2.0.7.RELEASE.jar unbescape-1.1.6.RELEASE.jar wildfhir-model-0.5.1-SN
+ APSHOT.jar wildfhir-service-0.5.1-SNAPSHOT.jar jta-1.1.jar javax.servle
+ t-api-4.0.1.jar joda-time-2.12.5.jar okhttp-4.10.0.jar okio-jvm-3.0.0.j
+ ar kotlin-stdlib-jdk8-1.6.10.jar kotlin-stdlib-1.6.20.jar annotations-1
+ 3.0.jar kotlin-stdlib-common-1.5.31.jar kotlin-stdlib-jdk7-1.6.10.jar l
+ ogging-interceptor-4.10.0.jar commons-jcs-core-2.0-beta-1.jar mysql-con
+ nector-j-8.0.33.jar protobuf-java-3.21.9.jar commonmark-0.12.1.jar comm
+ onmark-ext-gfm-tables-0.12.1.jar txtmark-0.13.jar zjsonpatch-0.4.11.jar
+  xml-patch-0.3.1.jar jdom2-2.0.6.jar
 

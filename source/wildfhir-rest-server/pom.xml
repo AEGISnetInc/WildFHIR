@@ -5,7 +5,7 @@
     <parent>
         <groupId>net.aegis.fhir</groupId>
         <artifactId>wildfhir</artifactId>
-        <version>0.5.0</version>
+        <version>0.5.1-SNAPSHOT</version>
     </parent>
     <artifactId>wildfhir-rest-server</artifactId>
     <packaging>war</packaging>
