@@ -194,7 +194,8 @@ public class ConformanceResourceRESTService {
 						if (resourceContents != null && resourceContents.length > 0) {
 
 							if (producesType.contains("xml")) {
-								builder = builder.entity(new String(resourceContents));
+								String sConformance = new String(resourceContents);
+								builder = builder.entity(new String(resourceContents)).header(HttpHeaders.CONTENT_LENGTH, sConformance.getBytes("UTF-8").length);
 							}
 							else {
 								// Convert XML contents to JSON
@@ -208,7 +209,7 @@ public class ConformanceResourceRESTService {
 								jsonParser.compose(oConformance, conformance);
 								String sConformance = oConformance.toString();
 
-								builder = builder.entity(sConformance);
+								builder = builder.entity(sConformance).header(HttpHeaders.CONTENT_LENGTH, sConformance.getBytes("UTF-8").length);;
 							}
 						}
 						else {

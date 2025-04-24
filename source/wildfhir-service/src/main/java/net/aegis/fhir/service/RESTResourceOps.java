@@ -2218,7 +2218,7 @@ public class RESTResourceOps {
                         sResourceSearch = oResourceSearch.toString();
                     }
 
-                    builder = builder.entity(sResourceSearch);
+                    builder = builder.entity(sResourceSearch).header(HttpHeaders.CONTENT_LENGTH, sResourceSearch.getBytes("UTF-8").length);
 
                 } else {
                 	// Response status is not OK;; build OperationOutcome response resource
@@ -2382,7 +2382,8 @@ public class RESTResourceOps {
         	if (resourceContainer.getResource().getResourceContents() != null) {
 	            if (producesType.indexOf("xml") >= 0) {
 	            	String out = new String(resourceContainer.getResource().getResourceContents());
-	                builder = builder.entity(out).tag(eTag).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+	                builder = builder.entity(out).tag(eTag).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion)
+	                		.header(HttpHeaders.CONTENT_LENGTH, out.getBytes("UTF-8").length);
 
 	            } else {
 	                // Convert XML contents to JSON
@@ -2395,7 +2396,8 @@ public class RESTResourceOps {
 	                jsonParser.compose(oResource, resource);
 	                String sResource = oResource.toString();
 
-	                builder = builder.entity(sResource).tag(eTag).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+	                builder = builder.entity(sResource).tag(eTag).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion)
+	                		.header(HttpHeaders.CONTENT_LENGTH, sResource.getBytes("UTF-8").length);
 	            }
         	}
         	else {

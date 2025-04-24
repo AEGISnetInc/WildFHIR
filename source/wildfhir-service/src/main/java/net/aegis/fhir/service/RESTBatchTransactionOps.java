@@ -259,83 +259,84 @@ public class RESTBatchTransactionOps {
     * @throws URISyntaxException
     * @throws Exception
     */
-   private Response.ResponseBuilder responseBundle(String producesType, ResourceContainer resourceContainer, String locationPath, String responseFhirVersion)
-           throws URISyntaxException, Exception {
+	private Response.ResponseBuilder responseBundle(String producesType, ResourceContainer resourceContainer,
+			String locationPath, String responseFhirVersion) throws URISyntaxException, Exception {
 
-       log.fine("[START] RESTBatchTransactionOps.responseBundle()");
+		log.fine("[START] RESTBatchTransactionOps.responseBundle()");
 
-   	Response.ResponseBuilder builder;
-       ByteArrayOutputStream oResourceBundle;
+		Response.ResponseBuilder builder;
+		ByteArrayOutputStream oResourceBundle;
 
-       if (resourceContainer != null) {
-           builder = Response.status(resourceContainer.getResponseStatus()).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+		if (resourceContainer != null) {
+			builder = Response.status(resourceContainer.getResponseStatus()).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 
-           if (resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
-               // Define URI location
-               URI resourceLocation = new URI(locationPath);
-               builder = builder.contentLocation(resourceLocation);
+			if (resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
+				// Define URI location
+				URI resourceLocation = new URI(locationPath);
+				builder = builder.contentLocation(resourceLocation);
 
-               if (resourceContainer.getBundle() != null) {
+				if (resourceContainer.getBundle() != null) {
 
-                   String sResourceBundle = "";
+					String sResourceBundle = "";
 
-                   if (producesType.indexOf("xml") >= 0) {
-                       // Convert Bundle to XML
-                       oResourceBundle = new ByteArrayOutputStream();
-       				XmlParser xmlParser = new XmlParser();
-       				xmlParser.setOutputStyle(OutputStyle.PRETTY);
-       				xmlParser.compose(oResourceBundle, resourceContainer.getBundle(), true);
-                       sResourceBundle = oResourceBundle.toString();
-                   } else {
-                       // Convert Bundle to JSON
-                       oResourceBundle = new ByteArrayOutputStream();
-                       JsonParser jsonParser = new JsonParser();
-                       jsonParser.setOutputStyle(OutputStyle.PRETTY);
-                       jsonParser.compose(oResourceBundle, resourceContainer.getBundle());
-                       sResourceBundle = oResourceBundle.toString();
-                   }
+					if (producesType.indexOf("xml") >= 0) {
+						// Convert Bundle to XML
+						oResourceBundle = new ByteArrayOutputStream();
+						XmlParser xmlParser = new XmlParser();
+						xmlParser.setOutputStyle(OutputStyle.PRETTY);
+						xmlParser.compose(oResourceBundle, resourceContainer.getBundle(), true);
+						sResourceBundle = oResourceBundle.toString();
+					} else {
+						// Convert Bundle to JSON
+						oResourceBundle = new ByteArrayOutputStream();
+						JsonParser jsonParser = new JsonParser();
+						jsonParser.setOutputStyle(OutputStyle.PRETTY);
+						jsonParser.compose(oResourceBundle, resourceContainer.getBundle());
+						sResourceBundle = oResourceBundle.toString();
+					}
 
-                   builder = builder.entity(sResourceBundle);
+					builder = builder.entity(sResourceBundle).header(HttpHeaders.CONTENT_LENGTH, sResourceBundle.getBytes("UTF-8").length);
 
-               } else {
-               	// Response status is not OK;; build OperationOutcome response resource
-               	String message = "No response data found. Bundle is empty.";
-               	if (!StringUtils.isNullOrEmpty(resourceContainer.getMessage())) {
-               		message = resourceContainer.getMessage();
-               	}
+				} else {
+					// Response status is not OK;; build OperationOutcome response resource
+					String message = "No response data found. Bundle is empty.";
+					if (!StringUtils.isNullOrEmpty(resourceContainer.getMessage())) {
+						message = resourceContainer.getMessage();
+					}
 
-               	// Default outcome severity to ERROR and Type to TRANSIENT
-               	OperationOutcome.IssueSeverity outcomeIssueSeverity = OperationOutcome.IssueSeverity.ERROR;
-               	OperationOutcome.IssueType outcomeIssueType = OperationOutcome.IssueType.TRANSIENT;
+					// Default outcome severity to ERROR and Type to TRANSIENT
+					OperationOutcome.IssueSeverity outcomeIssueSeverity = OperationOutcome.IssueSeverity.ERROR;
+					OperationOutcome.IssueType outcomeIssueType = OperationOutcome.IssueType.TRANSIENT;
 
-               	// If returned response status is NOT_IMPLEMENTED, set severity to WARNING and type to NOTSUPPORTED
-               	if (resourceContainer.getResponseStatus() != null && resourceContainer.getResponseStatus().equals(Response.Status.NOT_IMPLEMENTED)) {
-               		outcomeIssueSeverity = OperationOutcome.IssueSeverity.WARNING;
-               		outcomeIssueType = OperationOutcome.IssueType.NOTSUPPORTED;
-               	}
+					// If returned response status is NOT_IMPLEMENTED, set severity to WARNING and
+					// type to NOTSUPPORTED
+					if (resourceContainer.getResponseStatus() != null && resourceContainer.getResponseStatus().equals(Response.Status.NOT_IMPLEMENTED)) {
+						outcomeIssueSeverity = OperationOutcome.IssueSeverity.WARNING;
+						outcomeIssueType = OperationOutcome.IssueType.NOTSUPPORTED;
+					}
 
-               	String outcome = ServicesUtil.INSTANCE.getOperationOutcome(outcomeIssueSeverity, outcomeIssueType, message, null, null, producesType);
+					String outcome = ServicesUtil.INSTANCE.getOperationOutcome(outcomeIssueSeverity, outcomeIssueType, message, null, null, producesType);
 
-                   builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-               }
-           } else {
-               // Something went wrong
-           	String message = "Failure processing batch/transaction bundle.";
-           	if (!StringUtils.isNullOrEmpty(resourceContainer.getMessage())) {
-           		message = resourceContainer.getMessage();
-           	}
-               String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.TRANSIENT, message, null, null, producesType);
+					builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+				}
+			} else {
+				// Something went wrong
+				String message = "Failure processing batch/transaction bundle.";
+				if (!StringUtils.isNullOrEmpty(resourceContainer.getMessage())) {
+					message = resourceContainer.getMessage();
+				}
+				String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.TRANSIENT, message, null, null, producesType);
 
-               builder = Response.status(resourceContainer.getResponseStatus()).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-           }
-       } else {
-           // Something went wrong
-           String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.TRANSIENT, "No response container returned.", null, null, producesType);
+				builder = Response.status(resourceContainer.getResponseStatus()).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+			}
+		} else {
+			// Something went wrong
+			String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.TRANSIENT, "No response container returned.", null, null, producesType);
 
-           builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-       }
+			builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+		}
 
-       return builder;
-   }
+		return builder;
+	}
 
 }
