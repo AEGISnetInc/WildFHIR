@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.aegis.fhir</groupId>
     <artifactId>wildfhir</artifactId>
-    <version>0.5.1</version>
+    <version>0.5.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>WildFHIR</name>
     <description>AEGIS WildFHIR - an open-source implementation of the FHIR R4 specification in Java</description>
@@ -18,7 +18,7 @@
     </licenses>
 
     <properties>
-        <release.version>0.5.1</release.version>
+        <release.version>0.5.2-SNAPSHOT</release.version>
 
         <core.version>6.5.17</core.version>
 
