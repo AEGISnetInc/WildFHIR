@@ -36,6 +36,8 @@ import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 
+import org.hl7.fhir.r4.formats.XmlParser;
+import org.hl7.fhir.r4.model.CapabilityStatement;
 import org.hl7.fhir.r4.model.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,8 +78,26 @@ public class InitializeCapabilityStatement extends HttpServlet {
 		try {
 			ResourceContainer resourceContainer = conformanceService.read();
 
-			if (resourceContainer != null && resourceContainer.getConformance() != null
-					&& (resourceContainer.getConformance().getResourceContents() == null || resourceContainer.getConformance().getResourceContents().length == 0)) {
+			String softwareVersion = ServicesUtil.INSTANCE.getSoftwareVersion();
+			boolean versionsMatch = false;
+
+			if (resourceContainer != null && resourceContainer.getConformance() != null && resourceContainer.getConformance().getResourceContents() != null) {
+				// CapabilityStatement exists, check current version
+
+				// Parse contents to CapabilityStatement object
+				XmlParser xmlParser = new XmlParser();
+				CapabilityStatement capstmt = (CapabilityStatement)xmlParser.parse(resourceContainer.getConformance().getResourceContents());
+
+				String capstmtVersion = capstmt.getVersion();
+
+				if (capstmtVersion.equals(softwareVersion)) {
+					versionsMatch = true;
+				}
+			}
+
+			if (!versionsMatch ||
+					(resourceContainer != null && resourceContainer.getConformance() != null
+					&& (resourceContainer.getConformance().getResourceContents() == null || resourceContainer.getConformance().getResourceContents().length == 0))) {
 				/*
 				 * Use Factory Pattern for execution of capability-reload operation
 				 */
@@ -86,7 +106,6 @@ public class InitializeCapabilityStatement extends HttpServlet {
 				ResourceOperationProxy operationProxy = operationFactory.getResourceOperationProxy(null, "capability-reload");
 
 				if (operationProxy != null) {
-					String softwareVersion = ServicesUtil.INSTANCE.getSoftwareVersion();
 					Parameters outputParameters = operationProxy.executeOperation(null, null, null, null, null, null, codeService, conformanceService, softwareVersion, null, null, null, null, null, null, false, null);
 
 					if (outputParameters != null) {
