@@ -681,7 +681,7 @@ public class ResourceOperationsRESTService {
 			sParameters = oResource.toString();
 		}
 
-		builder = builder.entity(sParameters);
+		builder = builder.entity(sParameters).header(HttpHeaders.CONTENT_LENGTH, sParameters.getBytes("UTF-8").length);
 
 		return builder;
 	}
