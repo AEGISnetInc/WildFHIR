@@ -33,7 +33,7 @@ docker start wildfhircemysql
 # - Define WildFHIR environment variable file
 # - Expose ports 80, 443, 9990 for browser and RESTful client access
 # -------------------------------------------------------------------------------
-docker run --network=wildfhirce-net -itd -p 80:80 -p 443:443 -p 9990:9990 --env-file env.list --name=wildfhircewildfly aegisnetinc/wildfhirce-wildfly:r4-20.0.1.Final-mysql8.0
+docker run --network=wildfhirce-net -itd -p 80:8080 -p 443:8443 -p 9990:9990 --env-file env.list --name=wildfhircewildfly aegisnetinc/wildfhirce-wildfly:r4-20.0.1.Final-mysql8.0
 
 # -------------------------------------------------------------------------------
 # Run wildfhircewildfly container

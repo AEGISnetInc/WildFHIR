@@ -3,10 +3,12 @@
 # Use latest jboss/base-jdk:11 image as the base
 FROM jboss/base-jdk:11
 
-# Set the WILDFLY_VERSION env variable
+# Set the WILDFLY_VERSION env variables
 ENV WILDFLY_VERSION=20.0.1.Final
 ENV WILDFLY_SHA1=95366b4a0c8f2e6e74e3e4000a98371046c83eeb
 ENV JBOSS_HOME=/opt/jboss/wildfly
+# FHIR packages comma separated list of packagename#version
+ENV FHIR_PACKAGES=hl7.fhir.us.core#6.1.0
 
 USER root
 
@@ -41,7 +43,7 @@ COPY ./standalone.xml $JBOSS_HOME/standalone/configuration
 COPY ./wildfhir-rest-server.war $JBOSS_HOME/standalone/deployments
 
 # Expose the ports we're interested in
-EXPOSE 80 443 9990
+EXPOSE 8080 8443 9990
 
 # Set the default command to run on boot
 # This will boot WildFly in the standalone mode and bind to all interface
