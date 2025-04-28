@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -77,6 +78,8 @@ public class ResourcemetadataSchedule extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iSchedule = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a Schedule object
@@ -94,79 +97,48 @@ public class ResourcemetadataSchedule extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each Schedule metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, schedule, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (schedule.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", schedule.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (schedule.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", schedule.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (schedule.getMeta() != null && schedule.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(schedule.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(schedule.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, schedule, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// active : token
 			if (schedule.hasActive()) {
-				Resourcemetadata rActive = generateResourcemetadata(resource, chainedResource, chainedParameter+"active", Boolean.toString(schedule.getActive()));
-				resourcemetadataList.add(rActive);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"active", Boolean.toString(schedule.getActive()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// actor : reference
 			if (schedule.hasActor()) {
 
-				List<Resourcemetadata> rActorChain = null;
 				for (Reference actor : schedule.getActor()) {
-
-					if (actor.hasReference()) {
-						Resourcemetadata rActor = generateResourcemetadata(resource, chainedResource, chainedParameter+"actor", generateFullLocalReference(actor.getReference(), baseUrl));
-						resourcemetadataList.add(rActor);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rActorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "actor", 0, actor.getReference(), null);
-							resourcemetadataList.addAll(rActorChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "actor", 0, actor, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// date : date(period)
 			if (schedule.hasPlanningHorizon()) {
-				Resourcemetadata rPlanningHorizon = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(schedule.getPlanningHorizon().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(schedule.getPlanningHorizon().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(schedule.getPlanningHorizon().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(schedule.getPlanningHorizon().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-				resourcemetadataList.add(rPlanningHorizon);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(schedule.getPlanningHorizon().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(schedule.getPlanningHorizon().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(schedule.getPlanningHorizon().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(schedule.getPlanningHorizon().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (schedule.hasIdentifier()) {
 
 				for (Identifier identifier : schedule.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// service-category : token
 			if (schedule.hasServiceCategory()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept category : schedule.getServiceCategory()) {
 
 					if (category.hasCoding()) {
 						for (Coding code : category.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -174,14 +146,12 @@ public class ResourcemetadataSchedule extends ResourcemetadataProxy {
 
 			// service-type : token
 			if (schedule.hasServiceType()) {
-
-				Resourcemetadata rType = null;
 				for (CodeableConcept scheduleType : schedule.getServiceType()) {
 
 					if (scheduleType.hasCoding()) {
 						for (Coding type : scheduleType.getCoding()) {
-							rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-							resourcemetadataList.add(rType);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -189,14 +159,12 @@ public class ResourcemetadataSchedule extends ResourcemetadataProxy {
 
 			// specialty : token
 			if (schedule.hasSpecialty()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept specialty : schedule.getSpecialty()) {
 
 					if (specialty.hasCoding()) {
 						for (Coding code : specialty.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"specialty", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"specialty", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -206,6 +174,16 @@ public class ResourcemetadataSchedule extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iSchedule != null) {
+                try {
+                	iSchedule.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

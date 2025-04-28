@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -77,6 +78,8 @@ public class ResourcemetadataMedicationDispense extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iMedicationDispense = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a MedicationDispense object
@@ -94,126 +97,76 @@ public class ResourcemetadataMedicationDispense extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each MedicationDispense metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, medicationDispense, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, medicationDispense, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
-			// _id : token
-			if (medicationDispense.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", medicationDispense.getId());
-				resourcemetadataList.add(_id);
-			}
+			// Nictiz Search Parameter
+			// category : token
+			if (medicationDispense.hasCategory() && medicationDispense.getCategory().hasCoding()) {
 
-			// _language : token
-			if (medicationDispense.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", medicationDispense.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (medicationDispense.getMeta() != null && medicationDispense.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(medicationDispense.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(medicationDispense.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
+				for (Coding code : medicationDispense.getCategory().getCoding()) {
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
+				}
 			}
 
 			// code : token
 			if (medicationDispense.hasMedicationCodeableConcept() && medicationDispense.getMedicationCodeableConcept().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : medicationDispense.getMedicationCodeableConcept().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// context : reference
-			if (medicationDispense.hasContext() && medicationDispense.getContext().hasReference()) {
-				String contextString = generateFullLocalReference(medicationDispense.getContext().getReference(), baseUrl);
-
-				Resourcemetadata rContext = generateResourcemetadata(resource, chainedResource, chainedParameter+"context", contextString);
-				resourcemetadataList.add(rContext);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rContextChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "context", 0, medicationDispense.getContext().getReference(), null);
-					resourcemetadataList.addAll(rContextChain);
-				}
+			if (medicationDispense.hasContext()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "context", 0, medicationDispense.getContext(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// destination : reference
-			if (medicationDispense.hasDestination() && medicationDispense.getDestination().hasReference()) {
-				Resourcemetadata rDestination = generateResourcemetadata(resource, chainedResource, chainedParameter+"destination", generateFullLocalReference(medicationDispense.getDestination().getReference(), baseUrl));
-				resourcemetadataList.add(rDestination);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rDestinationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "destination", 0, medicationDispense.getDestination().getReference(), null);
-					resourcemetadataList.addAll(rDestinationChain);
-				}
+			if (medicationDispense.hasDestination()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "destination", 0, medicationDispense.getDestination(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// identifier : token
 			if (medicationDispense.hasIdentifier()) {
 
 				for (Identifier identifier : medicationDispense.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// medication : reference
-			if (medicationDispense.hasMedicationReference() && medicationDispense.getMedicationReference().hasReference()) {
-				Resourcemetadata rMedicationReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"medication", generateFullLocalReference(medicationDispense.getMedicationReference().getReference(), baseUrl));
-				resourcemetadataList.add(rMedicationReference);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rMedicationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "medication", 0, medicationDispense.getMedicationReference().getReference(), null);
-					resourcemetadataList.addAll(rMedicationChain);
-				}
+			if (medicationDispense.hasMedicationReference()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "medication", 0, medicationDispense.getMedicationReference(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
-			// patient : reference
 			// subject : reference
-			if (medicationDispense.hasSubject() && medicationDispense.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(medicationDispense.getSubject().getReference(), baseUrl);
+			if (medicationDispense.hasSubject()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, medicationDispense.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, medicationDispense.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, medicationDispense.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((medicationDispense.getSubject().hasReference() && medicationDispense.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (medicationDispense.getSubject().hasType() && medicationDispense.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, medicationDispense.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// performer : reference
 			if (medicationDispense.hasPerformer()) {
-
 				for (MedicationDispensePerformerComponent performer : medicationDispense.getPerformer()) {
 
-					if (performer.hasActor() && performer.getActor().hasReference()) {
-						Resourcemetadata rRequestDetail = generateResourcemetadata(resource, chainedResource, chainedParameter+"performer", generateFullLocalReference(performer.getActor().getReference(), baseUrl));
-						resourcemetadataList.add(rRequestDetail);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							List<Resourcemetadata> rPerformerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "performer", 0, performer.getActor().getReference(), null);
-							resourcemetadataList.addAll(rPerformerChain);
-						}
+					if (performer.hasActor()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "performer", 0, performer.getActor(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
@@ -221,92 +174,71 @@ public class ResourcemetadataMedicationDispense extends ResourcemetadataProxy {
 			// prescription : reference
 			if (medicationDispense.hasAuthorizingPrescription()) {
 
-				List<Resourcemetadata> rPrescriptionChain = null;
 				for (Reference prescription : medicationDispense.getAuthorizingPrescription()) {
-
-					if (prescription.hasReference()) {
-						Resourcemetadata rPrescription = generateResourcemetadata(resource, chainedResource, chainedParameter+"prescription", generateFullLocalReference(prescription.getReference(), baseUrl));
-						resourcemetadataList.add(rPrescription);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rPrescriptionChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "prescription", 0, prescription.getReference(), null);
-							resourcemetadataList.addAll(rPrescriptionChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "prescription", 0, prescription, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// receiver : reference
 			if (medicationDispense.hasReceiver()) {
 
-				List<Resourcemetadata> rReceiverChain = null;
 				for (Reference receiver : medicationDispense.getReceiver()) {
-
-					if (receiver.hasReference()) {
-						Resourcemetadata rReceiver = generateResourcemetadata(resource, chainedResource, chainedParameter+"receiver", generateFullLocalReference(receiver.getReference(), baseUrl));
-						resourcemetadataList.add(rReceiver);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rReceiverChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "receiver", 0, receiver.getReference(), null);
-							resourcemetadataList.addAll(rReceiverChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "receiver", 0, receiver, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// responsibleparty : reference
 			if (medicationDispense.hasSubstitution() && medicationDispense.getSubstitution().hasResponsibleParty()) {
 
-				List<Resourcemetadata> rResponsiblePartyChain = null;
 				for (Reference responsibleparty : medicationDispense.getSubstitution().getResponsibleParty()) {
-
-					if (responsibleparty.hasReference()) {
-						Resourcemetadata rResponsibleParty = generateResourcemetadata(resource, chainedResource, chainedParameter+"responsibleparty", generateFullLocalReference(responsibleparty.getReference(), baseUrl));
-						resourcemetadataList.add(rResponsibleParty);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rResponsiblePartyChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "responsibleparty", 0, responsibleparty.getReference(), null);
-							resourcemetadataList.addAll(rResponsiblePartyChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "responsibleparty", 0, responsibleparty, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// status : token
 			if (medicationDispense.hasStatus() && medicationDispense.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", medicationDispense.getStatus().toCode(), medicationDispense.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", medicationDispense.getStatus().toCode(), medicationDispense.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// type : token
 			if (medicationDispense.hasType()) {
 
 				for (Coding type : medicationDispense.getType().getCoding()) {
-
-					Resourcemetadata rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-					resourcemetadataList.add(rType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// whenhandedover : datetime
 			if (medicationDispense.hasWhenHandedOver()) {
-				Resourcemetadata rWhenHandedOver = generateResourcemetadata(resource, chainedResource, chainedParameter+"whenhandedover", utcDateUtil.formatDate(medicationDispense.getWhenHandedOver(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(medicationDispense.getWhenHandedOver(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rWhenHandedOver);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"whenhandedover", utcDateUtil.formatDate(medicationDispense.getWhenHandedOver(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(medicationDispense.getWhenHandedOver(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// whenprepared : datetime
 			if (medicationDispense.hasWhenPrepared()) {
-				Resourcemetadata rWhenPrepared = generateResourcemetadata(resource, chainedResource, chainedParameter+"whenprepared", utcDateUtil.formatDate(medicationDispense.getWhenPrepared(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(medicationDispense.getWhenPrepared(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rWhenPrepared);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"whenprepared", utcDateUtil.formatDate(medicationDispense.getWhenPrepared(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(medicationDispense.getWhenPrepared(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iMedicationDispense != null) {
+                try {
+                	iMedicationDispense.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

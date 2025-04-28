@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -81,6 +82,8 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iConceptMap = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a ConceptMap object
@@ -98,27 +101,9 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each ConceptMap metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, conceptMap, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (conceptMap.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", conceptMap.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (conceptMap.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", conceptMap.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (conceptMap.getMeta() != null && conceptMap.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(conceptMap.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(conceptMap.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, conceptMap, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// context-type-[x] : composite
 			StringBuilder conextTypeComposite = new StringBuilder("");
@@ -129,8 +114,8 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 				for (UsageContext context : conceptMap.getUseContext()) {
 
 					// context-type : token
-					Resourcemetadata rContextType = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type", context.getCode().getCode(), context.getCode().getSystem());
-					resourcemetadataList.add(rContextType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type", context.getCode().getCode(), context.getCode().getSystem());
+					resourcemetadataList.add(rMetadata);
 
 					// Start building the context-type-[x] composite
 					if (context.getCode().hasSystem()) {
@@ -140,10 +125,9 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 
 					if (context.hasValueCodeableConcept() && context.getValueCodeableConcept().hasCoding()) {
 						// context : token
-						Resourcemetadata rCode = null;
 						for (Coding code : context.getValueCodeableConcept().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"context", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 
 						// context-type-value : composite
@@ -153,15 +137,15 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 						}
 						conextTypeComposite.append("|").append(context.getValueCodeableConcept().getCodingFirstRep().getCode());
 
-						Resourcemetadata rContextTypeValue = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-value", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
-						resourcemetadataList.add(rContextTypeValue);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-value", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
+						resourcemetadataList.add(rMetadata);
 					}
 
 					if (context.hasValueQuantity()) {
 						// context-quantity : quantity
 						String quantityCode = (context.getValueQuantity().getCode() != null ? context.getValueQuantity().getCode() : context.getValueQuantity().getUnit());
-						Resourcemetadata rContextQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", context.getValueQuantity().getValue().toPlainString(), context.getValueQuantity().getSystem(), quantityCode);
-						resourcemetadataList.add(rContextQuantity);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", context.getValueQuantity().getValue().toPlainString(), context.getValueQuantity().getSystem(), quantityCode);
+						resourcemetadataList.add(rMetadata);
 
 						// context-type-quantity : composite
 						conextTypeComposite.append("$");
@@ -174,8 +158,8 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 						}
 						conextTypeComposite.append("|").append(quantityCode);
 
-						Resourcemetadata rContextTypeQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
-						resourcemetadataList.add(rContextTypeQuantity);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
+						resourcemetadataList.add(rMetadata);
 					}
 
 					if (context.hasValueRange()) {
@@ -190,8 +174,8 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 						}
 						if (rangeValue != null) {
 							quantityCode = (rangeValue.getCode() != null ? rangeValue.getCode() : rangeValue.getUnit());
-							Resourcemetadata rContextQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", rangeValue.getValue().toPlainString(), rangeValue.getSystem(), quantityCode);
-							resourcemetadataList.add(rContextQuantity);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", rangeValue.getValue().toPlainString(), rangeValue.getSystem(), quantityCode);
+							resourcemetadataList.add(rMetadata);
 
 							// context-type-quantity : composite
 							conextTypeComposite.append("$");
@@ -204,8 +188,8 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 							}
 							conextTypeComposite.append("|").append(quantityCode);
 
-							Resourcemetadata rContextTypeQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
-							resourcemetadataList.add(rContextTypeQuantity);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -224,14 +208,14 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 
 					// source-system : uri
 					if (group.hasSource()) {
-						Resourcemetadata rSourceSystem = generateResourcemetadata(resource, chainedResource, chainedParameter+"source-system", group.getSource());
-						resourcemetadataList.add(rSourceSystem);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"source-system", group.getSource());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// target-system : uri
 					if (group.hasTarget()) {
-						Resourcemetadata rTargetSystem = generateResourcemetadata(resource, chainedResource, chainedParameter+"target-system", group.getTarget());
-						resourcemetadataList.add(rTargetSystem);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"target-system", group.getTarget());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					if (group.hasElement()) {
@@ -240,8 +224,8 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 
 							// source-code : token
 							if (element.hasCode()) {
-								Resourcemetadata rSourceCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"source-code", element.getCode());
-								resourcemetadataList.add(rSourceCode);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"source-code", element.getCode());
+								resourcemetadataList.add(rMetadata);
 							}
 
 							if (element.hasTarget()) {
@@ -250,8 +234,8 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 
 									// target-code : token
 									if (target.hasCode()) {
-										Resourcemetadata rTargetCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"target-code", target.getCode());
-										resourcemetadataList.add(rTargetCode);
+										rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"target-code", target.getCode());
+										resourcemetadataList.add(rMetadata);
 									}
 
 									if (target.hasDependsOn()) {
@@ -260,8 +244,8 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 
 											// dependson : uri
 											if (dependson.hasProperty()) {
-												Resourcemetadata rDependsOn = generateResourcemetadata(resource, chainedResource, chainedParameter+"dependson", dependson.getProperty());
-												resourcemetadataList.add(rDependsOn);
+												rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"dependson", dependson.getProperty());
+												resourcemetadataList.add(rMetadata);
 											}
 										}
 									}
@@ -272,8 +256,8 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 
 											// product : uri
 											if (product.hasProperty()) {
-												Resourcemetadata rProduct = generateResourcemetadata(resource, chainedResource, chainedParameter+"product", product.getProperty());
-												resourcemetadataList.add(rProduct);
+												rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"product", product.getProperty());
+												resourcemetadataList.add(rMetadata);
 											}
 										}
 									}
@@ -286,40 +270,39 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 					}
 
 					if (group.hasUnmapped() && group.getUnmapped().hasUrl()) {
-						Resourcemetadata rOther = generateResourcemetadata(resource, chainedResource, chainedParameter+"other", group.getUnmapped().getUrl());
-						resourcemetadataList.add(rOther);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"other", group.getUnmapped().getUrl());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// date : date
 			if (conceptMap.hasDate()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(conceptMap.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(conceptMap.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(conceptMap.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(conceptMap.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// description : string
 			if (conceptMap.hasDescription()) {
-				Resourcemetadata rDescription = generateResourcemetadata(resource, chainedResource, chainedParameter+"description", conceptMap.getDescription());
-				resourcemetadataList.add(rDescription);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"description", conceptMap.getDescription());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (conceptMap.hasIdentifier()) {
-				Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", conceptMap.getIdentifier().getValue(), conceptMap.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(conceptMap.getIdentifier()));
-				resourcemetadataList.add(rIdentifier);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", conceptMap.getIdentifier().getValue(), conceptMap.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(conceptMap.getIdentifier()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// jurisdiction : token
 			if (conceptMap.hasJurisdiction()) {
 
-				Resourcemetadata rCode = null;
 				for (CodeableConcept jurisdiction : conceptMap.getJurisdiction()) {
 
 					if (jurisdiction.hasCoding()) {
 						for (Coding code : jurisdiction.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"jurisdiction", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"jurisdiction", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -327,84 +310,94 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 
 			// name : string
 			if (conceptMap.hasName()) {
-				Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", conceptMap.getName());
-				resourcemetadataList.add(rName);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", conceptMap.getName());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// publisher : string
 			if (conceptMap.hasPublisher()) {
-				Resourcemetadata rPublisher = generateResourcemetadata(resource, chainedResource, chainedParameter+"publisher", conceptMap.getPublisher());
-				resourcemetadataList.add(rPublisher);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"publisher", conceptMap.getPublisher());
+				resourcemetadataList.add(rMetadata);
 			}
 
-			// source : reference
+			// source : reference - source is a Canonical, no Reference.identifier
 			if (conceptMap.hasSourceCanonicalType()) {
 				String sourceReference = generateFullLocalReference(conceptMap.getSourceCanonicalType().getValue(), baseUrl);
 
-				Resourcemetadata rSource = generateResourcemetadata(resource, chainedResource, chainedParameter+"source", sourceReference);
-				resourcemetadataList.add(rSource);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"source", sourceReference);
+				resourcemetadataList.add(rMetadata);
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rSourceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "source", 0, conceptMap.getSourceCanonicalType().getValue(), null);
-					resourcemetadataList.addAll(rSourceChain);
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "source", 0, conceptMap.getSourceCanonicalType().getValue(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// source-uri : uri
 			if (conceptMap.hasSourceUriType()) {
-				Resourcemetadata rSourceUri = generateResourcemetadata(resource, chainedResource, chainedParameter+"source-uri", conceptMap.getSourceUriType().getValue());
-				resourcemetadataList.add(rSourceUri);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"source-uri", conceptMap.getSourceUriType().getValue());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// status : token
 			if (conceptMap.hasStatus() && conceptMap.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", conceptMap.getStatus().toCode(), conceptMap.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", conceptMap.getStatus().toCode(), conceptMap.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
-			// target : reference
+			// target : reference - target is a Canonical, no Reference.identifier
 			if (conceptMap.hasTargetCanonicalType()) {
 				String targetReference = generateFullLocalReference(conceptMap.getTargetCanonicalType().getValue(), baseUrl);
 
-				Resourcemetadata rTarget = generateResourcemetadata(resource, chainedResource, chainedParameter+"target", targetReference);
-				resourcemetadataList.add(rTarget);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"target", targetReference);
+				resourcemetadataList.add(rMetadata);
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rTargetChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "target", 0, conceptMap.getTargetCanonicalType().getValue(), null);
-					resourcemetadataList.addAll(rTargetChain);
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "target", 0, conceptMap.getTargetCanonicalType().getValue(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// target-uri : uri
 			if (conceptMap.hasTargetUriType()) {
-				Resourcemetadata rTargetUri = generateResourcemetadata(resource, chainedResource, chainedParameter+"target-uri", conceptMap.getTargetUriType().getValue());
-				resourcemetadataList.add(rTargetUri);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"target-uri", conceptMap.getTargetUriType().getValue());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// title : string
 			if (conceptMap.hasTitle()) {
-				Resourcemetadata rTitle = generateResourcemetadata(resource, chainedResource, chainedParameter+"title", conceptMap.getTitle());
-				resourcemetadataList.add(rTitle);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"title", conceptMap.getTitle());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// url : uri
 			if (conceptMap.hasUrl()) {
-				Resourcemetadata rUrl = generateResourcemetadata(resource, chainedResource, chainedParameter+"url", conceptMap.getUrl());
-				resourcemetadataList.add(rUrl);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"url", conceptMap.getUrl());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// version : token
 			if (conceptMap.hasVersion()) {
-				Resourcemetadata rVersion = generateResourcemetadata(resource, chainedResource, chainedParameter+"version", conceptMap.getVersion());
-				resourcemetadataList.add(rVersion);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"version", conceptMap.getVersion());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iConceptMap != null) {
+                try {
+                	iConceptMap.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

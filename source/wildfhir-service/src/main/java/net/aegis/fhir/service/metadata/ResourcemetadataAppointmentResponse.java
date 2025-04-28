@@ -33,15 +33,14 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -74,6 +73,8 @@ public class ResourcemetadataAppointmentResponse extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iAppointmentResponse = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a AppointmentResponse object
@@ -91,30 +92,12 @@ public class ResourcemetadataAppointmentResponse extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each AppointmentResponse metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, appointmentResponse, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (appointmentResponse.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", appointmentResponse.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (appointmentResponse.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", appointmentResponse.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (appointmentResponse.getMeta() != null && appointmentResponse.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(appointmentResponse.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(appointmentResponse.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, appointmentResponse, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// appointment : reference
-			if (appointmentResponse.hasAppointment() && appointmentResponse.getAppointment().hasReference()) {
+			if (appointmentResponse.hasAppointment()) {
 				Resourcemetadata rAppointment = generateResourcemetadata(resource, chainedResource, chainedParameter+"appointment", generateFullLocalReference(appointmentResponse.getAppointment().getReference(), baseUrl));
 				resourcemetadataList.add(rAppointment);
 
@@ -129,70 +112,46 @@ public class ResourcemetadataAppointmentResponse extends ResourcemetadataProxy {
 			if (appointmentResponse.hasIdentifier()) {
 
 				for (Identifier identifier : appointmentResponse.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// part-status : token
 			if (appointmentResponse.hasParticipantStatus() && appointmentResponse.getParticipantStatus() !=  null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"part-status", appointmentResponse.getParticipantStatus().toCode(), appointmentResponse.getParticipantStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"part-status", appointmentResponse.getParticipantStatus().toCode(), appointmentResponse.getParticipantStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// actor : reference
-			if (appointmentResponse.hasActor() && appointmentResponse.getActor().hasReference()) {
-				String actorString = generateFullLocalReference(appointmentResponse.getActor().getReference(), baseUrl);
-
-				List<Resourcemetadata> rActorChain = null;
-				Resourcemetadata rActor = generateResourcemetadata(resource, chainedResource, chainedParameter+"actor", actorString);
-				resourcemetadataList.add(rActor);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					rActorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "actor", 0, appointmentResponse.getActor().getReference(), null);
-					resourcemetadataList.addAll(rActorChain);
-				}
+			if (appointmentResponse.hasActor()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "actor", 0, appointmentResponse.getActor(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
 				/*
 				 *  Examine actor reference for specific resource types
 				 */
 
 				// location : reference
-				if (actorString.indexOf("Location") >= 0) {
-					Resourcemetadata rLocation = generateResourcemetadata(resource, chainedResource, chainedParameter+"location", actorString);
-					resourcemetadataList.add(rLocation);
+				if ((appointmentResponse.getActor().hasReference() && appointmentResponse.getActor().getReference().indexOf("Location") >= 0)
+						|| (appointmentResponse.getActor().hasType() && appointmentResponse.getActor().getType().equals("Location"))) {
 
-					if (chainedResource == null) {
-						// Add chained parameters
-						rActorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, appointmentResponse.getActor().getReference(), null);
-						resourcemetadataList.addAll(rActorChain);
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "location", 0, appointmentResponse.getActor(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
-
 				// patient : reference
-				if (actorString.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", actorString);
-					resourcemetadataList.add(rPatient);
+				else if ((appointmentResponse.getActor().hasReference() && appointmentResponse.getActor().getReference().indexOf("Patient") >= 0)
+						|| (appointmentResponse.getActor().hasType() && appointmentResponse.getActor().getType().equals("Patient"))) {
 
-					if (chainedResource == null) {
-						// Add chained parameters
-						rActorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, appointmentResponse.getActor().getReference(), null);
-						resourcemetadataList.addAll(rActorChain);
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, appointmentResponse.getActor(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
-
 				// practitioner : reference
-				if (actorString.indexOf("Practitioner") >= 0) {
-					Resourcemetadata rPractitioner = generateResourcemetadata(resource, chainedResource, chainedParameter+"practitioner", actorString);
-					resourcemetadataList.add(rPractitioner);
+				else if ((appointmentResponse.getActor().hasReference() && appointmentResponse.getActor().getReference().indexOf("Practitioner") >= 0)
+						|| (appointmentResponse.getActor().hasType() && appointmentResponse.getActor().getType().equals("Practitioner"))) {
 
-					if (chainedResource == null) {
-						// Add chained parameters
-						rActorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "practitioner", 0, appointmentResponse.getActor().getReference(), null);
-						resourcemetadataList.addAll(rActorChain);
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "practitioner", 0, appointmentResponse.getActor(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -200,6 +159,16 @@ public class ResourcemetadataAppointmentResponse extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iAppointmentResponse != null) {
+                try {
+                	iAppointmentResponse.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

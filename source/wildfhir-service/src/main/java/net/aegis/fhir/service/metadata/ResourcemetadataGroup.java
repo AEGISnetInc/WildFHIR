@@ -82,6 +82,8 @@ public class ResourcemetadataGroup extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iGroup = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Group object
@@ -99,27 +101,9 @@ public class ResourcemetadataGroup extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Group metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, group, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (group.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", group.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (group.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", group.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (group.getMeta() != null && group.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(group.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(group.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, group, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// actual : token
 			Resourcemetadata rActual = generateResourcemetadata(resource, chainedResource, chainedParameter+"actual", Boolean.toString(group.getActual()));
@@ -141,8 +125,8 @@ public class ResourcemetadataGroup extends ResourcemetadataProxy {
 						for (Coding coding : characteristic.getCode().getCoding()) {
 
 							characteristicCode = coding.getCode();
-							Resourcemetadata rCoding = generateResourcemetadata(resource, chainedResource, chainedParameter+"characteristic", coding.getCode(), coding.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(coding));
-							resourcemetadataList.add(rCoding);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"characteristic", coding.getCode(), coding.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(coding));
+							resourcemetadataList.add(rMetadata);
 							break; // Only take the first one
 						}
 					}
@@ -158,8 +142,8 @@ public class ResourcemetadataGroup extends ResourcemetadataProxy {
 
 								for (Coding coding : valueCodeableConcept.getCoding()) {
 									characteristicValue = coding.getCode();
-									Resourcemetadata rCoding = generateResourcemetadata(resource, chainedResource, chainedParameter+"valueCodeableConcept", coding.getCode(), coding.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(coding));
-									resourcemetadataList.add(rCoding);
+									rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"valueCodeableConcept", coding.getCode(), coding.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(coding));
+									resourcemetadataList.add(rMetadata);
 									break; // Only take the first one
 								}
 							}
@@ -168,16 +152,16 @@ public class ResourcemetadataGroup extends ResourcemetadataProxy {
 							BooleanType valueBoolean = (BooleanType) characteristic.getValue();
 
 							characteristicValue = valueBoolean.asStringValue();
-							Resourcemetadata rCoding = generateResourcemetadata(resource, chainedResource, chainedParameter+"valueBoolean", valueBoolean.asStringValue());
-							resourcemetadataList.add(rCoding);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"valueBoolean", valueBoolean.asStringValue());
+							resourcemetadataList.add(rMetadata);
 
 						} else if (characteristic.getValue() instanceof Quantity) {
 							Quantity valueQuantity = (Quantity)characteristic.getValue();
 
 							if (valueQuantity.getValue() != null) {
 								characteristicValue = valueQuantity.getValue().toPlainString();
-								Resourcemetadata rValue = generateResourcemetadata(resource, chainedResource, chainedParameter+"valueQuantity", valueQuantity.getValue().toPlainString());
-								resourcemetadataList.add(rValue);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"valueQuantity", valueQuantity.getValue().toPlainString());
+								resourcemetadataList.add(rMetadata);
 							}
 
 						} else if (characteristic.getValue() instanceof Range) {
@@ -185,8 +169,8 @@ public class ResourcemetadataGroup extends ResourcemetadataProxy {
 
 							if (valueRange.getLow() != null && valueRange.getLow().getValue() != null) {
 								characteristicValue = valueRange.getLow().getValue().toPlainString();
-								Resourcemetadata rValue = generateResourcemetadata(resource, chainedResource, chainedParameter+"valueRangeLow", valueRange.getLow().getValue().toPlainString());
-								resourcemetadataList.add(rValue);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"valueRangeLow", valueRange.getLow().getValue().toPlainString());
+								resourcemetadataList.add(rMetadata);
 							}
 
 							if (valueRange.getHigh() != null && valueRange.getHigh().getValue() != null) {
@@ -195,8 +179,8 @@ public class ResourcemetadataGroup extends ResourcemetadataProxy {
 								} else {
 									characteristicValue = valueRange.getHigh().getValue().toPlainString();
 								}
-								Resourcemetadata rValue = generateResourcemetadata(resource, chainedResource, chainedParameter+"valueRangeHigh", valueRange.getHigh().getValue().toPlainString());
-								resourcemetadataList.add(rValue);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"valueRangeHigh", valueRange.getHigh().getValue().toPlainString());
+								resourcemetadataList.add(rMetadata);
 							}
 
 						}
@@ -204,13 +188,13 @@ public class ResourcemetadataGroup extends ResourcemetadataProxy {
 
 					// characteristic-value : composite
 					if (characteristicCode != null && characteristicValue != null) {
-						Resourcemetadata rValue = generateResourcemetadata(resource, chainedResource, chainedParameter+"characteristic-value", characteristicCode + "$" + characteristicValue);
-						resourcemetadataList.add(rValue);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"characteristic-value", characteristicCode + "$" + characteristicValue);
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// exclude : token
-					Resourcemetadata rExclude = generateResourcemetadata(resource, chainedResource, chainedParameter+"exclude", Boolean.toString(characteristic.getExclude()));
-					resourcemetadataList.add(rExclude);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"exclude", Boolean.toString(characteristic.getExclude()));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -218,9 +202,8 @@ public class ResourcemetadataGroup extends ResourcemetadataProxy {
 			if (group.hasCode()) {
 
 				for (Coding coding : group.getCode().getCoding()) {
-
-					Resourcemetadata rCoding = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", coding.getCode(), coding.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(coding));
-					resourcemetadataList.add(rCoding);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", coding.getCode(), coding.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(coding));
+					resourcemetadataList.add(rMetadata);
 					break; // Only take the first one
 				}
 			}
@@ -229,58 +212,38 @@ public class ResourcemetadataGroup extends ResourcemetadataProxy {
 			if (group.hasIdentifier()) {
 
 				for (Identifier identifier : group.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// managing-entity : reference
-			if (group.hasManagingEntity() && group.getManagingEntity().hasReference()) {
-				String managingEntityReference = generateFullLocalReference(group.getManagingEntity().getReference(), baseUrl);
-
-				Resourcemetadata rManagingEntity = generateResourcemetadata(resource, chainedResource, chainedParameter+"managing-entity", managingEntityReference);
-				resourcemetadataList.add(rManagingEntity);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rManagingEntityChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "managing-entity", 0, group.getManagingEntity().getReference(), null);
-					resourcemetadataList.addAll(rManagingEntityChain);
-				}
+			if (group.hasManagingEntity()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "managing-entity", 0, group.getManagingEntity(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// member : reference
 			if (group.hasMember()) {
-
-				List<Resourcemetadata> rMemberChain = null;
 				for (GroupMemberComponent member : group.getMember()) {
 
 					if (member.hasEntity()) {
-
-						if (member.getEntity().hasReference()) {
-							Resourcemetadata rMember = generateResourcemetadata(resource, chainedResource, chainedParameter+"member", generateFullLocalReference(member.getEntity().getReference(), baseUrl));
-							resourcemetadataList.add(rMember);
-
-							if (chainedResource == null) {
-								// Add chained parameters for any
-								rMemberChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "member", 0, member.getEntity().getReference(), null);
-								resourcemetadataList.addAll(rMemberChain);
-							}
-						}
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "member", 0, member.getEntity(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 
 					// member-period : date(period)
 					if (member.hasPeriod()) {
-						Resourcemetadata rMemberPeriod = generateResourcemetadata(resource, chainedResource, chainedParameter+"member-period", utcDateUtil.formatDate(member.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(member.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(member.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(member.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-						resourcemetadataList.add(rMemberPeriod);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"member-period", utcDateUtil.formatDate(member.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(member.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(member.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(member.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// type : token
 			if (group.hasType() && group.getType() != null) {
-				Resourcemetadata rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", group.getType().toCode(), group.getType().getSystem());
-				resourcemetadataList.add(rType);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", group.getType().toCode(), group.getType().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
@@ -288,6 +251,8 @@ public class ResourcemetadataGroup extends ResourcemetadataProxy {
 			e.printStackTrace();
 			throw e;
         } finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
             if (iGroup != null) {
                 try {
                     iGroup.close();

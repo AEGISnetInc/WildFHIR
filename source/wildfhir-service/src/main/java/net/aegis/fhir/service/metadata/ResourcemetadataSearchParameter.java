@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -79,6 +80,8 @@ public class ResourcemetadataSearchParameter extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iSearchParameter = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a SearchParameter object
@@ -96,57 +99,37 @@ public class ResourcemetadataSearchParameter extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each SearchParameter metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, searchParameter, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (searchParameter.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", searchParameter.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (searchParameter.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", searchParameter.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (searchParameter.getMeta() != null && searchParameter.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(searchParameter.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(searchParameter.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, searchParameter, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// base : token
 			if (searchParameter.hasBase()) {
 
 				for (CodeType base : searchParameter.getBase()) {
-					Resourcemetadata rBase = generateResourcemetadata(resource, chainedResource, chainedParameter+"base", base.getValue());
-					resourcemetadataList.add(rBase);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"base", base.getValue());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// code : token
 			if (searchParameter.hasCode()) {
-				Resourcemetadata rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", searchParameter.getCode());
-				resourcemetadataList.add(rCode);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", searchParameter.getCode());
+				resourcemetadataList.add(rMetadata);
 			}
 
-			// component : reference
+			// component : reference - component.definition is a Canonical, no Reference.identifier
 			if (searchParameter.hasComponent()) {
-
-				List<Resourcemetadata> rComponentChain = null;
 				for (SearchParameterComponentComponent component : searchParameter.getComponent()) {
 
 					if (component.hasDefinition()) {
-						Resourcemetadata rComponent = generateResourcemetadata(resource, chainedResource, chainedParameter+"component", generateFullLocalReference(component.getDefinition(), baseUrl));
-						resourcemetadataList.add(rComponent);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"component", generateFullLocalReference(component.getDefinition(), baseUrl));
+						resourcemetadataList.add(rMetadata);
 
 						if (chainedResource == null) {
 							// Add chained parameters
-							rComponentChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "component", 0, component.getDefinition(), null);
-							resourcemetadataList.addAll(rComponentChain);
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "component", 0, component.getDefinition(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 				}
@@ -161,8 +144,8 @@ public class ResourcemetadataSearchParameter extends ResourcemetadataProxy {
 				for (UsageContext context : searchParameter.getUseContext()) {
 
 					// context-type : token
-					Resourcemetadata rContextType = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type", context.getCode().getCode(), context.getCode().getSystem());
-					resourcemetadataList.add(rContextType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type", context.getCode().getCode(), context.getCode().getSystem());
+					resourcemetadataList.add(rMetadata);
 
 					// Start building the context-type-[x] composite
 					if (context.getCode().hasSystem()) {
@@ -172,10 +155,9 @@ public class ResourcemetadataSearchParameter extends ResourcemetadataProxy {
 
 					if (context.hasValueCodeableConcept() && context.getValueCodeableConcept().hasCoding()) {
 						// context : token
-						Resourcemetadata rCode = null;
 						for (Coding code : context.getValueCodeableConcept().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"context", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 
 						// context-type-value : composite
@@ -185,15 +167,15 @@ public class ResourcemetadataSearchParameter extends ResourcemetadataProxy {
 						}
 						conextTypeComposite.append("|").append(context.getValueCodeableConcept().getCodingFirstRep().getCode());
 
-						Resourcemetadata rContextTypeValue = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-value", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
-						resourcemetadataList.add(rContextTypeValue);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-value", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
+						resourcemetadataList.add(rMetadata);
 					}
 
 					if (context.hasValueQuantity()) {
 						// context-quantity : quantity
 						String quantityCode = (context.getValueQuantity().getCode() != null ? context.getValueQuantity().getCode() : context.getValueQuantity().getUnit());
-						Resourcemetadata rContextQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", context.getValueQuantity().getValue().toPlainString(), context.getValueQuantity().getSystem(), quantityCode);
-						resourcemetadataList.add(rContextQuantity);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", context.getValueQuantity().getValue().toPlainString(), context.getValueQuantity().getSystem(), quantityCode);
+						resourcemetadataList.add(rMetadata);
 
 						// context-type-quantity : composite
 						conextTypeComposite.append("$");
@@ -206,8 +188,8 @@ public class ResourcemetadataSearchParameter extends ResourcemetadataProxy {
 						}
 						conextTypeComposite.append("|").append(quantityCode);
 
-						Resourcemetadata rContextTypeQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
-						resourcemetadataList.add(rContextTypeQuantity);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
+						resourcemetadataList.add(rMetadata);
 					}
 
 					if (context.hasValueRange()) {
@@ -222,8 +204,8 @@ public class ResourcemetadataSearchParameter extends ResourcemetadataProxy {
 						}
 						if (rangeValue != null) {
 							quantityCode = (rangeValue.getCode() != null ? rangeValue.getCode() : rangeValue.getUnit());
-							Resourcemetadata rContextQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", rangeValue.getValue().toPlainString(), rangeValue.getSystem(), quantityCode);
-							resourcemetadataList.add(rContextQuantity);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", rangeValue.getValue().toPlainString(), rangeValue.getSystem(), quantityCode);
+							resourcemetadataList.add(rMetadata);
 
 							// context-type-quantity : composite
 							conextTypeComposite.append("$");
@@ -236,8 +218,8 @@ public class ResourcemetadataSearchParameter extends ResourcemetadataProxy {
 							}
 							conextTypeComposite.append("|").append(quantityCode);
 
-							Resourcemetadata rContextTypeQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
-							resourcemetadataList.add(rContextTypeQuantity);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -245,32 +227,30 @@ public class ResourcemetadataSearchParameter extends ResourcemetadataProxy {
 
 			// date : date
 			if (searchParameter.hasDate()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(searchParameter.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(searchParameter.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(searchParameter.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(searchParameter.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// derived-from : uri
 			if (searchParameter.hasDerivedFrom()) {
-				Resourcemetadata rDerivedFrom = generateResourcemetadata(resource, chainedResource, chainedParameter+"derived-from", searchParameter.getDerivedFrom());
-				resourcemetadataList.add(rDerivedFrom);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"derived-from", searchParameter.getDerivedFrom());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// description : string
 			if (searchParameter.hasDescription()) {
-				Resourcemetadata rDescription = generateResourcemetadata(resource, chainedResource, chainedParameter+"description", searchParameter.getDescription());
-				resourcemetadataList.add(rDescription);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"description", searchParameter.getDescription());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// jurisdiction : token
 			if (searchParameter.hasJurisdiction()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept jurisdiction : searchParameter.getJurisdiction()) {
 
 					if (jurisdiction.hasCoding()) {
 						for (Coding code : jurisdiction.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"jurisdiction", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"jurisdiction", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -278,53 +258,63 @@ public class ResourcemetadataSearchParameter extends ResourcemetadataProxy {
 
 			// name : string
 			if (searchParameter.hasName()) {
-				Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", searchParameter.getName());
-				resourcemetadataList.add(rName);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", searchParameter.getName());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// publisher : string
 			if (searchParameter.hasPublisher()) {
-				Resourcemetadata rPublisher = generateResourcemetadata(resource, chainedResource, chainedParameter+"publisher", searchParameter.getPublisher());
-				resourcemetadataList.add(rPublisher);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"publisher", searchParameter.getPublisher());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// status : token
 			if (searchParameter.hasStatus() && searchParameter.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", searchParameter.getStatus().toCode(), searchParameter.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", searchParameter.getStatus().toCode(), searchParameter.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// target : token
 			if (searchParameter.hasTarget()) {
 
 				for (CodeType target : searchParameter.getTarget()) {
-					Resourcemetadata rTarget = generateResourcemetadata(resource, chainedResource, chainedParameter+"target", target.asStringValue());
-					resourcemetadataList.add(rTarget);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"target", target.asStringValue());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// type : token
 			if (searchParameter.hasType() && searchParameter.getType() != null) {
-				Resourcemetadata rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", searchParameter.getType().toCode(), searchParameter.getType().getSystem());
-				resourcemetadataList.add(rType);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", searchParameter.getType().toCode(), searchParameter.getType().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// url : uri
 			if (searchParameter.hasUrl()) {
-				Resourcemetadata rUrl = generateResourcemetadata(resource, chainedResource, chainedParameter+"url", searchParameter.getUrl());
-				resourcemetadataList.add(rUrl);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"url", searchParameter.getUrl());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// version : string
 			if (searchParameter.hasVersion()) {
-				Resourcemetadata rVersion = generateResourcemetadata(resource, chainedResource, chainedParameter+"version", searchParameter.getVersion());
-				resourcemetadataList.add(rVersion);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"version", searchParameter.getVersion());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iSearchParameter != null) {
+                try {
+                	iSearchParameter.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

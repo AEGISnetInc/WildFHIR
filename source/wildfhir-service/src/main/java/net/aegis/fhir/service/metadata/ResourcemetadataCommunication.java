@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -79,6 +80,8 @@ public class ResourcemetadataCommunication extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iCommunication = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a Communication object
@@ -96,90 +99,49 @@ public class ResourcemetadataCommunication extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each Communication metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, communication, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (communication.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", communication.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (communication.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", communication.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (communication.getMeta() != null && communication.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(communication.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(communication.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, communication, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// based-on : reference
 			if (communication.hasBasedOn()) {
 
-				String basedOnReference = null;
-				List<Resourcemetadata> rBasedOnChain = null;
 				for (Reference basedOn : communication.getBasedOn()) {
-
-					if (basedOn.hasReference()) {
-						basedOnReference = generateFullLocalReference(basedOn.getReference(), baseUrl);
-
-						Resourcemetadata rBasedOn = generateResourcemetadata(resource, chainedResource, chainedParameter+"based-on", basedOnReference);
-						resourcemetadataList.add(rBasedOn);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rBasedOnChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "based-on", 0, basedOn.getReference(), null);
-							resourcemetadataList.addAll(rBasedOnChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "based-on", 0, basedOn, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// category : token
 			if (communication.hasCategory()) {
 
-				Resourcemetadata rCode = null;
 				for (CodeableConcept category : communication.getCategory()) {
 
 					if (category.hasCoding()) {
 						for (Coding code : category.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
 			}
 
 			// encounter : reference
-			if (communication.hasEncounter() && communication.getEncounter().hasReference()) {
-				String encounterReference = generateFullLocalReference(communication.getEncounter().getReference(), baseUrl);
-
-				Resourcemetadata rEncounter = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", encounterReference);
-				resourcemetadataList.add(rEncounter);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, communication.getEncounter().getReference(), null);
-					resourcemetadataList.addAll(rEncounterChain);
-				}
+			if (communication.hasEncounter()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "encounter", 0, communication.getEncounter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// identifier : token
 			if (communication.hasIdentifier()) {
 
 				for (Identifier identifier : communication.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
-			// instantiates-canonical : reference
+			// instantiates-canonical : reference - instantiates is a Canonical, no Reference.identifier
 			if (communication.hasInstantiatesCanonical()) {
 
 				for (CanonicalType instantiates : communication.getInstantiatesCanonical()) {
@@ -201,22 +163,20 @@ public class ResourcemetadataCommunication extends ResourcemetadataProxy {
 			if (communication.hasInstantiatesUri()) {
 
 				for (UriType instantiates : communication.getInstantiatesUri()) {
-
-					Resourcemetadata rInstantiates = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-uri", instantiates.asStringValue());
-					resourcemetadataList.add(rInstantiates);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-uri", instantiates.asStringValue());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// medium : token
 			if (communication.hasMedium()) {
 
-				Resourcemetadata rCode = null;
 				for (CodeableConcept medium : communication.getMedium()) {
 
 					if (medium.hasCoding()) {
 						for (Coding code : medium.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"medium", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"medium", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -225,108 +185,72 @@ public class ResourcemetadataCommunication extends ResourcemetadataProxy {
 			// part-of : reference
 			if (communication.hasPartOf()) {
 
-				String partOfReference = null;
-				List<Resourcemetadata> rPartOfChain = null;
 				for (Reference partOf : communication.getPartOf()) {
-
-					if (partOf.hasReference()) {
-						partOfReference = generateFullLocalReference(partOf.getReference(), baseUrl);
-
-						Resourcemetadata rPartOf = generateResourcemetadata(resource, chainedResource, chainedParameter+"part-of", partOfReference);
-						resourcemetadataList.add(rPartOf);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rPartOfChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "part-of", 0, partOf.getReference(), null);
-							resourcemetadataList.addAll(rPartOfChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "part-of", 0, partOf, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
-			// patient : reference
 			// subject : reference
-			if (communication.hasSubject() && communication.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(communication.getSubject().getReference(), baseUrl);
+			if (communication.hasSubject()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, communication.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, communication.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, communication.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((communication.getSubject().hasReference() && communication.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (communication.getSubject().hasType() && communication.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, communication.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// received : date
 			if (communication.hasReceived()) {
-				Resourcemetadata rReceived = generateResourcemetadata(resource, chainedResource, chainedParameter+"received", utcDateUtil.formatDate(communication.getReceived(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(communication.getReceived(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rReceived);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"received", utcDateUtil.formatDate(communication.getReceived(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(communication.getReceived(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// recipient : reference
 			if (communication.hasRecipient()) {
 
-				String recipientReference = null;
 				for (Reference recipient : communication.getRecipient()) {
-
-					if (recipient.hasReference()) {
-						recipientReference = generateFullLocalReference(recipient.getReference(), baseUrl);
-
-						Resourcemetadata rRecipient = generateResourcemetadata(resource, chainedResource, chainedParameter+"recipient", recipientReference);
-						resourcemetadataList.add(rRecipient);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							List<Resourcemetadata> rRecipientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "recipient", 0, recipient.getReference(), null);
-							resourcemetadataList.addAll(rRecipientChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "recipient", 0, recipient, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// sender : reference
-			if (communication.hasSender() && communication.getSender().hasReference()) {
-				String senderReference = generateFullLocalReference(communication.getSender().getReference(), baseUrl);
-
-				Resourcemetadata rSender = generateResourcemetadata(resource, chainedResource, chainedParameter+"sender", senderReference);
-				resourcemetadataList.add(rSender);
-
-				if (chainedResource == null) {
-					// Add chained parameters for any
-					List<Resourcemetadata> rSenderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "sender", 0, communication.getSender().getReference(), null);
-					resourcemetadataList.addAll(rSenderChain);
-				}
+			if (communication.hasSender()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "sender", 0, communication.getSender(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// sent : date
 			if (communication.hasSent()) {
-				Resourcemetadata rSent = generateResourcemetadata(resource, chainedResource, chainedParameter+"sent", utcDateUtil.formatDate(communication.getSent(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(communication.getSent(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rSent);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"sent", utcDateUtil.formatDate(communication.getSent(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(communication.getSent(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// status : token
 			if (communication.hasStatus() && communication.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", communication.getStatus().toCode(), communication.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", communication.getStatus().toCode(), communication.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iCommunication != null) {
+                try {
+                	iCommunication.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

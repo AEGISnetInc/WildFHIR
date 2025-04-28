@@ -33,9 +33,9 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -52,7 +52,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -80,6 +79,8 @@ public class ResourcemetadataMedicationKnowledge extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iMedicationKnowledge = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a MedicationKnowledge object
@@ -97,49 +98,29 @@ public class ResourcemetadataMedicationKnowledge extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each MedicationKnowledge metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, medicationKnowledge, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (medicationKnowledge.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", medicationKnowledge.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (medicationKnowledge.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", medicationKnowledge.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (medicationKnowledge.getMeta() != null && medicationKnowledge.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(medicationKnowledge.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(medicationKnowledge.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, medicationKnowledge, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// classification : token
 			// classification-type : token
 			if (medicationKnowledge.hasMedicineClassification()) {
-
-				Resourcemetadata rCode = null;
 				for (MedicationKnowledgeMedicineClassificationComponent medicineClassification : medicationKnowledge.getMedicineClassification()) {
 
 					for (CodeableConcept classification : medicineClassification.getClassification()) {
 
 						if (classification.hasCoding()) {
 							for (Coding code : classification.getCoding()) {
-								rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-								resourcemetadataList.add(rCode);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+								resourcemetadataList.add(rMetadata);
 							}
 						}
 					}
 
 					if (medicineClassification.hasType() && medicineClassification.getType().hasCoding()) {
 						for (Coding code : medicineClassification.getType().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"category-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -148,20 +129,18 @@ public class ResourcemetadataMedicationKnowledge extends ResourcemetadataProxy {
 			// code : token
 			if (medicationKnowledge.hasCode() && medicationKnowledge.getCode().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : medicationKnowledge.getCode().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// doseform : token
 			if (medicationKnowledge.hasDoseForm() && medicationKnowledge.getDoseForm().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : medicationKnowledge.getDoseForm().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"doseform", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"doseform", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -169,60 +148,42 @@ public class ResourcemetadataMedicationKnowledge extends ResourcemetadataProxy {
 			// ingredient-code : token
 			if (medicationKnowledge.hasIngredient()) {
 
-				Resourcemetadata rCode = null;
-				Resourcemetadata rIngredient = null;
-				List<Resourcemetadata> rIngredientChain = null;
 				for (MedicationKnowledgeIngredientComponent ingredient : medicationKnowledge.getIngredient()) {
 
-					if (ingredient.hasItemReference() && ingredient.getItemReference().hasReference()) {
-						rIngredient = generateResourcemetadata(resource, chainedResource, chainedParameter+"ingredient", generateFullLocalReference(ingredient.getItemReference().getReference(), baseUrl));
-						resourcemetadataList.add(rIngredient);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rIngredientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "ingredient", 0, ingredient.getItemReference().getReference(), null);
-							resourcemetadataList.addAll(rIngredientChain);
-						}
+					if (ingredient.hasItemReference()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "ingredient", 0, ingredient.getItemReference(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 					else if (ingredient.hasItemCodeableConcept() && ingredient.getItemCodeableConcept().hasCoding()) {
 						for (Coding code : ingredient.getItemCodeableConcept().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"ingredient-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"ingredient-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
 			}
 
 			// manufacturer : reference
-			if (medicationKnowledge.hasManufacturer() && medicationKnowledge.getManufacturer().hasReference()) {
-				Resourcemetadata rManufacturer = generateResourcemetadata(resource, chainedResource, chainedParameter+"manufacturer", generateFullLocalReference(medicationKnowledge.getManufacturer().getReference(), baseUrl));
-				resourcemetadataList.add(rManufacturer);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rManufacturerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "manufacturer", 0, medicationKnowledge.getManufacturer().getReference(), null);
-					resourcemetadataList.addAll(rManufacturerChain);
-				}
+			if (medicationKnowledge.hasManufacturer()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "manufacturer", 0, medicationKnowledge.getManufacturer(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// monitoring-program-name : string
 			// monitoring-program-type : token
 			if (medicationKnowledge.hasMonitoringProgram()) {
-
-				Resourcemetadata rType = null;
-				Resourcemetadata rMonitoringProgram = null;
 				for (MedicationKnowledgeMonitoringProgramComponent monitoringProgram : medicationKnowledge.getMonitoringProgram()) {
 
 					if (monitoringProgram.hasName()) {
-						rMonitoringProgram = generateResourcemetadata(resource, chainedResource, chainedParameter+"monitoring-program-name", monitoringProgram.getName());
-						resourcemetadataList.add(rMonitoringProgram);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"monitoring-program-name", monitoringProgram.getName());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					if (monitoringProgram.hasType() && monitoringProgram.getType().hasCoding()) {
 
 						for (Coding type : monitoringProgram.getType().getCoding()) {
-							rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"monitoring-program-type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-							resourcemetadataList.add(rType);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"monitoring-program-type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -232,27 +193,18 @@ public class ResourcemetadataMedicationKnowledge extends ResourcemetadataProxy {
 			// monograph-type : token
 			if (medicationKnowledge.hasMonograph()) {
 
-				Resourcemetadata rType = null;
-				Resourcemetadata rMonograph = null;
-				List<Resourcemetadata> rMonographChain = null;
 				for (MedicationKnowledgeMonographComponent monograph : medicationKnowledge.getMonograph()) {
 
-					if (monograph.hasSource() && monograph.getSource().hasReference()) {
-						rMonograph = generateResourcemetadata(resource, chainedResource, chainedParameter+"monograph", generateFullLocalReference(monograph.getSource().getReference(), baseUrl));
-						resourcemetadataList.add(rMonograph);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rMonographChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "monograph", 0, monograph.getSource().getReference(), null);
-							resourcemetadataList.addAll(rMonographChain);
-						}
+					if (monograph.hasSource()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "monograph", 0, monograph.getSource(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 
 					if (monograph.hasType() && monograph.getType().hasCoding()) {
 
 						for (Coding type : monograph.getType().getCoding()) {
-							rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"monograph-program-type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-							resourcemetadataList.add(rType);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"monograph-program-type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -260,27 +212,35 @@ public class ResourcemetadataMedicationKnowledge extends ResourcemetadataProxy {
 
 			// source-cost : string
 			if (medicationKnowledge.hasCost()) {
-
-				Resourcemetadata rCost = null;
 				for (MedicationKnowledgeCostComponent cost : medicationKnowledge.getCost()) {
 
 					if (cost.hasSource()) {
-						rCost = generateResourcemetadata(resource, chainedResource, chainedParameter+"source-cost", cost.getSource());
-						resourcemetadataList.add(rCost);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"source-cost", cost.getSource());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// status : token
 			if (medicationKnowledge.hasStatus() && medicationKnowledge.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", medicationKnowledge.getStatus().toCode(), medicationKnowledge.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", medicationKnowledge.getStatus().toCode(), medicationKnowledge.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iMedicationKnowledge != null) {
+                try {
+                	iMedicationKnowledge.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

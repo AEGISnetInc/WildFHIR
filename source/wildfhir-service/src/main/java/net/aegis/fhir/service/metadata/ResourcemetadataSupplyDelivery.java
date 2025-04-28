@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -75,6 +76,8 @@ public class ResourcemetadataSupplyDelivery extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iSupplyDelivery = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a SupplyDelivery object
@@ -92,101 +95,70 @@ public class ResourcemetadataSupplyDelivery extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each SupplyDelivery metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, supplyDelivery, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (supplyDelivery.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", supplyDelivery.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (supplyDelivery.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", supplyDelivery.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (supplyDelivery.getMeta() != null && supplyDelivery.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(supplyDelivery.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(supplyDelivery.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, supplyDelivery, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// identifier : token
 			if (supplyDelivery.hasIdentifier()) {
 
 				for (Identifier identifier : supplyDelivery.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// occurrence : date(period)
 			if (supplyDelivery.hasOccurrenceDateTimeType()) {
-				Resourcemetadata rOccurrence = generateResourcemetadata(resource, chainedResource, chainedParameter+"occurrence", utcDateUtil.formatDate(supplyDelivery.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(supplyDelivery.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rOccurrence);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"occurrence", utcDateUtil.formatDate(supplyDelivery.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(supplyDelivery.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 			else if (supplyDelivery.hasOccurrencePeriod()) {
-				Resourcemetadata rOccurrence = generateResourcemetadata(resource, chainedResource, chainedParameter+"occurrence", utcDateUtil.formatDate(supplyDelivery.getOccurrencePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(supplyDelivery.getOccurrencePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(supplyDelivery.getOccurrencePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(supplyDelivery.getOccurrencePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-				resourcemetadataList.add(rOccurrence);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"occurrence", utcDateUtil.formatDate(supplyDelivery.getOccurrencePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(supplyDelivery.getOccurrencePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(supplyDelivery.getOccurrencePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(supplyDelivery.getOccurrencePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// patient : reference
-			if (supplyDelivery.hasPatient() && supplyDelivery.getPatient().hasReference()) {
-				Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", generateFullLocalReference(supplyDelivery.getPatient().getReference(), baseUrl));
-				resourcemetadataList.add(rPatient);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, supplyDelivery.getPatient().getReference(), null);
-					resourcemetadataList.addAll(rPatientChain);
-				}
+			if (supplyDelivery.hasPatient()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, supplyDelivery.getPatient(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// receiver : reference
 			if (supplyDelivery.hasReceiver()) {
 
-				List<Resourcemetadata> rReceiverChain = null;
 				for (Reference receiver : supplyDelivery.getReceiver()) {
-
-					if (receiver.hasReference()) {
-						Resourcemetadata rReceiver = generateResourcemetadata(resource, chainedResource, chainedParameter+"receiver", generateFullLocalReference(receiver.getReference(), baseUrl));
-						resourcemetadataList.add(rReceiver);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rReceiverChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "receiver", 0, receiver.getReference(), null);
-							resourcemetadataList.addAll(rReceiverChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "receiver", 0, receiver, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// status : token
 			if (supplyDelivery.hasStatus() && supplyDelivery.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", supplyDelivery.getStatus().toCode(), supplyDelivery.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", supplyDelivery.getStatus().toCode(), supplyDelivery.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// supplier : reference
-			if (supplyDelivery.hasSupplier() && supplyDelivery.getSupplier().hasReference()) {
-				Resourcemetadata rSupplier = generateResourcemetadata(resource, chainedResource, chainedParameter+"supplier", generateFullLocalReference(supplyDelivery.getSupplier().getReference(), baseUrl));
-				resourcemetadataList.add(rSupplier);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSupplierChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "supplier", 0, supplyDelivery.getSupplier().getReference(), null);
-					resourcemetadataList.addAll(rSupplierChain);
-				}
+			if (supplyDelivery.hasSupplier()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "supplier", 0, supplyDelivery.getSupplier(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iSupplyDelivery != null) {
+                try {
+                	iSupplyDelivery.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

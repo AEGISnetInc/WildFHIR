@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -74,6 +75,8 @@ public class ResourcemetadataVisionPrescription extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iVisionPrescription = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a VisionPrescription object
@@ -91,89 +94,63 @@ public class ResourcemetadataVisionPrescription extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each VisionPrescription metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, visionPrescription, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (visionPrescription.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", visionPrescription.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (visionPrescription.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", visionPrescription.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (visionPrescription.getMeta() != null && visionPrescription.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(visionPrescription.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(visionPrescription.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, visionPrescription, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// datewritten : datetime
 			if (visionPrescription.hasDateWritten()) {
-				Resourcemetadata rDateWritten = generateResourcemetadata(resource, chainedResource, chainedParameter+"datewritten", utcDateUtil.formatDate(visionPrescription.getDateWritten(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(visionPrescription.getDateWritten(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDateWritten);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"datewritten", utcDateUtil.formatDate(visionPrescription.getDateWritten(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(visionPrescription.getDateWritten(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// encounter : reference
-			if (visionPrescription.hasEncounter() && visionPrescription.getEncounter().hasReference()) {
-				Resourcemetadata rEncounter = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", generateFullLocalReference(visionPrescription.getEncounter().getReference(), baseUrl));
-				resourcemetadataList.add(rEncounter);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, visionPrescription.getEncounter().getReference(), null);
-					resourcemetadataList.addAll(rEncounterChain);
-				}
+			if (visionPrescription.hasEncounter()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "encounter", 0, visionPrescription.getEncounter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// identifier : token
 			if (visionPrescription.hasIdentifier()) {
 
 				for (Identifier identifier : visionPrescription.getIdentifier()) {
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// patient : reference
-			if (visionPrescription.hasPatient() && visionPrescription.getPatient().hasReference()) {
-				Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", generateFullLocalReference(visionPrescription.getPatient().getReference(), baseUrl));
-				resourcemetadataList.add(rPatient);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, visionPrescription.getPatient().getReference(), null);
-					resourcemetadataList.addAll(rPatientChain);
-				}
+			if (visionPrescription.hasPatient()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, visionPrescription.getPatient(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// prescriber : reference
-			if (visionPrescription.hasPrescriber() && visionPrescription.getPrescriber().hasReference()) {
-				Resourcemetadata rPrescriber = generateResourcemetadata(resource, chainedResource, chainedParameter+"prescriber", generateFullLocalReference(visionPrescription.getPrescriber().getReference(), baseUrl));
-				resourcemetadataList.add(rPrescriber);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPrescriberChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "prescriber", 0, visionPrescription.getPrescriber().getReference(), null);
-					resourcemetadataList.addAll(rPrescriberChain);
-				}
+			if (visionPrescription.hasPrescriber()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "prescriber", 0, visionPrescription.getPrescriber(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// status : token
 			if (visionPrescription.hasStatus() && visionPrescription.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", visionPrescription.getStatus().toCode(), visionPrescription.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", visionPrescription.getStatus().toCode(), visionPrescription.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iVisionPrescription != null) {
+                try {
+                	iVisionPrescription.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

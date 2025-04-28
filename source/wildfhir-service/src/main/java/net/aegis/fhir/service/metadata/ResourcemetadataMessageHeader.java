@@ -34,13 +34,13 @@ package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.formats.IParser.OutputStyle;
+import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.MessageHeader;
 import org.hl7.fhir.r4.model.MessageHeader.MessageDestinationComponent;
@@ -51,7 +51,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -80,6 +79,8 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iBundle = null;
         ByteArrayInputStream iMessageHeader = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a MessageHeader object
@@ -124,27 +125,9 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each MessageHeader metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, messageHeader, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (messageHeader.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", messageHeader.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (messageHeader.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", messageHeader.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (messageHeader.getMeta() != null && messageHeader.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(messageHeader.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(messageHeader.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, messageHeader, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// author : reference
 			if (messageHeader.hasAuthor() && messageHeader.getAuthor().hasReference()) {
@@ -156,14 +139,13 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 					authorReference = generateFullLocalReference(messageHeader.getAuthor().getReference(), baseUrl);
 				}
 
-				Resourcemetadata rAuthor = generateResourcemetadata(resource, chainedResource, chainedParameter+"author", authorReference);
-				resourcemetadataList.add(rAuthor);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"author", authorReference);
+				resourcemetadataList.add(rMetadata);
 
-				List<Resourcemetadata> rAuthorChain = null;
 				if (chainedResource == null) {
 					// Add chained parameters
-					rAuthorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "author", 0, messageHeader.getAuthor().getReference(), null);
-					resourcemetadataList.addAll(rAuthorChain);
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "author", 0, messageHeader.getAuthor().getReference(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 				else {
 					if (bundle != null) {
@@ -172,11 +154,16 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 
 						if (messageHeaderResource != null && authorEntry != null) {
 							// Add chained parameters for message.author; do not send baseUrl so references get stored as-is
-							rAuthorChain = this.generateChainedResourcemetadataAny(messageHeaderResource, "", resourceService, "message.author", 0, messageHeader.getAuthor().getReference(), authorEntry);
-							resourcemetadataList.addAll(rAuthorChain);
+							rMetadataChain = this.generateChainedResourcemetadataAny(messageHeaderResource, "", resourceService, "message.author", 0, messageHeader.getAuthor().getReference(), authorEntry);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 				}
+			}
+			// Manually handle Reference.identifier due to Bundle logic complexities
+			if (messageHeader.hasAuthor() && messageHeader.getAuthor().hasIdentifier()) {
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"author:identifier", messageHeader.getAuthor().getIdentifier().getValue(), messageHeader.getAuthor().getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(messageHeader.getAuthor().getIdentifier()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// enterer : reference
@@ -189,14 +176,13 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 					entererReference = generateFullLocalReference(messageHeader.getAuthor().getReference(), baseUrl);
 				}
 
-				Resourcemetadata rEnterer = generateResourcemetadata(resource, chainedResource, chainedParameter+"enterer", generateFullLocalReference(entererReference, baseUrl));
-				resourcemetadataList.add(rEnterer);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"enterer", generateFullLocalReference(entererReference, baseUrl));
+				resourcemetadataList.add(rMetadata);
 
-				List<Resourcemetadata> rEntererChain = null;
 				if (chainedResource == null) {
 					// Add chained parameters
-					rEntererChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "enterer", 0, messageHeader.getEnterer().getReference(), null);
-					resourcemetadataList.addAll(rEntererChain);
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "enterer", 0, messageHeader.getEnterer().getReference(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 				else {
 					if (bundle != null) {
@@ -205,28 +191,32 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 
 						if (messageHeaderResource != null && entererEntry != null) {
 							// Add chained parameters for message.enterer; do not send baseUrl so references get stored as-is
-							rEntererChain = this.generateChainedResourcemetadataAny(messageHeaderResource, "", resourceService, "message.enterer", 0, messageHeader.getEnterer().getReference(), entererEntry);
-							resourcemetadataList.addAll(rEntererChain);
+							rMetadataChain = this.generateChainedResourcemetadataAny(messageHeaderResource, "", resourceService, "message.enterer", 0, messageHeader.getEnterer().getReference(), entererEntry);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 				}
 			}
+			// Manually handle Reference.identifier due to Bundle logic complexities
+			if (messageHeader.hasEnterer() && messageHeader.getEnterer().hasIdentifier()) {
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"enterer:identifier", messageHeader.getEnterer().getIdentifier().getValue(), messageHeader.getEnterer().getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(messageHeader.getEnterer().getIdentifier()));
+				resourcemetadataList.add(rMetadata);
+			}
 
 			// event : token
 			if (messageHeader.hasEventUriType()) {
-				Resourcemetadata rEvent = generateResourcemetadata(resource, chainedResource, chainedParameter+"event", messageHeader.getEventUriType().getValue());
-				resourcemetadataList.add(rEvent);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"event", messageHeader.getEventUriType().getValue());
+				resourcemetadataList.add(rMetadata);
 			}
 			if (messageHeader.hasEventCoding()) {
-				Resourcemetadata rEvent = generateResourcemetadata(resource, chainedResource, chainedParameter+"event", messageHeader.getEventCoding().getCode(), messageHeader.getEventCoding().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(messageHeader.getEventCoding()));
-				resourcemetadataList.add(rEvent);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"event", messageHeader.getEventCoding().getCode(), messageHeader.getEventCoding().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(messageHeader.getEventCoding()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// focus : reference
 			if (messageHeader.hasFocus()) {
 
 				String focusReference = null;
-				List<Resourcemetadata> rFocusChain = null;
 				for (Reference focus : messageHeader.getFocus()) {
 
 					if (focus.hasReference()) {
@@ -237,13 +227,13 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 							focusReference = generateFullLocalReference(focus.getReference(), baseUrl);
 						}
 
-						Resourcemetadata rFocus = generateResourcemetadata(resource, chainedResource, chainedParameter+"focus", generateFullLocalReference(focusReference, baseUrl));
-						resourcemetadataList.add(rFocus);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"focus", generateFullLocalReference(focusReference, baseUrl));
+						resourcemetadataList.add(rMetadata);
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rFocusChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "focus", 0, focus.getReference(), null);
-							resourcemetadataList.addAll(rFocusChain);
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "focus", 0, focus.getReference(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 						else {
 							if (bundle != null) {
@@ -252,11 +242,16 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 
 								if (messageHeaderResource != null && focusEntry != null) {
 									// Add chained parameters for message.focus; do not send baseUrl so references get stored as-is
-									rFocusChain = this.generateChainedResourcemetadataAny(messageHeaderResource, "", resourceService, "message.focus", 0, focus.getReference(), focusEntry);
-									resourcemetadataList.addAll(rFocusChain);
+									rMetadataChain = this.generateChainedResourcemetadataAny(messageHeaderResource, "", resourceService, "message.focus", 0, focus.getReference(), focusEntry);
+									resourcemetadataList.addAll(rMetadataChain);
 								}
 							}
 						}
+					}
+					// Manually handle Reference.identifier due to Bundle logic complexities
+					if (focus.hasIdentifier()) {
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"focus:identifier", focus.getIdentifier().getValue(), focus.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(focus.getIdentifier()));
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
@@ -271,14 +266,13 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 					responsibleReference = generateFullLocalReference(messageHeader.getResponsible().getReference(), baseUrl);
 				}
 
-				Resourcemetadata rResponsible = generateResourcemetadata(resource, chainedResource, chainedParameter+"responsible", generateFullLocalReference(responsibleReference, baseUrl));
-				resourcemetadataList.add(rResponsible);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"responsible", generateFullLocalReference(responsibleReference, baseUrl));
+				resourcemetadataList.add(rMetadata);
 
-				List<Resourcemetadata> rResponsibleChain = null;
 				if (chainedResource == null) {
 					// Add chained parameters for any
-					rResponsibleChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "responsible", 0, messageHeader.getResponsible().getReference(), null);
-					resourcemetadataList.addAll(rResponsibleChain);
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "responsible", 0, messageHeader.getResponsible().getReference(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 				else {
 					if (bundle != null) {
@@ -287,11 +281,16 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 
 						if (messageHeaderResource != null && responsibleEntry != null) {
 							// Add chained parameters for message.responsible; do not send baseUrl so references get stored as-is
-							rResponsibleChain = this.generateChainedResourcemetadataAny(messageHeaderResource, "", resourceService, "message.responsible", 0, messageHeader.getResponsible().getReference(), responsibleEntry);
-							resourcemetadataList.addAll(rResponsibleChain);
+							rMetadataChain = this.generateChainedResourcemetadataAny(messageHeaderResource, "", resourceService, "message.responsible", 0, messageHeader.getResponsible().getReference(), responsibleEntry);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 				}
+			}
+			// Manually handle Reference.identifier due to Bundle logic complexities
+			if (messageHeader.hasResponsible() && messageHeader.getResponsible().hasIdentifier()) {
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"responsible:identifier", messageHeader.getResponsible().getIdentifier().getValue(), messageHeader.getResponsible().getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(messageHeader.getResponsible().getIdentifier()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// sender : reference
@@ -304,14 +303,13 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 					senderReference = generateFullLocalReference(messageHeader.getSender().getReference(), baseUrl);
 				}
 
-				Resourcemetadata rSender = generateResourcemetadata(resource, chainedResource, chainedParameter+"sender", generateFullLocalReference(senderReference, baseUrl));
-				resourcemetadataList.add(rSender);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"sender", generateFullLocalReference(senderReference, baseUrl));
+				resourcemetadataList.add(rMetadata);
 
-				List<Resourcemetadata> rSenderChain = null;
 				if (chainedResource == null) {
 					// Add chained parameters for any
-					rSenderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "sender", 0, messageHeader.getSender().getReference(), null);
-					resourcemetadataList.addAll(rSenderChain);
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "sender", 0, messageHeader.getSender().getReference(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 				else {
 					if (bundle != null) {
@@ -320,28 +318,32 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 
 						if (messageHeaderResource != null && senderEntry != null) {
 							// Add chained parameters for message.sender; do not send baseUrl so references get stored as-is
-							rSenderChain = this.generateChainedResourcemetadataAny(messageHeaderResource, "", resourceService, "message.sender", 0, messageHeader.getSender().getReference(), senderEntry);
-							resourcemetadataList.addAll(rSenderChain);
+							rMetadataChain = this.generateChainedResourcemetadataAny(messageHeaderResource, "", resourceService, "message.sender", 0, messageHeader.getSender().getReference(), senderEntry);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 				}
 			}
+			// Manually handle Reference.identifier due to Bundle logic complexities
+			if (messageHeader.hasSender() && messageHeader.getSender().hasIdentifier()) {
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"sender:identifier", messageHeader.getSender().getIdentifier().getValue(), messageHeader.getSender().getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(messageHeader.getSender().getIdentifier()));
+				resourcemetadataList.add(rMetadata);
+			}
 
 			if (messageHeader.hasDestination()) {
 
-				List<Resourcemetadata> rDestinationChain = null;
 				for (MessageDestinationComponent destination : messageHeader.getDestination()) {
 
 					// destination : string
 					if (destination.hasName()) {
-						Resourcemetadata rDestination = generateResourcemetadata(resource, chainedResource, chainedParameter+"destination", destination.getName());
-						resourcemetadataList.add(rDestination);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"destination", destination.getName());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// destination-uri : uri
 					if (destination.hasEndpoint()) {
-						Resourcemetadata rDestinationUri = generateResourcemetadata(resource, chainedResource, chainedParameter+"destination-uri", destination.getEndpoint());
-						resourcemetadataList.add(rDestinationUri);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"destination-uri", destination.getEndpoint());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// receiver : reference
@@ -354,13 +356,13 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 							receiverReference = generateFullLocalReference(destination.getReceiver().getReference(), baseUrl);
 						}
 
-						Resourcemetadata rReceiver = generateResourcemetadata(resource, chainedResource, chainedParameter+"receiver", generateFullLocalReference(receiverReference, baseUrl));
-						resourcemetadataList.add(rReceiver);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"receiver", generateFullLocalReference(receiverReference, baseUrl));
+						resourcemetadataList.add(rMetadata);
 
 						if (chainedResource == null) {
 							// Add chained parameters for any
-							rDestinationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "receiver", 0, destination.getReceiver().getReference(), null);
-							resourcemetadataList.addAll(rDestinationChain);
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "receiver", 0, destination.getReceiver().getReference(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 						else {
 							if (bundle != null) {
@@ -369,11 +371,16 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 
 								if (messageHeaderResource != null && receiverEntry != null) {
 									// Add chained parameters for message.receiver; do not send baseUrl so references get stored as-is
-									rDestinationChain = this.generateChainedResourcemetadataAny(messageHeaderResource, "", resourceService, "message.receiver", 0, destination.getReceiver().getReference(), receiverEntry);
-									resourcemetadataList.addAll(rDestinationChain);
+									rMetadataChain = this.generateChainedResourcemetadataAny(messageHeaderResource, "", resourceService, "message.receiver", 0, destination.getReceiver().getReference(), receiverEntry);
+									resourcemetadataList.addAll(rMetadataChain);
 								}
 							}
 						}
+					}
+					// Manually handle Reference.identifier due to Bundle logic complexities
+					if (destination.hasReceiver() && destination.getReceiver().hasIdentifier()) {
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"receiver:identifier", destination.getReceiver().getIdentifier().getValue(), destination.getReceiver().getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(destination.getReceiver().getIdentifier()));
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// target : reference
@@ -386,13 +393,13 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 							targetReference = generateFullLocalReference(destination.getTarget().getReference(), baseUrl);
 						}
 
-						Resourcemetadata rTarget = generateResourcemetadata(resource, chainedResource, chainedParameter+"target", generateFullLocalReference(targetReference, baseUrl));
-						resourcemetadataList.add(rTarget);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"target", generateFullLocalReference(targetReference, baseUrl));
+						resourcemetadataList.add(rMetadata);
 
 						if (chainedResource == null) {
 							// Add chained parameters
-							List<Resourcemetadata> rTargetChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "target", 0, destination.getTarget().getReference(), null);
-							resourcemetadataList.addAll(rTargetChain);
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "target", 0, destination.getTarget().getReference(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 						else {
 							if (bundle != null) {
@@ -401,11 +408,16 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 
 								if (messageHeaderResource != null && targetEntry != null) {
 									// Add chained parameters for message.target; do not send baseUrl so references get stored as-is
-									rDestinationChain = this.generateChainedResourcemetadata(messageHeaderResource, "", resourceService, "message.target.", ResourceType.Device.name(), targetEntry, targetEntry);
-									resourcemetadataList.addAll(rDestinationChain);
+									rMetadataChain = this.generateChainedResourcemetadata(messageHeaderResource, "", resourceService, "message.target.", ResourceType.Device.name(), targetEntry, targetEntry);
+									resourcemetadataList.addAll(rMetadataChain);
 								}
 							}
 						}
+					}
+					// Manually handle Reference.identifier due to Bundle logic complexities
+					if (destination.hasTarget() && destination.getTarget().hasIdentifier()) {
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"target:identifier", destination.getTarget().getIdentifier().getValue(), destination.getTarget().getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(destination.getTarget().getIdentifier()));
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
@@ -414,14 +426,14 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 
 				// code : token
 				if (messageHeader.getResponse().hasCode() && messageHeader.getResponse().getCode() != null) {
-					Resourcemetadata rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", messageHeader.getResponse().getCode().toCode(), messageHeader.getResponse().getCode().getSystem());
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", messageHeader.getResponse().getCode().toCode(), messageHeader.getResponse().getCode().getSystem());
+					resourcemetadataList.add(rMetadata);
 				}
 
 				// response-id : token
 				if (messageHeader.getResponse().hasIdentifier()) {
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"response-id", messageHeader.getResponse().getIdentifier());
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"response-id", messageHeader.getResponse().getIdentifier());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -429,14 +441,14 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 
 				// source : string
 				if (messageHeader.getSource().hasName()) {
-					Resourcemetadata rSource = generateResourcemetadata(resource, chainedResource, chainedParameter+"source", messageHeader.getSource().getName());
-					resourcemetadataList.add(rSource);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"source", messageHeader.getSource().getName());
+					resourcemetadataList.add(rMetadata);
 				}
 
 				// source-uri : uri
 				if (messageHeader.getSource().hasEndpoint()) {
-					Resourcemetadata rEndpoint = generateResourcemetadata(resource, chainedResource, chainedParameter+"source-uri", messageHeader.getSource().getEndpoint());
-					resourcemetadataList.add(rEndpoint);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"source-uri", messageHeader.getSource().getEndpoint());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -444,6 +456,23 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iBundle != null) {
+                try {
+                	iBundle.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
+            if (iMessageHeader != null) {
+                try {
+                	iMessageHeader.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

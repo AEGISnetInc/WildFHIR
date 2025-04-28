@@ -33,9 +33,9 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -50,7 +50,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -78,6 +77,8 @@ public class ResourcemetadataMedicinalProductPharmaceutical extends Resourcemeta
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iMedicinalProductPharmaceutical = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a MedicinalProductPharmaceutical object
@@ -95,36 +96,16 @@ public class ResourcemetadataMedicinalProductPharmaceutical extends Resourcemeta
              * Create new Resourcemetadata objects for each MedicinalProductPharmaceutical metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, medicinalProductPharmaceutical, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (medicinalProductPharmaceutical.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", medicinalProductPharmaceutical.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (medicinalProductPharmaceutical.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", medicinalProductPharmaceutical.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (medicinalProductPharmaceutical.getMeta() != null && medicinalProductPharmaceutical.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(medicinalProductPharmaceutical.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(medicinalProductPharmaceutical.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, medicinalProductPharmaceutical, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// identifier : token
 			if (medicinalProductPharmaceutical.hasIdentifier()) {
 
-				Resourcemetadata rIdentifier = null;
 				for (Identifier identifier : medicinalProductPharmaceutical.getIdentifier()) {
-
-					rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -132,13 +113,12 @@ public class ResourcemetadataMedicinalProductPharmaceutical extends Resourcemeta
 			// species : token
 			if (medicinalProductPharmaceutical.hasRouteOfAdministration()) {
 
-				Resourcemetadata rCode = null;
 				for (MedicinalProductPharmaceuticalRouteOfAdministrationComponent route : medicinalProductPharmaceutical.getRouteOfAdministration()) {
 
 					if (route.hasCode() && route.getCode().hasCoding()) {
 						for (Coding code : route.getCode().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"route", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"route", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 
@@ -147,8 +127,8 @@ public class ResourcemetadataMedicinalProductPharmaceutical extends Resourcemeta
 
 							if (targetSpecies.hasCode() && targetSpecies.getCode().hasCoding()) {
 								for (Coding code : targetSpecies.getCode().getCoding()) {
-									rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"species", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-									resourcemetadataList.add(rCode);
+									rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"species", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+									resourcemetadataList.add(rMetadata);
 								}
 							}
 						}
@@ -159,20 +139,9 @@ public class ResourcemetadataMedicinalProductPharmaceutical extends Resourcemeta
 			// device : reference
 			if (medicinalProductPharmaceutical.hasDevice()) {
 
-				Resourcemetadata rDevice = null;
-				List<Resourcemetadata> rDeviceChain = null;
 				for (Reference device : medicinalProductPharmaceutical.getDevice()) {
-
-					if (device.hasReference()) {
-						rDevice = generateResourcemetadata(resource, chainedResource, chainedParameter+"device", generateFullLocalReference(device.getReference(), baseUrl));
-						resourcemetadataList.add(rDevice);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rDeviceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "device", 0, device.getReference(), null);
-							resourcemetadataList.addAll(rDeviceChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "device", 0, device, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -180,6 +149,16 @@ public class ResourcemetadataMedicinalProductPharmaceutical extends Resourcemeta
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iMedicinalProductPharmaceutical != null) {
+                try {
+                	iMedicinalProductPharmaceutical.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

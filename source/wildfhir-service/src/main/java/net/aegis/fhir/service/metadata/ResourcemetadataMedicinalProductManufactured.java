@@ -33,9 +33,9 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -47,7 +47,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -75,6 +74,8 @@ public class ResourcemetadataMedicinalProductManufactured extends Resourcemetada
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iMedicinalProductManufactured = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a MedicinalProductManufactured object
@@ -92,75 +93,34 @@ public class ResourcemetadataMedicinalProductManufactured extends Resourcemetada
              * Create new Resourcemetadata objects for each MedicinalProductManufactured metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, medicinalProductManufactured, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (medicinalProductManufactured.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", medicinalProductManufactured.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (medicinalProductManufactured.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", medicinalProductManufactured.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (medicinalProductManufactured.getMeta() != null && medicinalProductManufactured.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(medicinalProductManufactured.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(medicinalProductManufactured.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, medicinalProductManufactured, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// dose-form : token
 			if (medicinalProductManufactured.hasManufacturedDoseForm() && medicinalProductManufactured.getManufacturedDoseForm().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : medicinalProductManufactured.getManufacturedDoseForm().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"dose-form", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"dose-form", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// ingredient : reference
 			if (medicinalProductManufactured.hasIngredient()) {
 
-				Resourcemetadata rIngredient = null;
-				List<Resourcemetadata> rIngredientChain = null;
 				for (Reference ingredient : medicinalProductManufactured.getManufacturer()) {
-
-					if (ingredient.hasReference()) {
-						rIngredient = generateResourcemetadata(resource, chainedResource, chainedParameter+"ingredient", generateFullLocalReference(ingredient.getReference(), baseUrl));
-						resourcemetadataList.add(rIngredient);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rIngredientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "ingredient", 0, ingredient.getReference(), null);
-							resourcemetadataList.addAll(rIngredientChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "ingredient", 0, ingredient, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// manufacturer : reference
 			if (medicinalProductManufactured.hasManufacturer()) {
 
-				Resourcemetadata rManufacturer = null;
-				List<Resourcemetadata> rManufacturerChain = null;
 				for (Reference manufacturer : medicinalProductManufactured.getManufacturer()) {
-
-					if (manufacturer.hasReference()) {
-						rManufacturer = generateResourcemetadata(resource, chainedResource, chainedParameter+"manufacturer", generateFullLocalReference(manufacturer.getReference(), baseUrl));
-						resourcemetadataList.add(rManufacturer);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rManufacturerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "manufacturer", 0, manufacturer.getReference(), null);
-							resourcemetadataList.addAll(rManufacturerChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "manufacturer", 0, manufacturer, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -168,6 +128,16 @@ public class ResourcemetadataMedicinalProductManufactured extends Resourcemetada
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iMedicinalProductManufactured != null) {
+                try {
+                	iMedicinalProductManufactured.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

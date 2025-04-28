@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -76,6 +77,8 @@ public class ResourcemetadataInvoice extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iInvoice = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a Invoice object
@@ -93,74 +96,39 @@ public class ResourcemetadataInvoice extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each Invoice metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, invoice, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (invoice.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", invoice.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (invoice.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", invoice.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (invoice.getMeta() != null && invoice.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(invoice.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(invoice.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, invoice, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// account : reference
-			if (invoice.hasAccount() && invoice.getAccount().hasReference()) {
-				Resourcemetadata rAccount = generateResourcemetadata(resource, chainedResource, chainedParameter+"account", generateFullLocalReference(invoice.getAccount().getReference(), baseUrl));
-				resourcemetadataList.add(rAccount);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rAccountChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "account", 0, invoice.getAccount().getReference(), null);
-					resourcemetadataList.addAll(rAccountChain);
-				}
+			if (invoice.hasAccount()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "account", 0, invoice.getAccount(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// date : datetime
 			if (invoice.hasDate()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(invoice.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(invoice.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(invoice.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(invoice.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (invoice.hasIdentifier()) {
 
 				for (Identifier identifier : invoice.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// issuer : reference
-			if (invoice.hasIssuer() && invoice.getIssuer().hasReference()) {
-				Resourcemetadata rIssuer = generateResourcemetadata(resource, chainedResource, chainedParameter+"issuer", generateFullLocalReference(invoice.getIssuer().getReference(), baseUrl));
-				resourcemetadataList.add(rIssuer);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rIssuerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "issuer", 0, invoice.getIssuer().getReference(), null);
-					resourcemetadataList.addAll(rIssuerChain);
-				}
+			if (invoice.hasIssuer()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "issuer", 0, invoice.getIssuer(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// participant
 			if (invoice.hasParticipant()) {
-
-				Resourcemetadata rCode = null;
-				String participantReference = null;
-				List<Resourcemetadata> rParticipantChain = null;
 
 				for (InvoiceParticipantComponent participant : invoice.getParticipant()) {
 
@@ -168,91 +136,62 @@ public class ResourcemetadataInvoice extends ResourcemetadataProxy {
 					if (participant.hasRole() && participant.getRole().hasCoding()) {
 
 						for (Coding code : participant.getRole().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"participant-role", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"participant-role", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 
 					// participant : reference
-					if (participant.hasActor() && participant.getActor().hasReference()) {
-
-						participantReference = generateFullLocalReference(participant.getActor().getReference(), baseUrl);
-
-						Resourcemetadata rParticipant = generateResourcemetadata(resource, chainedResource, chainedParameter+"participant", participantReference);
-						resourcemetadataList.add(rParticipant);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rParticipantChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "participant", 0, participant.getActor().getReference(), null);
-							resourcemetadataList.addAll(rParticipantChain);
-						}
+					if (participant.hasActor()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "participant", 0, participant.getActor(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
 
-			// patient : reference
 			// subject : reference
-			if (invoice.hasSubject() && invoice.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(invoice.getSubject().getReference(), baseUrl);
+			if (invoice.hasSubject()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, invoice.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, invoice.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, invoice.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((invoice.getSubject().hasReference() && invoice.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (invoice.getSubject().hasType() && invoice.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, invoice.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// recipient : reference
-			if (invoice.hasRecipient() && invoice.getRecipient().hasReference()) {
-				Resourcemetadata rRecipient = generateResourcemetadata(resource, chainedResource, chainedParameter+"recipient", generateFullLocalReference(invoice.getRecipient().getReference(), baseUrl));
-				resourcemetadataList.add(rRecipient);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rRecipientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "recipient", 0, invoice.getIssuer().getReference(), null);
-					resourcemetadataList.addAll(rRecipientChain);
-				}
+			if (invoice.hasRecipient()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "recipient", 0, invoice.getRecipient(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// status : token
 			if (invoice.hasStatus() && invoice.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", invoice.getStatus().toCode(), invoice.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", invoice.getStatus().toCode(), invoice.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// totalgross : money
 			if (invoice.hasTotalGross()) {
-				Resourcemetadata rTotalGross = generateResourcemetadata(resource, chainedResource, chainedParameter+"totalgross", invoice.getTotalGross().primitiveValue());
-				resourcemetadataList.add(rTotalGross);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"totalgross", invoice.getTotalGross().primitiveValue());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// totalnet : money
 			if (invoice.hasTotalNet()) {
-				Resourcemetadata rTotalNet = generateResourcemetadata(resource, chainedResource, chainedParameter+"totalnet", invoice.getTotalNet().primitiveValue());
-				resourcemetadataList.add(rTotalNet);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"totalnet", invoice.getTotalNet().primitiveValue());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// type : token
 			if (invoice.hasType() && invoice.getType().hasCoding()) {
 
-				Resourcemetadata rType = null;
 				for (Coding type : invoice.getType().getCoding()) {
-					rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-					resourcemetadataList.add(rType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -260,6 +199,16 @@ public class ResourcemetadataInvoice extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iInvoice != null) {
+                try {
+                	iInvoice.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

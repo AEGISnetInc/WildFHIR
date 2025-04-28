@@ -33,9 +33,9 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -49,7 +49,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -77,6 +76,8 @@ public class ResourcemetadataHealthcareService extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iHealthcareService = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a HealthcareService object
@@ -94,44 +95,24 @@ public class ResourcemetadataHealthcareService extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each HealthcareService metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, healthcareService, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (healthcareService.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", healthcareService.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (healthcareService.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", healthcareService.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (healthcareService.getMeta() != null && healthcareService.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(healthcareService.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(healthcareService.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, healthcareService, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// active : token
 			if (healthcareService.hasActive()) {
-				Resourcemetadata rActive = generateResourcemetadata(resource, chainedResource, chainedParameter+"active", Boolean.toString(healthcareService.getActive()));
-				resourcemetadataList.add(rActive);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"active", Boolean.toString(healthcareService.getActive()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// characteristic : token
 			if (healthcareService.hasCharacteristic()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept characteristic : healthcareService.getCharacteristic()) {
 
 					if (characteristic.hasCoding()) {
 						for (Coding code : characteristic.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"characteristic", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"characteristic", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -140,101 +121,59 @@ public class ResourcemetadataHealthcareService extends ResourcemetadataProxy {
 			// coverage-area : reference
 			if (healthcareService.hasCoverageArea()) {
 
-				Resourcemetadata rCoverageArea = null;
-				List<Resourcemetadata> rCoverageAreaChain = null;
 				for (Reference coverageArea : healthcareService.getCoverageArea()) {
-
-					rCoverageArea = generateResourcemetadata(resource, chainedResource, chainedParameter+"coverage-area", generateFullLocalReference(coverageArea.getReference(), baseUrl));
-					resourcemetadataList.add(rCoverageArea);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						rCoverageAreaChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "coverage-area", 0, coverageArea.getReference(), null);
-						resourcemetadataList.addAll(rCoverageAreaChain);
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "coverage-area", 0, coverageArea, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// endpoint : reference
 			if (healthcareService.hasEndpoint()) {
 
-				String endpointReference = null;
-				Resourcemetadata rEndpoint = null;
-				List<Resourcemetadata> rEndpointChain = null;
 				for (Reference endpoint : healthcareService.getEndpoint()) {
-
-					if (endpoint.hasReference()) {
-						endpointReference = generateFullLocalReference(endpoint.getReference(), baseUrl);
-
-						rEndpoint = generateResourcemetadata(resource, chainedResource, chainedParameter+"endpoint", endpointReference);
-						resourcemetadataList.add(rEndpoint);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rEndpointChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "endpoint", 0, endpoint.getReference(), null);
-							resourcemetadataList.addAll(rEndpointChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "endpoint", 0, endpoint, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// identifier : token
 			if (healthcareService.hasIdentifier()) {
 
-				Resourcemetadata rIdentifier = null;
 				for (Identifier identifier : healthcareService.getIdentifier()) {
-
-					rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// location : reference
 			if (healthcareService.hasLocation()) {
 
-				Resourcemetadata rLocation = null;
-				List<Resourcemetadata> rLocationChain = null;
 				for (Reference location : healthcareService.getLocation()) {
-
-					rLocation = generateResourcemetadata(resource, chainedResource, chainedParameter+"location", generateFullLocalReference(location.getReference(), baseUrl));
-					resourcemetadataList.add(rLocation);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						rLocationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, location.getReference(), null);
-						resourcemetadataList.addAll(rLocationChain);
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "location", 0, location, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// name : string
 			if (healthcareService.hasName()) {
-				Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", healthcareService.getName());
-				resourcemetadataList.add(rName);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", healthcareService.getName());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// organization : reference
-			if (healthcareService.hasProvidedBy() && healthcareService.getProvidedBy().hasReference()) {
-				Resourcemetadata rProvidedBy = generateResourcemetadata(resource, chainedResource, chainedParameter+"organization", generateFullLocalReference(healthcareService.getProvidedBy().getReference(), baseUrl));
-				resourcemetadataList.add(rProvidedBy);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rOrganizationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "organization", 0, healthcareService.getProvidedBy().getReference(), null);
-					resourcemetadataList.addAll(rOrganizationChain);
-				}
+			if (healthcareService.hasProvidedBy()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "organization", 0, healthcareService.getProvidedBy(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// program : string
 			if (healthcareService.hasProgram()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept program : healthcareService.getProgram()) {
 
 					if (program.hasCoding()) {
 						for (Coding code : program.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"program", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"program", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -242,14 +181,12 @@ public class ResourcemetadataHealthcareService extends ResourcemetadataProxy {
 
 			// service-category : token
 			if (healthcareService.hasCategory()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept category : healthcareService.getCategory()) {
 
 					if (category.hasCoding()) {
 						for (Coding code : category.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -257,14 +194,12 @@ public class ResourcemetadataHealthcareService extends ResourcemetadataProxy {
 
 			// service-type : token
 			if (healthcareService.hasType()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept type : healthcareService.getType()) {
 
 					if (type.hasCoding()) {
 						for (Coding code : type.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -272,14 +207,12 @@ public class ResourcemetadataHealthcareService extends ResourcemetadataProxy {
 
 			// specialty : token
 			if (healthcareService.hasSpecialty()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept specialty : healthcareService.getSpecialty()) {
 
 					if (specialty.hasCoding()) {
 						for (Coding code : specialty.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"specialty", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"specialty", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -289,6 +222,16 @@ public class ResourcemetadataHealthcareService extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iHealthcareService != null) {
+                try {
+                	iHealthcareService.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

@@ -33,9 +33,9 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -47,7 +47,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -75,6 +74,8 @@ public class ResourcemetadataSubstanceSpecification extends ResourcemetadataProx
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iSubstanceSpecification = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a SubstanceSpecification object
@@ -92,38 +93,18 @@ public class ResourcemetadataSubstanceSpecification extends ResourcemetadataProx
              * Create new Resourcemetadata objects for each SubstanceSpecification metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, substanceSpecification, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (substanceSpecification.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", substanceSpecification.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (substanceSpecification.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", substanceSpecification.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (substanceSpecification.getMeta() != null && substanceSpecification.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(substanceSpecification.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(substanceSpecification.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, substanceSpecification, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// code : token
 			if (substanceSpecification.hasCode()) {
-
-				Resourcemetadata rCode = null;
 				for (SubstanceSpecificationCodeComponent substanceSpecificationCode : substanceSpecification.getCode()) {
 
 					if (substanceSpecificationCode.hasCode() && substanceSpecificationCode.getCode().hasCoding()) {
 						for (Coding code : substanceSpecificationCode.getCode().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -131,17 +112,16 @@ public class ResourcemetadataSubstanceSpecification extends ResourcemetadataProx
 
 			// identifier : token
 			if (substanceSpecification.hasIdentifier()) {
-				Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", substanceSpecification.getIdentifier().getValue(), substanceSpecification.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(substanceSpecification.getIdentifier()));
-				resourcemetadataList.add(rIdentifier);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", substanceSpecification.getIdentifier().getValue(), substanceSpecification.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(substanceSpecification.getIdentifier()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// type : token
 			if (substanceSpecification.hasType() && substanceSpecification.getType().hasCoding()) {
 
-				Resourcemetadata rType = null;
 				for (Coding type : substanceSpecification.getType().getCoding()) {
-					rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-					resourcemetadataList.add(rType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -149,6 +129,16 @@ public class ResourcemetadataSubstanceSpecification extends ResourcemetadataProx
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iSubstanceSpecification != null) {
+                try {
+                	iSubstanceSpecification.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

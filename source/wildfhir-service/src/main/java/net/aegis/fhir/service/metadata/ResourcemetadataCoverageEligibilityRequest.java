@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -74,6 +75,8 @@ public class ResourcemetadataCoverageEligibilityRequest extends Resourcemetadata
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iCoverageEligibilityRequest = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a CoverageEligibilityRequest object
@@ -91,102 +94,69 @@ public class ResourcemetadataCoverageEligibilityRequest extends Resourcemetadata
              * Create new Resourcemetadata objects for each CoverageEligibilityRequest metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, coverageEligibilityRequest, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (coverageEligibilityRequest.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", coverageEligibilityRequest.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (coverageEligibilityRequest.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", coverageEligibilityRequest.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (coverageEligibilityRequest.getMeta() != null && coverageEligibilityRequest.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(coverageEligibilityRequest.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(coverageEligibilityRequest.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, coverageEligibilityRequest, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// created : date
 			if (coverageEligibilityRequest.hasCreated()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"created", utcDateUtil.formatDate(coverageEligibilityRequest.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(coverageEligibilityRequest.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"created", utcDateUtil.formatDate(coverageEligibilityRequest.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(coverageEligibilityRequest.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// enterer : reference
-			if (coverageEligibilityRequest.hasEnterer() && coverageEligibilityRequest.getEnterer().hasReference()) {
-				Resourcemetadata rEntererReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"enterer", generateFullLocalReference(coverageEligibilityRequest.getEnterer().getReference(), baseUrl));
-				resourcemetadataList.add(rEntererReference);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rEntererChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "enterer", 0, coverageEligibilityRequest.getEnterer().getReference(), null);
-					resourcemetadataList.addAll(rEntererChain);
-				}
+			if (coverageEligibilityRequest.hasEnterer()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "enterer", 0, coverageEligibilityRequest.getEnterer(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// facility : reference
-			if (coverageEligibilityRequest.hasFacility() && coverageEligibilityRequest.getFacility().hasReference()) {
-				Resourcemetadata rFacilityReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"facility", generateFullLocalReference(coverageEligibilityRequest.getFacility().getReference(), baseUrl));
-				resourcemetadataList.add(rFacilityReference);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rFacilityChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "facility", 0, coverageEligibilityRequest.getFacility().getReference(), null);
-					resourcemetadataList.addAll(rFacilityChain);
-				}
+			if (coverageEligibilityRequest.hasFacility()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "facility", 0, coverageEligibilityRequest.getFacility(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// identifier : token
 			if (coverageEligibilityRequest.hasIdentifier()) {
 
 				for (Identifier identifier : coverageEligibilityRequest.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// patient : reference
-			if (coverageEligibilityRequest.hasPatient() && coverageEligibilityRequest.getPatient().hasReference()) {
-				Resourcemetadata rPatientReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", generateFullLocalReference(coverageEligibilityRequest.getPatient().getReference(), baseUrl));
-				resourcemetadataList.add(rPatientReference);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, coverageEligibilityRequest.getPatient().getReference(), null);
-					resourcemetadataList.addAll(rPatientChain);
-				}
+			if (coverageEligibilityRequest.hasPatient()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, coverageEligibilityRequest.getPatient(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// provider : reference
-			if (coverageEligibilityRequest.hasProvider() && coverageEligibilityRequest.getProvider().hasReference()) {
-				Resourcemetadata rProviderReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"provider", generateFullLocalReference(coverageEligibilityRequest.getProvider().getReference(), baseUrl));
-				resourcemetadataList.add(rProviderReference);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rProviderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "provider", 0, coverageEligibilityRequest.getProvider().getReference(), null);
-					resourcemetadataList.addAll(rProviderChain);
-				}
+			if (coverageEligibilityRequest.hasProvider()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "provider", 0, coverageEligibilityRequest.getProvider(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// status : token
 			if (coverageEligibilityRequest.hasStatus() && coverageEligibilityRequest.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", coverageEligibilityRequest.getStatus().toCode(), coverageEligibilityRequest.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", coverageEligibilityRequest.getStatus().toCode(), coverageEligibilityRequest.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iCoverageEligibilityRequest != null) {
+                try {
+                	iCoverageEligibilityRequest.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

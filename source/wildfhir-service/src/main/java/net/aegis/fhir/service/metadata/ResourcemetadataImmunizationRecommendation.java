@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -78,6 +79,8 @@ public class ResourcemetadataImmunizationRecommendation extends Resourcemetadata
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iImmunizationRecommendation = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a ImmunizationRecommendation object
@@ -95,77 +98,41 @@ public class ResourcemetadataImmunizationRecommendation extends Resourcemetadata
 			 * Create new Resourcemetadata objects for each ImmunizationRecommendation metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, immunizationRecommendation, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (immunizationRecommendation.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", immunizationRecommendation.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (immunizationRecommendation.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", immunizationRecommendation.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (immunizationRecommendation.getMeta() != null && immunizationRecommendation.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(immunizationRecommendation.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(immunizationRecommendation.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, immunizationRecommendation, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// date : datetime
 			if (immunizationRecommendation.hasDate()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(immunizationRecommendation.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(immunizationRecommendation.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(immunizationRecommendation.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(immunizationRecommendation.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (immunizationRecommendation.hasIdentifier()) {
 
 				for (Identifier identifier : immunizationRecommendation.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// patient : reference
-			if (immunizationRecommendation.hasPatient() && immunizationRecommendation.getPatient().hasReference()) {
-				Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", generateFullLocalReference(immunizationRecommendation.getPatient().getReference(), baseUrl));
-				resourcemetadataList.add(rPatient);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, immunizationRecommendation.getPatient().getReference(), null);
-					resourcemetadataList.addAll(rPatientChain);
-				}
+			if (immunizationRecommendation.hasPatient()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, immunizationRecommendation.getPatient(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			if (immunizationRecommendation.hasRecommendation()) {
 
-				Resourcemetadata rCode = null;
 				for (ImmunizationRecommendationRecommendationComponent recommendation : immunizationRecommendation.getRecommendation()) {
 
 					// information : reference
 					if (recommendation.hasSupportingPatientInformation()) {
 
-						List<Resourcemetadata> rInformationChain = null;
 						for (Reference supportingPatientInformation : recommendation.getSupportingPatientInformation()) {
-
-							if (supportingPatientInformation.hasReference()) {
-								Resourcemetadata rSupportingPatientInformation = generateResourcemetadata(resource, chainedResource, chainedParameter+"information", generateFullLocalReference(supportingPatientInformation.getReference(), baseUrl));
-								resourcemetadataList.add(rSupportingPatientInformation);
-
-								if (chainedResource == null) {
-									// Add chained parameters for any
-									rInformationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "information", 0, supportingPatientInformation.getReference(), null);
-									resourcemetadataList.addAll(rInformationChain);
-								}
-							}
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "information", 0, supportingPatientInformation, null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 
@@ -173,27 +140,17 @@ public class ResourcemetadataImmunizationRecommendation extends Resourcemetadata
 					if (recommendation.hasForecastStatus() && recommendation.getForecastStatus().hasCoding()) {
 
 						for (Coding code : recommendation.getForecastStatus().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 
 					// support : reference
 					if (recommendation.hasSupportingImmunization()) {
 
-						List<Resourcemetadata> rSupportingInformationChain = null;
 						for (Reference supportingImmunization : recommendation.getSupportingImmunization()) {
-
-							if (supportingImmunization.hasReference()) {
-								Resourcemetadata rSupportingImmunization = generateResourcemetadata(resource, chainedResource, chainedParameter+"support", generateFullLocalReference(supportingImmunization.getReference(), baseUrl));
-								resourcemetadataList.add(rSupportingImmunization);
-
-								if (chainedResource == null) {
-									// Add chained parameters
-									rSupportingInformationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "support", 0, supportingImmunization.getReference(), null);
-									resourcemetadataList.addAll(rSupportingInformationChain);
-								}
-							}
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "support", 0, supportingImmunization, null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 
@@ -204,8 +161,8 @@ public class ResourcemetadataImmunizationRecommendation extends Resourcemetadata
 
 							if (vaccineCode.hasCoding()) {
 								for (Coding code : vaccineCode.getCoding()) {
-									rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"vaccine-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-									resourcemetadataList.add(rCode);
+									rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"vaccine-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+									resourcemetadataList.add(rMetadata);
 								}
 							}
 						}
@@ -217,6 +174,16 @@ public class ResourcemetadataImmunizationRecommendation extends Resourcemetadata
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iImmunizationRecommendation != null) {
+                try {
+                	iImmunizationRecommendation.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

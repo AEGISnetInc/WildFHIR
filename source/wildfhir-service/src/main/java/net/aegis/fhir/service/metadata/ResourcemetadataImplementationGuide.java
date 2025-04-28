@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -80,6 +81,8 @@ public class ResourcemetadataImplementationGuide extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iImplementationGuide = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a ImplementationGuide object
@@ -97,27 +100,9 @@ public class ResourcemetadataImplementationGuide extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each ImmunizationRecommendation metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, implementationGuide, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (implementationGuide.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", implementationGuide.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (implementationGuide.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", implementationGuide.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (implementationGuide.getMeta() != null && implementationGuide.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(implementationGuide.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(implementationGuide.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, implementationGuide, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// context-type-[x] : composite
 			StringBuilder conextTypeComposite = new StringBuilder("");
@@ -128,8 +113,8 @@ public class ResourcemetadataImplementationGuide extends ResourcemetadataProxy {
 				for (UsageContext context : implementationGuide.getUseContext()) {
 
 					// context-type : token
-					Resourcemetadata rContextType = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type", context.getCode().getCode(), context.getCode().getSystem());
-					resourcemetadataList.add(rContextType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type", context.getCode().getCode(), context.getCode().getSystem());
+					resourcemetadataList.add(rMetadata);
 
 					// Start building the context-type-[x] composite
 					if (context.getCode().hasSystem()) {
@@ -139,10 +124,9 @@ public class ResourcemetadataImplementationGuide extends ResourcemetadataProxy {
 
 					if (context.hasValueCodeableConcept() && context.getValueCodeableConcept().hasCoding()) {
 						// context : token
-						Resourcemetadata rCode = null;
 						for (Coding code : context.getValueCodeableConcept().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"context", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 
 						// context-type-value : composite
@@ -152,15 +136,15 @@ public class ResourcemetadataImplementationGuide extends ResourcemetadataProxy {
 						}
 						conextTypeComposite.append("|").append(context.getValueCodeableConcept().getCodingFirstRep().getCode());
 
-						Resourcemetadata rContextTypeValue = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-value", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
-						resourcemetadataList.add(rContextTypeValue);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-value", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
+						resourcemetadataList.add(rMetadata);
 					}
 
 					if (context.hasValueQuantity()) {
 						// context-quantity : quantity
 						String quantityCode = (context.getValueQuantity().getCode() != null ? context.getValueQuantity().getCode() : context.getValueQuantity().getUnit());
-						Resourcemetadata rContextQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", context.getValueQuantity().getValue().toPlainString(), context.getValueQuantity().getSystem(), quantityCode);
-						resourcemetadataList.add(rContextQuantity);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", context.getValueQuantity().getValue().toPlainString(), context.getValueQuantity().getSystem(), quantityCode);
+						resourcemetadataList.add(rMetadata);
 
 						// context-type-quantity : composite
 						conextTypeComposite.append("$");
@@ -173,8 +157,8 @@ public class ResourcemetadataImplementationGuide extends ResourcemetadataProxy {
 						}
 						conextTypeComposite.append("|").append(quantityCode);
 
-						Resourcemetadata rContextTypeQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
-						resourcemetadataList.add(rContextTypeQuantity);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
+						resourcemetadataList.add(rMetadata);
 					}
 
 					if (context.hasValueRange()) {
@@ -189,8 +173,8 @@ public class ResourcemetadataImplementationGuide extends ResourcemetadataProxy {
 						}
 						if (rangeValue != null) {
 							quantityCode = (rangeValue.getCode() != null ? rangeValue.getCode() : rangeValue.getUnit());
-							Resourcemetadata rContextQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", rangeValue.getValue().toPlainString(), rangeValue.getSystem(), quantityCode);
-							resourcemetadataList.add(rContextQuantity);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", rangeValue.getValue().toPlainString(), rangeValue.getSystem(), quantityCode);
+							resourcemetadataList.add(rMetadata);
 
 							// context-type-quantity : composite
 							conextTypeComposite.append("$");
@@ -203,8 +187,8 @@ public class ResourcemetadataImplementationGuide extends ResourcemetadataProxy {
 							}
 							conextTypeComposite.append("|").append(quantityCode);
 
-							Resourcemetadata rContextTypeQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
-							resourcemetadataList.add(rContextTypeQuantity);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -212,64 +196,59 @@ public class ResourcemetadataImplementationGuide extends ResourcemetadataProxy {
 
 			// date : datetime
 			if (implementationGuide.hasDate()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(implementationGuide.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(implementationGuide.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(implementationGuide.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(implementationGuide.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// depends-on : uri
 			if (implementationGuide.hasDependsOn()) {
-
 				for (ImplementationGuideDependsOnComponent dependsOn : implementationGuide.getDependsOn()) {
 
 					if (dependsOn.hasUri()) {
-						Resourcemetadata rDependsOn = generateResourcemetadata(resource, chainedResource, chainedParameter+"depends-on", dependsOn.getUri());
-						resourcemetadataList.add(rDependsOn);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"depends-on", dependsOn.getUri());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// description : string
 			if (implementationGuide.hasDescription()) {
-				Resourcemetadata rDescription = generateResourcemetadata(resource, chainedResource, chainedParameter+"description", implementationGuide.getDescription());
-				resourcemetadataList.add(rDescription);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"description", implementationGuide.getDescription());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// experimental : token
 			if (implementationGuide.hasExperimental()) {
-				Resourcemetadata rExperimental = generateResourcemetadata(resource, chainedResource, chainedParameter+"experimental", implementationGuide.getExperimentalElement().getValueAsString());
-				resourcemetadataList.add(rExperimental);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"experimental", implementationGuide.getExperimentalElement().getValueAsString());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// jurisdiction : token
 			if (implementationGuide.hasJurisdiction()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept jurisdiction : implementationGuide.getJurisdiction()) {
 
 					if (jurisdiction.hasCoding()) {
 						for (Coding code : jurisdiction.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"jurisdiction", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"jurisdiction", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
 			}
 
-			// global : reference
+			// global : reference - global.profile is a Canonical, no Reference.identifier
 			if (implementationGuide.hasGlobal()) {
 
-				Resourcemetadata rGlobal = null;
-				List<Resourcemetadata> rGlobalChain = null;
 				for (ImplementationGuideGlobalComponent global : implementationGuide.getGlobal()) {
 
 					if (global.hasProfile()) {
-						rGlobal = generateResourcemetadata(resource, chainedResource, chainedParameter+"global", generateFullLocalReference(global.getProfile(), baseUrl));
-						resourcemetadataList.add(rGlobal);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"global", generateFullLocalReference(global.getProfile(), baseUrl));
+						resourcemetadataList.add(rMetadata);
 
 						if (chainedResource == null) {
 							// Add chained parameters
-							rGlobalChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "global", 0, global.getProfile(), null);
-							resourcemetadataList.addAll(rGlobalChain);
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "global", 0, global.getProfile(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 				}
@@ -277,64 +256,66 @@ public class ResourcemetadataImplementationGuide extends ResourcemetadataProxy {
 
 			// name : string
 			if (implementationGuide.hasName()) {
-				Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", implementationGuide.getName());
-				resourcemetadataList.add(rName);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", implementationGuide.getName());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// publisher : string
 			if (implementationGuide.hasPublisher()) {
-				Resourcemetadata rPublisher = generateResourcemetadata(resource, chainedResource, chainedParameter+"publisher", implementationGuide.getPublisher());
-				resourcemetadataList.add(rPublisher);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"publisher", implementationGuide.getPublisher());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// resource : reference
 			if (implementationGuide.hasDefinition()) {
 
-				Resourcemetadata rResource = null;
-				List<Resourcemetadata> rResourceChain = null;
 				for (ImplementationGuideDefinitionResourceComponent resourceComponent : implementationGuide.getDefinition().getResource()) {
 
-					if (resourceComponent.hasReference() && resourceComponent.getReference().hasReference()) {
-						rResource = generateResourcemetadata(resource, chainedResource, chainedParameter+"resource", generateFullLocalReference(resourceComponent.getReference().getReference(), baseUrl));
-						resourcemetadataList.add(rResource);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rResourceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "resource", 0, resourceComponent.getReference().getReference(), null);
-							resourcemetadataList.addAll(rResourceChain);
-						}
+					if (resourceComponent.hasReference()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "resource", 0, resourceComponent.getReference(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
 
 			// status : token
 			if (implementationGuide.hasStatus() && implementationGuide.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", implementationGuide.getStatus().toCode(), implementationGuide.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", implementationGuide.getStatus().toCode(), implementationGuide.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// title : string
 			if (implementationGuide.hasTitle()) {
-				Resourcemetadata rTitle = generateResourcemetadata(resource, chainedResource, chainedParameter+"title", implementationGuide.getTitle());
-				resourcemetadataList.add(rTitle);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"title", implementationGuide.getTitle());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// url : uri
 			if (implementationGuide.hasUrl()) {
-				Resourcemetadata rUrl = generateResourcemetadata(resource, chainedResource, chainedParameter+"url", implementationGuide.getUrl());
-				resourcemetadataList.add(rUrl);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"url", implementationGuide.getUrl());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// version : token
 			if (implementationGuide.hasVersion()) {
-				Resourcemetadata rVersion = generateResourcemetadata(resource, chainedResource, chainedParameter+"version", implementationGuide.getVersion());
-				resourcemetadataList.add(rVersion);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"version", implementationGuide.getVersion());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iImplementationGuide != null) {
+                try {
+                	iImplementationGuide.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

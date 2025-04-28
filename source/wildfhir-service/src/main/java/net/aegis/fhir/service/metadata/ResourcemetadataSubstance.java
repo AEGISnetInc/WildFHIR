@@ -79,6 +79,8 @@ public class ResourcemetadataSubstance extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iSubstance = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Substance object
@@ -96,38 +98,18 @@ public class ResourcemetadataSubstance extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Substance metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, substance, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (substance.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", substance.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (substance.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", substance.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (substance.getMeta() != null && substance.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(substance.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(substance.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, substance, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// category : token
 			if (substance.hasCategory()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept category : substance.getCategory()) {
 
 					if (category.hasCoding()) {
 						for (Coding code : category.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -135,10 +117,10 @@ public class ResourcemetadataSubstance extends ResourcemetadataProxy {
 
 			// code : token
 			if (substance.hasCode() && substance.getCode().hasCoding()) {
-				Resourcemetadata rCode = null;
+
 				for (Coding code : substance.getCode().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -146,26 +128,25 @@ public class ResourcemetadataSubstance extends ResourcemetadataProxy {
 			// expiry : date
 			// quantity : number
 			if (substance.hasInstance()) {
-
 				for (SubstanceInstanceComponent instance : substance.getInstance()) {
 
 					// container-identifier : token
 					if (instance.hasIdentifier()) {
-						Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"container-identifier", instance.getIdentifier().getValue(), instance.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(instance.getIdentifier()));
-						resourcemetadataList.add(rIdentifier);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"container-identifier", instance.getIdentifier().getValue(), instance.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(instance.getIdentifier()));
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// expiry : date
 					if (instance.hasExpiry()) {
-						Resourcemetadata rExpiry = generateResourcemetadata(resource, chainedResource, chainedParameter+"expiry", utcDateUtil.formatDate(instance.getExpiry(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(instance.getExpiry(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-						resourcemetadataList.add(rExpiry);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"expiry", utcDateUtil.formatDate(instance.getExpiry(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(instance.getExpiry(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// quantity : number (quantity)
 					if (instance.hasQuantity()) {
 						String valueQuantityCode = (instance.getQuantity().getCode() != null ? instance.getQuantity().getCode() : instance.getQuantity().getUnit());
-						Resourcemetadata rQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"quantity", instance.getQuantity().getValue().toString(), instance.getQuantity().getSystem(), valueQuantityCode);
-						resourcemetadataList.add(rQuantity);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"quantity", instance.getQuantity().getValue().toString(), instance.getQuantity().getSystem(), valueQuantityCode);
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
@@ -174,40 +155,31 @@ public class ResourcemetadataSubstance extends ResourcemetadataProxy {
 			if (substance.hasIdentifier()) {
 
 				for (Identifier identifier : substance.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// status : token
 			if (substance.hasStatus() && substance.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", substance.getStatus().toCode(), substance.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", substance.getStatus().toCode(), substance.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// substance-reference : reference
 			if (substance.hasIngredient()) {
-
-				List<Resourcemetadata> rSubstanceChain = null;
 				for (SubstanceIngredientComponent ingredient : substance.getIngredient()) {
 
-					if (ingredient.hasSubstanceReference() && ingredient.getSubstanceReference().hasReference()) {
-						Resourcemetadata rSubstancereference = generateResourcemetadata(resource, chainedResource, chainedParameter+"substance-reference", generateFullLocalReference(ingredient.getSubstanceReference().getReference(), baseUrl));
-						resourcemetadataList.add(rSubstancereference);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rSubstanceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "substance-reference", 0, ingredient.getSubstanceReference().getReference(), null);
-							resourcemetadataList.addAll(rSubstanceChain);
-						}
+					if (ingredient.hasSubstanceReference()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "substance-reference", 0, ingredient.getSubstanceReference(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 
 					if (ingredient.hasSubstanceCodeableConcept() && ingredient.getSubstanceCodeableConcept().hasCoding()) {
-						Resourcemetadata rCode = null;
+
 						for (Coding code : ingredient.getSubstanceCodeableConcept().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -218,6 +190,8 @@ public class ResourcemetadataSubstance extends ResourcemetadataProxy {
 			e.printStackTrace();
 			throw e;
         } finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
             if (iSubstance != null) {
                 try {
                     iSubstance.close();

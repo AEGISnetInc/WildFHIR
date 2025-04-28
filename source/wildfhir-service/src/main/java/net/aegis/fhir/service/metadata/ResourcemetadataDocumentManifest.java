@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -77,6 +78,8 @@ public class ResourcemetadataDocumentManifest extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iDocumentManifest = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a DocumentManifest object
@@ -94,183 +97,112 @@ public class ResourcemetadataDocumentManifest extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each DocumentManifest metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, documentManifest, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (documentManifest.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", documentManifest.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (documentManifest.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", documentManifest.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (documentManifest.getMeta() != null && documentManifest.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(documentManifest.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(documentManifest.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, documentManifest, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// author : reference
 			if (documentManifest.hasAuthor()) {
 
-				Resourcemetadata rAuthor = null;
-				List<Resourcemetadata> rAuthorChain = null;
 				for (Reference author : documentManifest.getAuthor()) {
-
-					if (author.hasReference()) {
-						rAuthor = generateResourcemetadata(resource, chainedResource, chainedParameter+"author", generateFullLocalReference(author.getReference(), baseUrl));
-						resourcemetadataList.add(rAuthor);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rAuthorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "author", 0, author.getReference(), null);
-							resourcemetadataList.addAll(rAuthorChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "author", 0, author, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// created : date
 			if (documentManifest.hasCreated()) {
-				Resourcemetadata rCreated = generateResourcemetadata(resource, chainedResource, chainedParameter+"created", utcDateUtil.formatDate(documentManifest.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(documentManifest.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rCreated);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"created", utcDateUtil.formatDate(documentManifest.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(documentManifest.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// description : string
 			if (documentManifest.hasDescription()) {
-				Resourcemetadata rDescription = generateResourcemetadata(resource, chainedResource, chainedParameter+"description", documentManifest.getDescription());
-				resourcemetadataList.add(rDescription);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"description", documentManifest.getDescription());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (documentManifest.hasMasterIdentifier()) {
-				Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", documentManifest.getMasterIdentifier().getValue(), documentManifest.getMasterIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(documentManifest.getMasterIdentifier()));
-				resourcemetadataList.add(rIdentifier);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", documentManifest.getMasterIdentifier().getValue(), documentManifest.getMasterIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(documentManifest.getMasterIdentifier()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			if (documentManifest.hasIdentifier()) {
 
 				for (Identifier identifier : documentManifest.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// item : reference
 			if (documentManifest.hasContent()) {
 
-				List<Resourcemetadata> rContentChain = null;
 				for (Reference content : documentManifest.getContent()) {
-
-					if (content.hasReference()) {
-						Resourcemetadata rContentRef = generateResourcemetadata(resource, chainedResource, chainedParameter+"item", generateFullLocalReference(content.getReference(), baseUrl));
-						resourcemetadataList.add(rContentRef);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rContentChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "item", 0, content.getReference(), null);
-							resourcemetadataList.addAll(rContentChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "item", 0, content, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
-			// recipient : token
+			// recipient : reference
 			if (documentManifest.hasRecipient()) {
 
-				List<Resourcemetadata> rRecipientChain = null;
 				for (Reference recipient : documentManifest.getRecipient()) {
-
-					if (recipient.hasReference()) {
-						Resourcemetadata rRecipient = generateResourcemetadata(resource, chainedResource, chainedParameter+"recipient", recipient.getReference());
-						resourcemetadataList.add(rRecipient);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rRecipientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "recipient", 0, recipient.getReference(), null);
-							resourcemetadataList.addAll(rRecipientChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "recipient", 0, recipient, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// source : uri
 			if (documentManifest.hasSource()) {
-				Resourcemetadata rSource = generateResourcemetadata(resource, chainedResource, chainedParameter+"source", documentManifest.getSource());
-				resourcemetadataList.add(rSource);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"source", documentManifest.getSource());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// status : token
 			if (documentManifest.hasStatus() && documentManifest.getStatus() != null) {
-				Resourcemetadata rCoding = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", documentManifest.getStatus().toCode(), documentManifest.getStatus().getSystem());
-				resourcemetadataList.add(rCoding);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", documentManifest.getStatus().toCode(), documentManifest.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
-			// patient : reference
 			// subject : reference
-			if (documentManifest.hasSubject() && documentManifest.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(documentManifest.getSubject().getReference(), baseUrl);
+			if (documentManifest.hasSubject()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, documentManifest.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, documentManifest.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, documentManifest.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((documentManifest.getSubject().hasReference() && documentManifest.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (documentManifest.getSubject().hasType() && documentManifest.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, documentManifest.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// type : token
 			if (documentManifest.hasType() && documentManifest.getType().hasCoding()) {
 
-				Resourcemetadata rType = null;
 				for (Coding type : documentManifest.getType().getCoding()) {
-					rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-					resourcemetadataList.add(rType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// related
 			if (documentManifest.hasRelated()) {
 
-				List<Resourcemetadata> rRelatedChain = null;
 				for (DocumentManifestRelatedComponent related : documentManifest.getRelated()) {
 
 					// related-id : token
 					if (related.hasIdentifier()) {
-						Resourcemetadata rRelatedId = generateResourcemetadata(resource, chainedResource, chainedParameter+"related-id", related.getIdentifier().getValue(), related.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(related.getIdentifier()));
-						resourcemetadataList.add(rRelatedId);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"related-id", related.getIdentifier().getValue(), related.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(related.getIdentifier()));
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// related-ref : reference
-					if (related.hasRef() && related.getRef().hasReference()) {
-						Resourcemetadata rRelatedRef = generateResourcemetadata(resource, chainedResource, chainedParameter+"related-ref", generateFullLocalReference(related.getRef().getReference(), baseUrl));
-						resourcemetadataList.add(rRelatedRef);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rRelatedChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "related-ref", 0, related.getRef().getReference(), null);
-							resourcemetadataList.addAll(rRelatedChain);
-						}
+					if (related.hasRef()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "related-ref", 0, related.getRef(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
@@ -279,6 +211,16 @@ public class ResourcemetadataDocumentManifest extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iDocumentManifest != null) {
+                try {
+                	iDocumentManifest.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

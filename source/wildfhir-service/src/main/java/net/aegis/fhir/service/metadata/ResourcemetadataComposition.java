@@ -34,6 +34,7 @@ package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -45,8 +46,8 @@ import net.aegis.fhir.service.util.ServicesUtil;
 import net.aegis.fhir.service.util.UTCDateUtil;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.formats.IParser.OutputStyle;
+import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
@@ -55,8 +56,8 @@ import org.hl7.fhir.r4.model.Composition.CompositionAttesterComponent;
 import org.hl7.fhir.r4.model.Composition.CompositionEventComponent;
 import org.hl7.fhir.r4.model.Composition.CompositionRelatesToComponent;
 import org.hl7.fhir.r4.model.Composition.SectionComponent;
-import org.hl7.fhir.r4.model.ResourceType;
 import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.ResourceType;
 
 /**
  * @author richard.ettema
@@ -85,6 +86,8 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iBundle = null;
         ByteArrayInputStream iComposition = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Composition object
@@ -129,33 +132,14 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Composition metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, composition, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (composition.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", composition.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (composition.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", composition.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (composition.getMeta() != null && composition.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(composition.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(composition.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, composition, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// attester : reference
 			if (composition.hasAttester()) {
 
 				String attesterReference = null;
-				List<Resourcemetadata> rAttesterChain = null;
 				for (CompositionAttesterComponent attester : composition.getAttester()) {
 
 					if (attester.hasParty() && attester.getParty().hasReference()) {
@@ -166,26 +150,29 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 							attesterReference = generateFullLocalReference(attester.getParty().getReference(), baseUrl);
 						}
 
-						Resourcemetadata rAttester = generateResourcemetadata(resource, chainedResource, chainedParameter+"attester", attesterReference);
-						resourcemetadataList.add(rAttester);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"attester", attesterReference);
+						resourcemetadataList.add(rMetadata);
 
 						if (chainedResource == null) {
 							// Add chained parameters
-							rAttesterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "attester", 0, attester.getParty().getReference(), null);
-							resourcemetadataList.addAll(rAttesterChain);
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "attester", 0, attester.getParty().getReference(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
-						else {
-							if (bundle != null) {
-								// Extract composition.attester resource from containing bundle
-								org.hl7.fhir.r4.model.Resource attesterEntry = this.getReferencedBundleEntryResource(bundle, attester.getParty().getReference());
+						else if (bundle != null) {
+							// Extract composition.subject resource from containing bundle
+							org.hl7.fhir.r4.model.Resource attesterEntry = this.getReferencedBundleEntryResource(bundle, attester.getParty().getReference());
 
-								if (compositionResource != null && attesterEntry != null) {
-									// Add chained parameters for composition.attester; do not send baseUrl so references get stored as-is
-									rAttesterChain = this.generateChainedResourcemetadataAny(compositionResource, "", resourceService, "composition.attester", 0, attester.getParty().getReference(), attesterEntry);
-									resourcemetadataList.addAll(rAttesterChain);
-								}
+							if (attesterEntry != null) {
+								// Add chained parameters for composition.attester
+								rMetadataChain = this.generateChainedResourcemetadataAny(compositionResource, "", resourceService, "composition.attester", 0, attester.getParty().getReference(), attesterEntry);
+								resourcemetadataList.addAll(rMetadataChain);
 							}
 						}
+					}
+					// Manually handle Reference.identifier due to Bundle logic complexities
+					if (attester.hasParty() && attester.getParty().hasIdentifier()) {
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"attester:identifier", attester.getParty().getIdentifier().getValue(), attester.getParty().getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(attester.getParty().getIdentifier()));
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
@@ -194,7 +181,6 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 			if (composition.hasAuthor()) {
 
 				String authorReference = null;
-				List<Resourcemetadata> rAuthorChain = null;
 				for (Reference author : composition.getAuthor()) {
 
 					if (author.hasReference()) {
@@ -205,26 +191,29 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 							authorReference = generateFullLocalReference(author.getReference(), baseUrl);
 						}
 
-						Resourcemetadata rAuthor = generateResourcemetadata(resource, chainedResource, chainedParameter+"author", authorReference);
-						resourcemetadataList.add(rAuthor);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"author", authorReference);
+						resourcemetadataList.add(rMetadata);
 
 						if (chainedResource == null) {
 							// Add chained parameters
-							rAuthorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "author", 0, author.getReference(), null);
-							resourcemetadataList.addAll(rAuthorChain);
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "author", 0, author.getReference(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
-						else {
-							if (bundle != null) {
-								// Extract composition.author resource from containing bundle
-								org.hl7.fhir.r4.model.Resource authorEntry = this.getReferencedBundleEntryResource(bundle, author.getReference());
+						else if (bundle != null) {
+							// Extract composition.author resource from containing bundle
+							org.hl7.fhir.r4.model.Resource authorEntry = this.getReferencedBundleEntryResource(bundle, author.getReference());
 
-								if (compositionResource != null && authorEntry != null) {
-									// Add chained parameters for composition.author; do not send baseUrl so references get stored as-is
-									rAuthorChain = this.generateChainedResourcemetadataAny(compositionResource, "", resourceService, "composition.author", 0, author.getReference(), authorEntry);
-									resourcemetadataList.addAll(rAuthorChain);
-								}
+							if (authorEntry != null) {
+								// Add chained parameters for composition.author
+								rMetadataChain = this.generateChainedResourcemetadataAny(compositionResource, "", resourceService, "composition.author", 0, author.getReference(), authorEntry);
+								resourcemetadataList.addAll(rMetadataChain);
 							}
 						}
+					}
+					// Manually handle Reference.identifier due to Bundle logic complexities
+					if (author.hasIdentifier()) {
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"author:identifier", author.getIdentifier().getValue(), author.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(author.getIdentifier()));
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
@@ -232,13 +221,12 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 			// category : token
 			if (composition.hasCategory()) {
 
-				Resourcemetadata rCode = null;
 				for (CodeableConcept category : composition.getCategory()) {
-
 					if (category.hasCoding()) {
+
 						for (Coding code : category.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -246,24 +234,22 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 
 			// confidentiality : token
 			if (composition.hasConfidentiality() && composition.getConfidentiality() != null) {
-				Resourcemetadata rConfidentiality = generateResourcemetadata(resource, chainedResource, chainedParameter+"confidentiality", composition.getConfidentiality().toCode(), composition.getConfidentiality().getSystem());
-				resourcemetadataList.add(rConfidentiality);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"confidentiality", composition.getConfidentiality().toCode(), composition.getConfidentiality().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			if (composition.hasEvent()) {
 
-				Resourcemetadata rCode = null;
 				for (CompositionEventComponent event : composition.getEvent()) {
-
 					// context : token
 					if (event.hasCode()) {
 
 						for (CodeableConcept eventCode : event.getCode()) {
-
 							if (eventCode.hasCoding()) {
+
 								for (Coding code : eventCode.getCoding()) {
-									rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"context", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-									resourcemetadataList.add(rCode);
+									rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+									resourcemetadataList.add(rMetadata);
 								}
 							}
 						}
@@ -271,16 +257,16 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 
 					// period : date(period)
 					if (event.hasPeriod()) {
-						Resourcemetadata rPeriod = generateResourcemetadata(resource, chainedResource, chainedParameter+"period", utcDateUtil.formatDate(event.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(event.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(event.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(event.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-						resourcemetadataList.add(rPeriod);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"period", utcDateUtil.formatDate(event.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(event.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(event.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(event.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// date : datetime
 			if (composition.hasDate()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(composition.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(composition.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(composition.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(composition.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// encounter : reference
@@ -293,34 +279,34 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 					encounterReference = generateFullLocalReference(composition.getEncounter().getReference(), baseUrl);
 				}
 
-				Resourcemetadata rEncounter = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", encounterReference);
-				resourcemetadataList.add(rEncounter);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", encounterReference);
+				resourcemetadataList.add(rMetadata);
 
-				List<Resourcemetadata> rEncounterChain = null;
 				if (chainedResource == null) {
 					// Add chained parameters
-					rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, composition.getEncounter().getReference(), null);
-					resourcemetadataList.addAll(rEncounterChain);
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, composition.getEncounter().getReference(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
-				else {
-					if (bundle != null) {
-						// Extract composition.encounter resource from containing bundle
-						org.hl7.fhir.r4.model.Resource encounterEntry = this.getReferencedBundleEntryResource(bundle, composition.getEncounter().getReference());
+				else if (bundle != null) {
+					// Extract composition.encounter resource from containing bundle
+					org.hl7.fhir.r4.model.Resource encounterEntry = this.getReferencedBundleEntryResource(bundle, composition.getEncounter().getReference());
 
-						if (compositionResource != null && encounterEntry != null) {
-							// Add chained parameters for composition.encounter; do not send baseUrl so references get stored as-is
-							rEncounterChain = this.generateChainedResourcemetadata(compositionResource, "", resourceService, "composition.encounter.", ResourceType.Encounter.name(), encounterEntry, encounterEntry);
-							resourcemetadataList.addAll(rEncounterChain);
-						}
+					if (encounterEntry != null) {
+						// Add chained parameters for composition.encounter
+						rMetadataChain = this.generateChainedResourcemetadata(compositionResource, "", resourceService, "composition.encounter.", ResourceType.Encounter.name(), encounterEntry, encounterEntry);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
+			}
+			// Manually handle Reference.identifier due to Bundle logic complexities
+			if (composition.hasEncounter() && composition.getEncounter().hasIdentifier()) {
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter:identifier", composition.getEncounter().getIdentifier().getValue(), composition.getEncounter().getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(composition.getEncounter().getIdentifier()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// section
 			if (composition.hasSection()) {
 
-				Resourcemetadata rCode = null;
-				List<Resourcemetadata> rEntryChain = null;
 				for (SectionComponent section : composition.getSection()) {
 
 					// entry : reference
@@ -337,26 +323,29 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 									entryReference = generateFullLocalReference(entry.getReference(), baseUrl);
 								}
 
-								Resourcemetadata rEntry = generateResourcemetadata(resource, chainedResource, chainedParameter+"entry", entryReference);
-								resourcemetadataList.add(rEntry);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"entry", entryReference);
+								resourcemetadataList.add(rMetadata);
 
 								if (chainedResource == null) {
 									// Add chained parameters for any
-									rEntryChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "entry", 0, entry.getReference(), null);
-									resourcemetadataList.addAll(rEntryChain);
+									rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "entry", 0, entry.getReference(), null);
+									resourcemetadataList.addAll(rMetadataChain);
 								}
-								else {
-									if (bundle != null) {
-										// Extract composition.entry resource from containing bundle
-										org.hl7.fhir.r4.model.Resource entryEntry = this.getReferencedBundleEntryResource(bundle, entry.getReference());
+								else if (bundle != null) {
+									// Extract composition.entry resource from containing bundle
+									org.hl7.fhir.r4.model.Resource entryEntry = this.getReferencedBundleEntryResource(bundle, entry.getReference());
 
-										if (compositionResource != null && entryEntry != null) {
-											// Add chained parameters for composition.entry; do not send baseUrl so references get stored as-is
-											rEntryChain = this.generateChainedResourcemetadataAny(compositionResource, "", resourceService, "composition.entry", 0, entry.getReference(), entryEntry);
-											resourcemetadataList.addAll(rEntryChain);
-										}
+									if (entryEntry != null) {
+										// Add chained parameters for composition.entry
+										rMetadataChain = this.generateChainedResourcemetadataAny(compositionResource, "", resourceService, "composition.entry", 0, entry.getReference(), entryEntry);
+										resourcemetadataList.addAll(rMetadataChain);
 									}
 								}
+							}
+							// Manually handle Reference.identifier due to Bundle logic complexities
+							if (entry.hasIdentifier()) {
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"entry:identifier", entry.getIdentifier().getValue(), entry.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(entry.getIdentifier()));
+								resourcemetadataList.add(rMetadata);
 							}
 						}
 					}
@@ -364,8 +353,8 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 					// section : token
 					if (section.hasCode() && section.getCode().hasCoding()) {
 						for (Coding code : section.getCode().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"section", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"section", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -373,20 +362,19 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 
 			// identifier : token
 			if (composition.hasIdentifier()) {
-				Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", composition.getIdentifier().getValue(), composition.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(composition.getIdentifier()));
-				resourcemetadataList.add(rIdentifier);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", composition.getIdentifier().getValue(), composition.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(composition.getIdentifier()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// relatesTo
 			if (composition.hasRelatesTo()) {
 
-				List<Resourcemetadata> rRelatedRefChain = null;
 				for (CompositionRelatesToComponent relatesTo : composition.getRelatesTo()) {
 
 					// related-id : token
 					if (relatesTo.hasTargetIdentifier()) {
-						Resourcemetadata rRelatedId = generateResourcemetadata(resource, chainedResource, chainedParameter+"related-id", relatesTo.getTargetIdentifier().getValue(), relatesTo.getTargetIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(relatesTo.getTargetIdentifier()));
-						resourcemetadataList.add(rRelatedId);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"related-id", relatesTo.getTargetIdentifier().getValue(), relatesTo.getTargetIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(relatesTo.getTargetIdentifier()));
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// related-ref : reference
@@ -399,34 +387,37 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 							relatesToReference = generateFullLocalReference(relatesTo.getTargetReference().getReference(), baseUrl);
 						}
 
-						Resourcemetadata rRelatedRef = generateResourcemetadata(resource, chainedResource, chainedParameter+"related-ref", relatesToReference);
-						resourcemetadataList.add(rRelatedRef);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"related-ref", relatesToReference);
+						resourcemetadataList.add(rMetadata);
 
 						if (chainedResource == null) {
 							// Add chained parameters
-							rRelatedRefChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "related-ref", 0, relatesTo.getTargetReference().getReference(), null);
-							resourcemetadataList.addAll(rRelatedRefChain);
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "related-ref", 0, relatesTo.getTargetReference().getReference(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
-						else {
-							if (bundle != null) {
-								// Extract composition.relatesTo resource from containing bundle
-								org.hl7.fhir.r4.model.Resource relatesToEntry = this.getReferencedBundleEntryResource(bundle, relatesTo.getTargetReference().getReference());
+						else if (bundle != null) {
+							// Extract composition.relatesTo resource from containing bundle
+							org.hl7.fhir.r4.model.Resource relatesToEntry = this.getReferencedBundleEntryResource(bundle, relatesTo.getTargetReference().getReference());
 
-								if (compositionResource != null && relatesToEntry != null) {
-									// Add chained parameters for composition.relatesTo; do not send baseUrl so references get stored as-is
-									rRelatedRefChain = this.generateChainedResourcemetadataAny(compositionResource, "", resourceService, "composition.related-ref", 0, relatesTo.getTargetReference().getReference(), relatesToEntry);
-									resourcemetadataList.addAll(rRelatedRefChain);
-								}
+							if (relatesToEntry != null) {
+								// Add chained parameters for composition.relatesTo
+								rMetadataChain = this.generateChainedResourcemetadataAny(compositionResource, "", resourceService, "composition.related-ref", 0, relatesTo.getTargetReference().getReference(), relatesToEntry);
+								resourcemetadataList.addAll(rMetadataChain);
 							}
 						}
+					}
+					// Manually handle Reference.identifier due to Bundle logic complexities
+					if (relatesTo.hasTargetReference() && relatesTo.getTargetReference().hasIdentifier()) {
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"related-ref:identifier", relatesTo.getTargetReference().getIdentifier().getValue(), relatesTo.getTargetReference().getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(relatesTo.getTargetReference().getIdentifier()));
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// status : token
 			if (composition.hasStatus() && composition.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", composition.getStatus().toCode(), composition.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", composition.getStatus().toCode(), composition.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// patient : reference
@@ -439,66 +430,70 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 				else {
 					subjectReference = generateFullLocalReference(composition.getSubject().getReference(), baseUrl);
 				}
-				List<Resourcemetadata> rSubjectChain = null;
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
+				resourcemetadataList.add(rMetadata);
 
 				if (chainedResource == null) {
 					// Add chained parameters for any
-					rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, composition.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, composition.getSubject().getReference(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
-				else {
-					if (bundle != null) {
-						// Extract composition.subject resource from containing bundle
-						org.hl7.fhir.r4.model.Resource subjectEntry = this.getReferencedBundleEntryResource(bundle, composition.getSubject().getReference());
+				else if (bundle != null) {
+					// Extract composition.subject resource from containing bundle
+					org.hl7.fhir.r4.model.Resource subjectEntry = this.getReferencedBundleEntryResource(bundle, composition.getSubject().getReference());
 
-						if (compositionResource != null && subjectEntry != null) {
-							// Add chained parameters for composition.subject; do not send baseUrl so references get stored as-is
-							rSubjectChain = this.generateChainedResourcemetadataAny(compositionResource, "", resourceService, "composition.subject", 0, composition.getSubject().getReference(), subjectEntry);
-							resourcemetadataList.addAll(rSubjectChain);
-						}
+					if (compositionResource != null && subjectEntry != null) {
+						// Add chained parameters for composition.subject; do not send baseUrl so references get stored as-is
+						rMetadataChain = this.generateChainedResourcemetadataAny(compositionResource, "", resourceService, "composition.subject", 0, composition.getSubject().getReference(), subjectEntry);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 
 				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
+					resourcemetadataList.add(rMetadata);
 
 					if (chainedResource == null) {
 						// Add chained parameters
-						rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, composition.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rSubjectChain);
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, composition.getSubject().getReference(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
-					else {
-						if (bundle != null) {
-							// Extract composition.subject resource from containing bundle
-							org.hl7.fhir.r4.model.Resource subjectEntry = this.getReferencedBundleEntryResource(bundle, composition.getSubject().getReference());
+					else if (bundle != null) {
+						// Extract composition.subject resource from containing bundle
+						org.hl7.fhir.r4.model.Resource subjectEntry = this.getReferencedBundleEntryResource(bundle, composition.getSubject().getReference());
 
-							if (compositionResource != null && subjectEntry != null) {
-								// Add chained parameters for composition.patient; do not send baseUrl so references get stored as-is
-								rSubjectChain = this.generateChainedResourcemetadata(compositionResource, "", resourceService, "composition.patient.", ResourceType.Patient.name(), subjectEntry, subjectEntry);
-								resourcemetadataList.addAll(rSubjectChain);
-							}
+						if (compositionResource != null && subjectEntry != null) {
+							// Add chained parameters for composition.patient; do not send baseUrl so references get stored as-is
+							rMetadataChain = this.generateChainedResourcemetadata(compositionResource, "", resourceService, "composition.patient.", ResourceType.Patient.name(), subjectEntry, subjectEntry);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
+				}
+			}
+			// Manually handle Reference.identifier due to Bundle logic complexities
+			if (composition.hasSubject() && composition.getSubject().hasIdentifier()) {
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject:identifier", composition.getSubject().getIdentifier().getValue(), composition.getSubject().getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(composition.getSubject().getIdentifier()));
+				resourcemetadataList.add(rMetadata);
+
+				if (composition.getSubject().hasType("Patient")) {
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient:identifier", composition.getSubject().getIdentifier().getValue(), composition.getSubject().getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(composition.getSubject().getIdentifier()));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// title : string
 			if (composition.hasTitle()) {
-				Resourcemetadata rTitle = generateResourcemetadata(resource, chainedResource, chainedParameter+"title", composition.getTitle());
-				resourcemetadataList.add(rTitle);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"title", composition.getTitle());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// type : token
 			if (composition.hasType() && composition.getType().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : composition.getType().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -506,6 +501,23 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iBundle != null) {
+                try {
+                	iBundle.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
+            if (iComposition != null) {
+                try {
+                	iComposition.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

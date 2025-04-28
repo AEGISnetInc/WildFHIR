@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -76,6 +77,8 @@ public class ResourcemetadataSlot extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iSlot = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a Slot object
@@ -93,35 +96,16 @@ public class ResourcemetadataSlot extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each Slot metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, slot, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (slot.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", slot.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (slot.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", slot.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (slot.getMeta() != null && slot.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(slot.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(slot.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, slot, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// appointment-type : token
 			if (slot.hasAppointmentType() && slot.getAppointmentType().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : slot.getAppointmentType().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"appointment-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"appointment-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -129,34 +113,25 @@ public class ResourcemetadataSlot extends ResourcemetadataProxy {
 			if (slot.hasIdentifier()) {
 
 				for (Identifier identifier : slot.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// schedule : reference
-			if (slot.hasSchedule() && slot.getSchedule().hasReference()) {
-				Resourcemetadata rSchedule = generateResourcemetadata(resource, chainedResource, chainedParameter+"schedule", generateFullLocalReference(slot.getSchedule().getReference(), baseUrl));
-				resourcemetadataList.add(rSchedule);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rScheduleChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "schedule", 0, slot.getSchedule().getReference(), null);
-					resourcemetadataList.addAll(rScheduleChain);
-				}
+			if (slot.hasSchedule()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "schedule", 0, slot.getSchedule(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// service-category : token
 			if (slot.hasServiceCategory()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept category : slot.getServiceCategory()) {
 
 					if (category.hasCoding()) {
 						for (Coding code : category.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -164,14 +139,12 @@ public class ResourcemetadataSlot extends ResourcemetadataProxy {
 
 			// service-type : token
 			if (slot.hasServiceType()) {
-
-				Resourcemetadata rType = null;
 				for (CodeableConcept slotType : slot.getServiceType()) {
 
 					if (slotType.hasCoding()) {
 						for (Coding type : slotType.getCoding()) {
-							rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-							resourcemetadataList.add(rType);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -179,14 +152,12 @@ public class ResourcemetadataSlot extends ResourcemetadataProxy {
 
 			// specialty : token
 			if (slot.hasSpecialty()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept specialty : slot.getSpecialty()) {
 
 					if (specialty.hasCoding()) {
 						for (Coding code : specialty.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"specialty", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"specialty", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -194,20 +165,30 @@ public class ResourcemetadataSlot extends ResourcemetadataProxy {
 
 			// start : datetime
 			if (slot.hasStart()) {
-				Resourcemetadata rStart = generateResourcemetadata(resource, chainedResource, chainedParameter+"start", utcDateUtil.formatDate(slot.getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(slot.getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rStart);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"start", utcDateUtil.formatDate(slot.getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(slot.getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// status : token
 			if (slot.hasStatus() && slot.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", slot.getStatus().toCode(), slot.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", slot.getStatus().toCode(), slot.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iSlot != null) {
+                try {
+                	iSlot.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

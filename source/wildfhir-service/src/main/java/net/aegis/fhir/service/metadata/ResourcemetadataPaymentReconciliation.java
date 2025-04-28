@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -74,6 +75,8 @@ public class ResourcemetadataPaymentReconciliation extends ResourcemetadataProxy
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iPaymentReconciliation = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a PaymentReconciliation object
@@ -91,102 +94,75 @@ public class ResourcemetadataPaymentReconciliation extends ResourcemetadataProxy
              * Create new Resourcemetadata objects for each PaymentReconciliation metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, paymentReconciliation, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (paymentReconciliation.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", paymentReconciliation.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (paymentReconciliation.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", paymentReconciliation.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (paymentReconciliation.getMeta() != null && paymentReconciliation.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(paymentReconciliation.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(paymentReconciliation.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, paymentReconciliation, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// created : date
 			if (paymentReconciliation.hasCreated()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"created", utcDateUtil.formatDate(paymentReconciliation.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(paymentReconciliation.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"created", utcDateUtil.formatDate(paymentReconciliation.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(paymentReconciliation.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// disposition : string
 			if (paymentReconciliation.hasDisposition()) {
-				Resourcemetadata rDisposition = generateResourcemetadata(resource, chainedResource, chainedParameter+"disposition", paymentReconciliation.getDisposition());
-				resourcemetadataList.add(rDisposition);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"disposition", paymentReconciliation.getDisposition());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (paymentReconciliation.hasIdentifier()) {
 
 				for (Identifier identifier : paymentReconciliation.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// outcome : token
 			if (paymentReconciliation.hasOutcome() && paymentReconciliation.getOutcome() != null) {
-				Resourcemetadata rOutcome = generateResourcemetadata(resource, chainedResource, chainedParameter+"outcome", paymentReconciliation.getOutcome().toCode(), paymentReconciliation.getOutcome().getSystem());
-				resourcemetadataList.add(rOutcome);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"outcome", paymentReconciliation.getOutcome().toCode(), paymentReconciliation.getOutcome().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// payment-issuer : reference
-			if (paymentReconciliation.hasPaymentIssuer() && paymentReconciliation.getPaymentIssuer().hasReference()) {
-				Resourcemetadata rPaymentIssuer = generateResourcemetadata(resource, chainedResource, chainedParameter+"payment-issuer", generateFullLocalReference(paymentReconciliation.getPaymentIssuer().getReference(), baseUrl));
-				resourcemetadataList.add(rPaymentIssuer);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPaymentIssuerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "payment-issuer", 0, paymentReconciliation.getPaymentIssuer().getReference(), null);
-					resourcemetadataList.addAll(rPaymentIssuerChain);
-				}
+			if (paymentReconciliation.hasPaymentIssuer()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "payment-issuer", 0, paymentReconciliation.getPaymentIssuer(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// request : reference
 			if (paymentReconciliation.hasRequest()) {
-				Resourcemetadata rRequestReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"request", generateFullLocalReference(paymentReconciliation.getRequest().getReference(), baseUrl));
-				resourcemetadataList.add(rRequestReference);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rRequestChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "request", 0, paymentReconciliation.getRequest().getReference(), null);
-					resourcemetadataList.addAll(rRequestChain);
-				}
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "request", 0, paymentReconciliation.getRequest(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// requestor : reference
 			if (paymentReconciliation.hasRequestor()) {
-				Resourcemetadata rRequestor = generateResourcemetadata(resource, chainedResource, chainedParameter+"requestor", generateFullLocalReference(paymentReconciliation.getRequestor().getReference(), baseUrl));
-				resourcemetadataList.add(rRequestor);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rRequestorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "requestor", 0, paymentReconciliation.getRequestor().getReference(), null);
-					resourcemetadataList.addAll(rRequestorChain);
-				}
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "requestor", 0, paymentReconciliation.getRequestor(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// status : token
 			if (paymentReconciliation.hasStatus() && paymentReconciliation.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", paymentReconciliation.getStatus().toCode(), paymentReconciliation.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", paymentReconciliation.getStatus().toCode(), paymentReconciliation.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iPaymentReconciliation != null) {
+                try {
+                	iPaymentReconciliation.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

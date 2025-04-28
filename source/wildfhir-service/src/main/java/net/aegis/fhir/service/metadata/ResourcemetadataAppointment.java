@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -78,6 +79,8 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iAppointment = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a Appointment object
@@ -95,139 +98,83 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each Appointment metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, appointment, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (appointment.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", appointment.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (appointment.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", appointment.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (appointment.getMeta() != null && appointment.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(appointment.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(appointment.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, appointment, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// appointment-type : token
 			if (appointment.hasAppointmentType() && appointment.getAppointmentType().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : appointment.getAppointmentType().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"appointment-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"appointment-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// based-on : reference
 			if (appointment.hasBasedOn()) {
 
-				String basedOnReference = null;
-				Resourcemetadata rBasedOn = null;
-				List<Resourcemetadata> rBasedOnChain = null;
 				for (Reference basedOn : appointment.getBasedOn()) {
-
-					if (basedOn.hasReference()) {
-						basedOnReference = generateFullLocalReference(basedOn.getReference(), baseUrl);
-
-						rBasedOn = generateResourcemetadata(resource, chainedResource, chainedParameter+"based-on", basedOnReference);
-						resourcemetadataList.add(rBasedOn);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rBasedOnChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "based-on", 0, basedOn.getReference(), null);
-							resourcemetadataList.addAll(rBasedOnChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "based-on", 0, basedOn, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// date : date
 			if (appointment.hasStart()) {
-				Resourcemetadata rStart = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(appointment.getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(appointment.getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rStart);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(appointment.getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(appointment.getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (appointment.hasIdentifier()) {
 
 				for (Identifier identifier : appointment.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// participant
 			if (appointment.hasParticipant()) {
 
-				Resourcemetadata rParticipant = null;
-				List<Resourcemetadata> rParticipantChain = null;
 				for (AppointmentParticipantComponent participant : appointment.getParticipant()) {
 
 					// participant.partstatus : token
 					if (participant.hasStatus() && participant.getStatus() != null) {
-						rParticipant = generateResourcemetadata(resource, chainedResource, chainedParameter+"part-status", participant.getStatus().toCode(), participant.getStatus().getSystem());
-						resourcemetadataList.add(rParticipant);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"part-status", participant.getStatus().toCode(), participant.getStatus().getSystem());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// participant.actor : reference
-					if (participant.hasActor() && participant.getActor().hasReference()) {
-						String actorString = generateFullLocalReference(participant.getActor().getReference(), baseUrl);
-
-						rParticipant = generateResourcemetadata(resource, chainedResource, chainedParameter+"actor", actorString);
-						resourcemetadataList.add(rParticipant);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rParticipantChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "actor", 0, participant.getActor().getReference(), null);
-							resourcemetadataList.addAll(rParticipantChain);
-						}
+					if (participant.hasActor()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "actor", 0, participant.getActor(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 
 						/*
 						 *  Examine actor reference for specific resource types
 						 */
 
 						// location : reference
-						if (actorString.indexOf("Location") >= 0) {
-							rParticipant = generateResourcemetadata(resource, chainedResource, chainedParameter+"location", actorString);
-							resourcemetadataList.add(rParticipant);
+						if ((participant.getActor().hasReference() && participant.getActor().getReference().indexOf("Location") >= 0)
+								|| (participant.getActor().hasType() && participant.getActor().getType().equals("Location"))) {
 
-							if (chainedResource == null) {
-								// Add chained parameters
-								rParticipantChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, participant.getActor().getReference(), null);
-								resourcemetadataList.addAll(rParticipantChain);
-							}
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "location", 0, participant.getActor(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 						// patient : reference
-						else if (actorString.indexOf("Patient") >= 0) {
-							rParticipant = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", actorString);
-							resourcemetadataList.add(rParticipant);
+						else if ((participant.getActor().hasReference() && participant.getActor().getReference().indexOf("Patient") >= 0)
+								|| (participant.getActor().hasType() && participant.getActor().getType().equals("Patient"))) {
 
-							if (chainedResource == null) {
-								// Add chained parameters
-								rParticipantChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, participant.getActor().getReference(), null);
-								resourcemetadataList.addAll(rParticipantChain);
-							}
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, participant.getActor(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 						// practitioner : reference
-						else if (actorString.indexOf("Practitioner") >= 0) {
-							rParticipant = generateResourcemetadata(resource, chainedResource, chainedParameter+"practitioner", actorString);
-							resourcemetadataList.add(rParticipant);
+						else if ((participant.getActor().hasReference() && participant.getActor().getReference().indexOf("Practitioner") >= 0)
+								|| (participant.getActor().hasType() && participant.getActor().getType().equals("Practitioner"))) {
 
-							if (chainedResource == null) {
-								// Add chained parameters
-								rParticipantChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "practitioner", 0, participant.getActor().getReference(), null);
-								resourcemetadataList.addAll(rParticipantChain);
-							}
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "practitioner", 0, participant.getActor(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 				}
@@ -236,13 +183,12 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 			// reason-code : token
 			if (appointment.hasReasonCode()) {
 
-				Resourcemetadata rCode = null;
 				for (CodeableConcept reasonCode : appointment.getReasonCode()) {
 					if (reasonCode.hasCoding()) {
 
 						for (Coding code : reasonCode.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"reason-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"reason-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -251,36 +197,21 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 			// reason-reference : reference
 			if (appointment.hasReasonReference()) {
 
-				String reasonRefReference = null;
-				Resourcemetadata rReasonRef = null;
-				List<Resourcemetadata> rReasonRefChain = null;
 				for (Reference reasonRef : appointment.getReasonReference()) {
-
-					if (reasonRef.hasReference()) {
-						reasonRefReference = generateFullLocalReference(reasonRef.getReference(), baseUrl);
-
-						rReasonRef = generateResourcemetadata(resource, chainedResource, chainedParameter+"reason-reference", reasonRefReference);
-						resourcemetadataList.add(rReasonRef);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rReasonRefChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "reason-reference", 0, reasonRef.getReference(), null);
-							resourcemetadataList.addAll(rReasonRefChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "reason-reference", 0, reasonRef, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// service-category : token
 			if (appointment.hasServiceCategory()) {
 
-				Resourcemetadata rCode = null;
 				for (CodeableConcept serviceCategory : appointment.getServiceCategory()) {
 					if (serviceCategory.hasCoding()) {
 
 						for (Coding code : serviceCategory.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -289,13 +220,12 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 			// service-type : token
 			if (appointment.hasServiceType()) {
 
-				Resourcemetadata rCode = null;
 				for (CodeableConcept serviceType : appointment.getServiceType()) {
 					if (serviceType.hasCoding()) {
 
 						for (Coding code : serviceType.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"service-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -304,36 +234,21 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 			// slot : reference
 			if (appointment.hasSlot()) {
 
-				String slotReference = null;
-				Resourcemetadata rSlot = null;
-				List<Resourcemetadata> rSlotChain = null;
 				for (Reference slot : appointment.getBasedOn()) {
-
-					if (slot.hasReference()) {
-						slotReference = generateFullLocalReference(slot.getReference(), baseUrl);
-
-						rSlot = generateResourcemetadata(resource, chainedResource, chainedParameter+"slot", slotReference);
-						resourcemetadataList.add(rSlot);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rSlotChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "slot", 0, slot.getReference(), null);
-							resourcemetadataList.addAll(rSlotChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "slot", 0, slot, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// specialty : token
 			if (appointment.hasSpecialty()) {
 
-				Resourcemetadata rCode = null;
 				for (CodeableConcept specialty : appointment.getSpecialty()) {
 					if (specialty.hasCoding()) {
 
 						for (Coding code : specialty.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"specialty", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"specialty", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -341,30 +256,16 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 
 			// status : token
 			if (appointment.hasStatus() && appointment.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", appointment.getStatus().toCode(), appointment.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", appointment.getStatus().toCode(), appointment.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// supporting-info : reference
 			if (appointment.hasSupportingInformation()) {
 
-				String supportingInformationReference = null;
-				Resourcemetadata rSupportingInformation = null;
-				List<Resourcemetadata> rSupportingInformationChain = null;
 				for (Reference supportingInformation : appointment.getReasonReference()) {
-
-					if (supportingInformation.hasReference()) {
-						supportingInformationReference = generateFullLocalReference(supportingInformation.getReference(), baseUrl);
-
-						rSupportingInformation = generateResourcemetadata(resource, chainedResource, chainedParameter+"supporting-info", supportingInformationReference);
-						resourcemetadataList.add(rSupportingInformation);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rSupportingInformationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "supporting-info", 0, supportingInformation.getReference(), null);
-							resourcemetadataList.addAll(rSupportingInformationChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "supporting-info", 0, supportingInformation, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -372,6 +273,16 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iAppointment != null) {
+                try {
+                	iAppointment.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

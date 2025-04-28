@@ -33,9 +33,9 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -48,7 +48,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -76,6 +75,8 @@ public class ResourcemetadataEndpoint extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iEndpoint = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Endpoint object
@@ -93,73 +94,45 @@ public class ResourcemetadataEndpoint extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Endpoint metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, endpoint, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (endpoint.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", endpoint.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (endpoint.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", endpoint.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (endpoint.getMeta() != null && endpoint.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(endpoint.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(endpoint.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, endpoint, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// connection-type : token
 			if (endpoint.hasConnectionType()) {
-				Resourcemetadata rConnectionType = generateResourcemetadata(resource, chainedResource, chainedParameter+"connection-type", endpoint.getConnectionType().getCode(), endpoint.getConnectionType().getSystem());
-				resourcemetadataList.add(rConnectionType);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"connection-type", endpoint.getConnectionType().getCode(), endpoint.getConnectionType().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (endpoint.hasIdentifier()) {
 
-				Resourcemetadata rIdentifier = null;
 				for (Identifier identifier : endpoint.getIdentifier()) {
-
-					rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// name : string
 			if (endpoint.hasName()) {
-				Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", endpoint.getName());
-				resourcemetadataList.add(rName);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", endpoint.getName());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// organization : reference
 			if (endpoint.hasManagingOrganization()) {
-				Resourcemetadata rOrganization = generateResourcemetadata(resource, chainedResource, chainedParameter+"organization", generateFullLocalReference(endpoint.getManagingOrganization().getReference(), baseUrl));
-				resourcemetadataList.add(rOrganization);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rOrganizationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "organization", 0, endpoint.getManagingOrganization().getReference(), null);
-					resourcemetadataList.addAll(rOrganizationChain);
-				}
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "organization", 0, endpoint.getManagingOrganization(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// payload-type : token
 			if (endpoint.hasPayloadType()) {
-
-				Resourcemetadata rType = null;
 				for (CodeableConcept payloadType : endpoint.getPayloadType()) {
 
 					if (payloadType.hasCoding()) {
 						for (Coding type : payloadType.getCoding()) {
-							rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"payload-type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-							resourcemetadataList.add(rType);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"payload-type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -167,8 +140,8 @@ public class ResourcemetadataEndpoint extends ResourcemetadataProxy {
 
 			// status : token
 			if (endpoint.hasStatus() && endpoint.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", endpoint.getStatus().toCode(), endpoint.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", endpoint.getStatus().toCode(), endpoint.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 
@@ -176,6 +149,16 @@ public class ResourcemetadataEndpoint extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iEndpoint != null) {
+                try {
+                	iEndpoint.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

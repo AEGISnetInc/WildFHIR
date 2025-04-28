@@ -33,14 +33,13 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -74,6 +73,7 @@ public class ResourcemetadataLinkage extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iLinkage = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Linkage object
@@ -91,68 +91,28 @@ public class ResourcemetadataLinkage extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Linkage metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, linkage, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (linkage.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", linkage.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (linkage.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", linkage.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (linkage.getMeta() != null && linkage.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(linkage.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(linkage.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, linkage, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// author : reference
-			if (linkage.hasAuthor() && linkage.getAuthor().hasReference()) {
-				Resourcemetadata rAuthor = generateResourcemetadata(resource, chainedResource, chainedParameter+"author", generateFullLocalReference(linkage.getAuthor().getReference(), baseUrl));
-				resourcemetadataList.add(rAuthor);
-
-				if (chainedResource == null) {
-					// Add chained parameters for any
-					List<Resourcemetadata> rAuthorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "author", 0, linkage.getAuthor().getReference(), null);
-					resourcemetadataList.addAll(rAuthorChain);
-				}
+			if (linkage.hasAuthor()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "author", 0, linkage.getAuthor(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			if (linkage.hasItem()) {
-
-				List<Resourcemetadata> rItemChain = null;
 				for (LinkageItemComponent item : linkage.getItem()) {
 
 					if (item.hasResource() && item.getResource().hasReference()) {
-						String itemReference = generateFullLocalReference(item.getResource().getReference(), baseUrl);
-
 						// item : reference
-						Resourcemetadata rItem = generateResourcemetadata(resource, chainedResource, chainedParameter+"item", itemReference);
-						resourcemetadataList.add(rItem);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rItemChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "item", 0, item.getResource().getReference(), null);
-							resourcemetadataList.addAll(rItemChain);
-						}
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "item", 0, item.getResource(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 
 						// source : reference
 						if (item.hasType() && item.getType().equals(LinkageType.SOURCE)) {
-							Resourcemetadata rSource = generateResourcemetadata(resource, chainedResource, chainedParameter+"source", itemReference);
-							resourcemetadataList.add(rSource);
-
-							if (chainedResource == null) {
-								// Add chained parameters for any
-								rItemChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "source", 0, item.getResource().getReference(), null);
-								resourcemetadataList.addAll(rItemChain);
-							}
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "source", 0, item.getResource(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 				}
@@ -162,6 +122,15 @@ public class ResourcemetadataLinkage extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadataChain = null;
+            if (iLinkage != null) {
+                try {
+                	iLinkage.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

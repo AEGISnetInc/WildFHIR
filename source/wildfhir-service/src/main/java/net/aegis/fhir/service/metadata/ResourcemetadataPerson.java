@@ -81,6 +81,8 @@ public class ResourcemetadataPerson extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iPerson = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Person object
@@ -98,27 +100,9 @@ public class ResourcemetadataPerson extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Patient metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, person, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (person.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", person.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (person.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", person.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (person.getMeta() != null && person.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(person.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(person.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, person, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// address : string - one for each address
 			if (person.hasAddress()) {
@@ -148,8 +132,8 @@ public class ResourcemetadataPerson extends ResourcemetadataProxy {
 							sbAddress.append(" ");
 						}
 						sbAddress.append(address.getCity());
-						Resourcemetadata rCity = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-city", address.getCity());
-						resourcemetadataList.add(rCity);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-city", address.getCity());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address-state : string
@@ -158,8 +142,18 @@ public class ResourcemetadataPerson extends ResourcemetadataProxy {
 							sbAddress.append(" ");
 						}
 						sbAddress.append(address.getState());
-						Resourcemetadata rState = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-state", address.getState());
-						resourcemetadataList.add(rState);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-state", address.getState());
+						resourcemetadataList.add(rMetadata);
+					}
+
+					// address-district : string
+					if (address.hasDistrict()) {
+						if (sbAddress.length() > 0) {
+							sbAddress.append(" ");
+						}
+						sbAddress.append(address.getDistrict());
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-district", address.getDistrict());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address-country : string
@@ -168,8 +162,8 @@ public class ResourcemetadataPerson extends ResourcemetadataProxy {
 							sbAddress.append(" ");
 						}
 						sbAddress.append(address.getCountry());
-						Resourcemetadata rCountry = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-country", address.getCountry());
-						resourcemetadataList.add(rCountry);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-country", address.getCountry());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address-postalcode : string
@@ -178,14 +172,14 @@ public class ResourcemetadataPerson extends ResourcemetadataProxy {
 							sbAddress.append(" ");
 						}
 						sbAddress.append(address.getPostalCode());
-						Resourcemetadata rPostalCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-postalcode", address.getPostalCode());
-						resourcemetadataList.add(rPostalCode);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-postalcode", address.getPostalCode());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address-use : token
 					if (address.hasUse() && address.getUse() != null) {
-						Resourcemetadata rUse = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-use", address.getUse().toCode(), address.getUse().getSystem());
-						resourcemetadataList.add(rUse);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-use", address.getUse().toCode(), address.getUse().getSystem());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address : string
@@ -197,16 +191,16 @@ public class ResourcemetadataPerson extends ResourcemetadataProxy {
 					}
 
 					if (sbAddress.length() > 0) {
-						Resourcemetadata rAddress = generateResourcemetadata(resource, chainedResource, chainedParameter+"address", sbAddress.toString());
-						resourcemetadataList.add(rAddress);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address", sbAddress.toString());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// birthdate : date
 			if (person.hasBirthDate()) {
-				Resourcemetadata rBirthDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"birthdate", utcDateUtil.formatDate(person.getBirthDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(person.getBirthDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rBirthDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"birthdate", utcDateUtil.formatDate(person.getBirthDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(person.getBirthDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// (email) telecom.system=email : token
@@ -224,36 +218,33 @@ public class ResourcemetadataPerson extends ResourcemetadataProxy {
 							telecomSystemName = telecom.getSystem().toCode();
 
 							if (telecom.getSystem().equals(ContactPointSystem.EMAIL)) {
-
-								Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter + "email", telecom.getValue(), telecomSystemName);
-								resourcemetadataList.add(rTelecom);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "email", telecom.getValue(), telecomSystemName);
+								resourcemetadataList.add(rMetadata);
 							}
 							else if (telecom.getSystem().equals(ContactPointSystem.PHONE)) {
-
-								Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter + "phone", telecom.getValue(), telecomSystemName);
-								resourcemetadataList.add(rTelecom);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "phone", telecom.getValue(), telecomSystemName);
+								resourcemetadataList.add(rMetadata);
 							}
 						}
 
-						Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter + "telecom", telecom.getValue(), telecomSystemName);
-						resourcemetadataList.add(rTelecom);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "telecom", telecom.getValue(), telecomSystemName);
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// gender : token
 			if (person.hasGender() && person.getGender() != null) {
-				Resourcemetadata rCoding = generateResourcemetadata(resource, chainedResource, chainedParameter+"gender", person.getGender().toCode(), person.getGender().getSystem());
-				resourcemetadataList.add(rCoding);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"gender", person.getGender().toCode(), person.getGender().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (person.hasIdentifier()) {
 
 				for (Identifier identifier : person.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -262,39 +253,31 @@ public class ResourcemetadataPerson extends ResourcemetadataProxy {
 			// practitioner : reference
 			// relatedperson : reference
 			if (person.hasLink()) {
-
-				String linkReference = null;
-				List<Resourcemetadata> rLinkChain = null;
 				for (PersonLinkComponent link : person.getLink()) {
 
 					if (link.hasTarget() && link.getTarget().hasReference()) {
-						linkReference = generateFullLocalReference(link.getTarget().getReference(), baseUrl);
-
-						Resourcemetadata rLink = generateResourcemetadata(resource, chainedResource, chainedParameter+"link", linkReference);
-						resourcemetadataList.add(rLink);
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "link", 0, link.getTarget(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 
 						// patient : reference
-						if (linkReference.indexOf("Patient") >= 0) {
-							Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", linkReference);
-							resourcemetadataList.add(rPatient);
+						if ((link.getTarget().hasReference() && link.getTarget().getReference().indexOf("Patient") >= 0)
+								|| (link.getTarget().hasType() && link.getTarget().getType().equals("Patient"))) {
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, link.getTarget(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 
 						// practitioner : reference
-						if (linkReference.indexOf("Practitioner") >= 0) {
-							Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"practitioner", linkReference);
-							resourcemetadataList.add(rPatient);
+						else if ((link.getTarget().hasReference() && link.getTarget().getReference().indexOf("Practitioner") >= 0)
+								|| (link.getTarget().hasType() && link.getTarget().getType().equals("Practitioner"))) {
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "practitioner", 0, link.getTarget(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 
 						// relatedperson : reference
-						if (linkReference.indexOf("RelatedPerson") >= 0) {
-							Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"relatedperson", linkReference);
-							resourcemetadataList.add(rPatient);
-						}
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rLinkChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "link", 0, link.getTarget().getReference(), null);
-							resourcemetadataList.addAll(rLinkChain);
+						else if ((link.getTarget().hasReference() && link.getTarget().getReference().indexOf("RelatedPerson") >= 0)
+								|| (link.getTarget().hasType() && link.getTarget().getType().equals("RelatedPerson"))) {
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "relatedperson", 0, link.getTarget(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 				}
@@ -360,24 +343,18 @@ public class ResourcemetadataPerson extends ResourcemetadataProxy {
 						}
 					}
 					if (sb.length() > 0) {
-						Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", sb.toString());
-						resourcemetadataList.add(rName);
-						rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"phonetic", sb.toString());
-						resourcemetadataList.add(rName);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", sb.toString());
+						resourcemetadataList.add(rMetadata);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"phonetic", sb.toString());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// organization : reference
-			if (person.hasManagingOrganization() && person.getManagingOrganization().hasReference()) {
-				Resourcemetadata rOrganization = generateResourcemetadata(resource, chainedResource, chainedParameter+"organization", generateFullLocalReference(person.getManagingOrganization().getReference(), baseUrl));
-				resourcemetadataList.add(rOrganization);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rOrganizationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "organization", 0, person.getManagingOrganization().getReference(), null);
-					resourcemetadataList.addAll(rOrganizationChain);
-				}
+			if (person.hasManagingOrganization()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "organization", 0, person.getManagingOrganization(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 		} catch (Exception e) {
@@ -385,6 +362,8 @@ public class ResourcemetadataPerson extends ResourcemetadataProxy {
 			e.printStackTrace();
 			throw e;
         } finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
             if (iPerson != null) {
                 try {
                     iPerson.close();

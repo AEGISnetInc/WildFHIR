@@ -33,9 +33,9 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -47,7 +47,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -75,6 +74,8 @@ public class ResourcemetadataVerificationResult extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iVerificationResult = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a VerificationResult object
@@ -92,71 +93,40 @@ public class ResourcemetadataVerificationResult extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each VerificationResult metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, verificationResult, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (verificationResult.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", verificationResult.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (verificationResult.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", verificationResult.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (verificationResult.getMeta() != null && verificationResult.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(verificationResult.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(verificationResult.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, verificationResult, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// need : token
 			if (verificationResult.hasNeed() && verificationResult.getNeed().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : verificationResult.getNeed().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"need", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"need", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// status : token
 			if (verificationResult.hasStatus() && verificationResult.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", verificationResult.getStatus().toCode(), verificationResult.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", verificationResult.getStatus().toCode(), verificationResult.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// target : reference
 			if (verificationResult.hasTarget()) {
 
-				Resourcemetadata rTarget = null;
-				List<Resourcemetadata> rTargetChain = null;
 				for (Reference target : verificationResult.getTarget()) {
-
-					if (target.hasReference()) {
-						rTarget = generateResourcemetadata(resource, chainedResource, chainedParameter+"target", generateFullLocalReference(target.getReference(), baseUrl));
-						resourcemetadataList.add(rTarget);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rTargetChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "target", 0, target.getReference(), null);
-							resourcemetadataList.addAll(rTargetChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "target", 0, target, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// type : token
 			if (verificationResult.hasValidationType() && verificationResult.getValidationType().hasCoding()) {
 
-				Resourcemetadata rType = null;
 				for (Coding type : verificationResult.getValidationType().getCoding()) {
-					rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-					resourcemetadataList.add(rType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -164,6 +134,16 @@ public class ResourcemetadataVerificationResult extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iVerificationResult != null) {
+                try {
+                	iVerificationResult.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

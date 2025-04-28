@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -78,6 +79,8 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iDiagnosticReport = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a DiagnosticReport object
@@ -95,44 +98,16 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each DiagnosticReport metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, diagnosticReport, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (diagnosticReport.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", diagnosticReport.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (diagnosticReport.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", diagnosticReport.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (diagnosticReport.getMeta() != null && diagnosticReport.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(diagnosticReport.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(diagnosticReport.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, diagnosticReport, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// based-on : reference
 			if (diagnosticReport.hasBasedOn()) {
 
-				List<Resourcemetadata> rBasedOnChain = null;
 				for (Reference basedOn : diagnosticReport.getBasedOn()) {
-
-					if (basedOn.hasReference()) {
-						Resourcemetadata rBasedOn = generateResourcemetadata(resource, chainedResource, chainedParameter+"based-on", generateFullLocalReference(basedOn.getReference(), baseUrl));
-						resourcemetadataList.add(rBasedOn);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rBasedOnChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "based-on", 0, basedOn.getReference(), null);
-							resourcemetadataList.addAll(rBasedOnChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "based-on", 0, basedOn, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -142,9 +117,8 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 				for (CodeableConcept category : diagnosticReport.getCategory()) {
 
 					for (Coding coding : category.getCoding()) {
-
-						Resourcemetadata rCoding = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", coding.getCode(), coding.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(coding));
-						resourcemetadataList.add(rCoding);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", coding.getCode(), coding.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(coding));
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
@@ -153,36 +127,27 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 			if (diagnosticReport.hasCode()) {
 
 				for (Coding coding : diagnosticReport.getCode().getCoding()) {
-
-					Resourcemetadata rCoding = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", coding.getCode(), coding.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(coding));
-					resourcemetadataList.add(rCoding);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", coding.getCode(), coding.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(coding));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// encounter : reference
-			if (diagnosticReport.hasEncounter() && diagnosticReport.getEncounter().hasReference()) {
-				String encounterReference = generateFullLocalReference(diagnosticReport.getEncounter().getReference(), baseUrl);
-
-				Resourcemetadata rEncounter = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", encounterReference);
-				resourcemetadataList.add(rEncounter);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, diagnosticReport.getEncounter().getReference(), null);
-					resourcemetadataList.addAll(rEncounterChain);
-				}
+			if (diagnosticReport.hasEncounter()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "encounter", 0, diagnosticReport.getEncounter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// date : date(period)
 			if (diagnosticReport.hasEffective()) {
 
 				if (diagnosticReport.hasEffectiveDateTimeType()) {
-					Resourcemetadata rDateDateTime = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(diagnosticReport.getEffectiveDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(diagnosticReport.getEffectiveDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-					resourcemetadataList.add(rDateDateTime);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(diagnosticReport.getEffectiveDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(diagnosticReport.getEffectiveDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+					resourcemetadataList.add(rMetadata);
 				}
 				else if (diagnosticReport.hasEffectivePeriod()) {
-					Resourcemetadata rDatePeriod = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(diagnosticReport.getEffectivePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(diagnosticReport.getEffectivePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(diagnosticReport.getEffectivePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(diagnosticReport.getEffectivePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-					resourcemetadataList.add(rDatePeriod);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(diagnosticReport.getEffectivePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(diagnosticReport.getEffectivePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(diagnosticReport.getEffectivePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(diagnosticReport.getEffectivePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -190,26 +155,24 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 			if (diagnosticReport.hasIdentifier()) {
 
 				for (Identifier identifier : diagnosticReport.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// issued : date
 			if (diagnosticReport.hasIssued()) {
-				Resourcemetadata rIssued = generateResourcemetadata(resource, chainedResource, chainedParameter+"issued", utcDateUtil.formatDate(diagnosticReport.getIssued(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(diagnosticReport.getIssued(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rIssued);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"issued", utcDateUtil.formatDate(diagnosticReport.getIssued(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(diagnosticReport.getIssued(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// media : token
 			if (diagnosticReport.hasMedia()) {
 
 				for (DiagnosticReportMediaComponent media : diagnosticReport.getMedia()) {
-
 					if (media.hasLink() && media.getLink().hasReference()) {
-						Resourcemetadata rMedia = generateResourcemetadata(resource, chainedResource, chainedParameter+"media", media.getLink().getReference());
-						resourcemetadataList.add(rMedia);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"media", media.getLink().getReference());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
@@ -218,17 +181,8 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 			if (diagnosticReport.hasPerformer()) {
 
 				for (Reference performer : diagnosticReport.getPerformer()) {
-
-					if (performer.hasReference()) {
-						Resourcemetadata rRequestDetail = generateResourcemetadata(resource, chainedResource, chainedParameter+"performer", generateFullLocalReference(performer.getReference(), baseUrl));
-						resourcemetadataList.add(rRequestDetail);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							List<Resourcemetadata> rPerformerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "performer", 0, performer.getReference(), null);
-							resourcemetadataList.addAll(rPerformerChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "performer", 0, performer, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -236,17 +190,8 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 			if (diagnosticReport.hasResult()) {
 
 				for (Reference result : diagnosticReport.getResult()) {
-
-					if (result.hasReference()) {
-						Resourcemetadata rResult = generateResourcemetadata(resource, chainedResource, chainedParameter+"result", generateFullLocalReference(result.getReference(), baseUrl));
-						resourcemetadataList.add(rResult);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							List<Resourcemetadata> rResultChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "result", 0, result.getReference(), null);
-							resourcemetadataList.addAll(rResultChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "result", 0, result, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -254,17 +199,8 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 			if (diagnosticReport.hasResultsInterpreter()) {
 
 				for (Reference resultsInterpreter : diagnosticReport.getResultsInterpreter()) {
-
-					if (resultsInterpreter.hasReference()) {
-						Resourcemetadata rResultsInterpreter = generateResourcemetadata(resource, chainedResource, chainedParameter+"results-interpreter", generateFullLocalReference(resultsInterpreter.getReference(), baseUrl));
-						resourcemetadataList.add(rResultsInterpreter);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							List<Resourcemetadata> rResultsInterpreterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "results-interpreter", 0, resultsInterpreter.getReference(), null);
-							resourcemetadataList.addAll(rResultsInterpreterChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "results-interpreter", 0, resultsInterpreter, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -272,49 +208,27 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 			if (diagnosticReport.hasSpecimen()) {
 
 				for (Reference specimen : diagnosticReport.getSpecimen()) {
-
-					if (specimen.hasReference()) {
-						Resourcemetadata rSpecimen = generateResourcemetadata(resource, chainedResource, chainedParameter+"specimen", generateFullLocalReference(specimen.getReference(), baseUrl));
-						resourcemetadataList.add(rSpecimen);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							List<Resourcemetadata> rSpecimenChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "specimen", 0, specimen.getReference(), null);
-							resourcemetadataList.addAll(rSpecimenChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "specimen", 0, specimen, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// status : token
 			if (diagnosticReport.hasStatus() && diagnosticReport.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", diagnosticReport.getStatus().toCode(), diagnosticReport.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", diagnosticReport.getStatus().toCode(), diagnosticReport.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
-			// patient : reference
 			// subject : reference
-			if (diagnosticReport.hasSubject() && diagnosticReport.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(diagnosticReport.getSubject().getReference(), baseUrl);
+			if (diagnosticReport.hasSubject()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, diagnosticReport.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, diagnosticReport.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, diagnosticReport.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((diagnosticReport.getSubject().hasReference() && diagnosticReport.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (diagnosticReport.getSubject().hasType() && diagnosticReport.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, diagnosticReport.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -322,6 +236,16 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iDiagnosticReport != null) {
+                try {
+                	iDiagnosticReport.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

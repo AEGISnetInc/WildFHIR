@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -80,6 +81,8 @@ public class ResourcemetadataImmunization extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iImmunization = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Immunization object
@@ -97,102 +100,56 @@ public class ResourcemetadataImmunization extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Immunization metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, immunization, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (immunization.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", immunization.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (immunization.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", immunization.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (immunization.getMeta() != null && immunization.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(immunization.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(immunization.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, immunization, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// date : datetime
 			if (immunization.hasOccurrenceDateTimeType()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(immunization.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(immunization.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(immunization.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(immunization.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (immunization.hasIdentifier()) {
 
 				for (Identifier identifier : immunization.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// location : reference
-			if (immunization.hasLocation() && immunization.getLocation().hasReference()) {
-				Resourcemetadata rLocation = generateResourcemetadata(resource, chainedResource, chainedParameter+"location", generateFullLocalReference(immunization.getLocation().getReference(), baseUrl));
-				resourcemetadataList.add(rLocation);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rLocationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, immunization.getLocation().getReference(), null);
-					resourcemetadataList.addAll(rLocationChain);
-				}
+			if (immunization.hasLocation()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "location", 0, immunization.getLocation(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// lot-number : string
 			if (immunization.hasLotNumber()) {
-				Resourcemetadata rLotNumber = generateResourcemetadata(resource, chainedResource, chainedParameter+"lot-number", immunization.getLotNumber());
-				resourcemetadataList.add(rLotNumber);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"lot-number", immunization.getLotNumber());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// manufacturer : reference
-			if (immunization.hasManufacturer() && immunization.getManufacturer().hasReference()) {
-				Resourcemetadata rManufacturer = generateResourcemetadata(resource, chainedResource, chainedParameter+"manufacturer", generateFullLocalReference(immunization.getManufacturer().getReference(), baseUrl));
-				resourcemetadataList.add(rManufacturer);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rOrganizationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "manufacturer", 0, immunization.getManufacturer().getReference(), null);
-					resourcemetadataList.addAll(rOrganizationChain);
-				}
+			if (immunization.hasManufacturer()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "manufacturer", 0, immunization.getManufacturer(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// patient : reference
-			if (immunization.hasPatient() && immunization.getPatient().hasReference()) {
-				Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", generateFullLocalReference(immunization.getPatient().getReference(), baseUrl));
-				resourcemetadataList.add(rPatient);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, immunization.getPatient().getReference(), null);
-					resourcemetadataList.addAll(rPatientChain);
-				}
+			if (immunization.hasPatient()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, immunization.getPatient(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// performer : reference
 			if (immunization.hasPerformer()) {
-
-				Resourcemetadata rPerformer = null;
-				List<Resourcemetadata> rPerformerChain = null;
 				for (ImmunizationPerformerComponent performer : immunization.getPerformer()) {
 
-					if (performer.hasActor() && performer.getActor().hasReference()) {
-						rPerformer = generateResourcemetadata(resource, chainedResource, chainedParameter+"performer", generateFullLocalReference(performer.getActor().getReference(), baseUrl));
-						resourcemetadataList.add(rPerformer);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rPerformerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "performer", 0, performer.getActor().getReference(), null);
-							resourcemetadataList.addAll(rPerformerChain);
-						}
+					if (performer.hasActor()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "performer", 0, performer.getActor(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
@@ -201,38 +158,28 @@ public class ResourcemetadataImmunization extends ResourcemetadataProxy {
 			// reaction-date : date
 			if (immunization.hasReaction()) {
 
-				Resourcemetadata rReaction = null;
-				List<Resourcemetadata> rReactionChain = null;
 				for (ImmunizationReactionComponent reaction : immunization.getReaction()) {
 
-					if (reaction.hasDetail() && reaction.getDetail().hasReference()) {
-						rReaction = generateResourcemetadata(resource, chainedResource, chainedParameter+"reaction", generateFullLocalReference(reaction.getDetail().getReference(), baseUrl));
-						resourcemetadataList.add(rReaction);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rReactionChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "reaction", 0, reaction.getDetail().getReference(), null);
-							resourcemetadataList.addAll(rReactionChain);
-						}
+					if (reaction.hasDetail()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "reaction", 0, reaction.getDetail(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 
 					if (reaction.hasDate()) {
-						rReaction = generateResourcemetadata(resource, chainedResource, chainedParameter+"reaction-date", utcDateUtil.formatDate(reaction.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(reaction.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-						resourcemetadataList.add(rReaction);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"reaction-date", utcDateUtil.formatDate(reaction.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(reaction.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// reason-code : token
 			if (immunization.hasReasonCode()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept reasonCode : immunization.getReasonCode()) {
 
 					if (reasonCode.hasCoding()) {
 						for (Coding code : reasonCode.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"reason-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"reason-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -241,20 +188,9 @@ public class ResourcemetadataImmunization extends ResourcemetadataProxy {
 			// reason-reference : reference
 			if (immunization.hasReasonReference()) {
 
-				Resourcemetadata rReasonReference = null;
-				List<Resourcemetadata> rReasonReferenceChain = null;
 				for (Reference reasonReference : immunization.getReasonReference()) {
-
-					if (reasonReference.hasReference()) {
-						rReasonReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"reason-reference", generateFullLocalReference(reasonReference.getReference(), baseUrl));
-						resourcemetadataList.add(rReasonReference);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rReasonReferenceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "reason-reference", 0, reasonReference.getReference(), null);
-							resourcemetadataList.addAll(rReasonReferenceChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "reason-reference", 0, reasonReference, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -262,23 +198,20 @@ public class ResourcemetadataImmunization extends ResourcemetadataProxy {
 			// target-disease: token
 			if (immunization.hasProtocolApplied()) {
 
-				Resourcemetadata rSeries = null;
-				Resourcemetadata rCode = null;
 				for (ImmunizationProtocolAppliedComponent protocolApplied : immunization.getProtocolApplied()) {
 
 					if (protocolApplied.hasSeries()) {
-						rSeries = generateResourcemetadata(resource, chainedResource, chainedParameter+"series", protocolApplied.getSeries());
-						resourcemetadataList.add(rSeries);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"series", protocolApplied.getSeries());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					if (protocolApplied.hasTargetDisease()) {
-
 						for (CodeableConcept targetDisease : protocolApplied.getTargetDisease()) {
 
 							if (targetDisease.hasCoding()) {
 								for (Coding code : targetDisease.getCoding()) {
-									rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"target-disease", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-									resourcemetadataList.add(rCode);
+									rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"target-disease", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+									resourcemetadataList.add(rMetadata);
 								}
 							}
 						}
@@ -288,27 +221,25 @@ public class ResourcemetadataImmunization extends ResourcemetadataProxy {
 
 			// status : token
 			if (immunization.hasStatus() && immunization.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", immunization.getStatus().toCode(), immunization.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", immunization.getStatus().toCode(), immunization.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// status-reason : token
 			if (immunization.hasStatusReason() && immunization.getStatusReason().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : immunization.getStatusReason().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"status-reason", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status-reason", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// vaccine-code : token
 			if (immunization.hasVaccineCode() && immunization.getVaccineCode().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : immunization.getVaccineCode().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"vaccine-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"vaccine-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -316,6 +247,16 @@ public class ResourcemetadataImmunization extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iImmunization != null) {
+                try {
+                	iImmunization.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

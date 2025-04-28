@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -81,6 +82,8 @@ public class ResourcemetadataCarePlan extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iCarePlan = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a CarePlan object
@@ -98,27 +101,9 @@ public class ResourcemetadataCarePlan extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each CarePlan metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, carePlan, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (carePlan.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", carePlan.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (carePlan.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", carePlan.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (carePlan.getMeta() != null && carePlan.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(carePlan.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(carePlan.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, carePlan, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// carePlan.activity
 			if (carePlan.hasActivity()) {
@@ -130,10 +115,9 @@ public class ResourcemetadataCarePlan extends ResourcemetadataProxy {
 
 						// (activity-code) detail.code : token
 						if (activity.getDetail().hasCode() && activity.getDetail().getCode().hasCoding()) {
-							Resourcemetadata rCode = null;
 							for (Coding code : activity.getDetail().getCode().getCoding()) {
-								rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"activity-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-								resourcemetadataList.add(rCode);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"activity-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+								resourcemetadataList.add(rMetadata);
 							}
 						}
 
@@ -141,44 +125,24 @@ public class ResourcemetadataCarePlan extends ResourcemetadataProxy {
 						if (activity.getDetail().hasScheduledPeriod()) {
 							Period activityDate = activity.getDetail().getScheduledPeriod();
 
-							Resourcemetadata rDateStart = generateResourcemetadata(resource, chainedResource, chainedParameter+"activity-date", utcDateUtil.formatDate(activityDate.getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(activityDate.getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(activityDate.getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(activityDate.getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-							resourcemetadataList.add(rDateStart);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"activity-date", utcDateUtil.formatDate(activityDate.getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(activityDate.getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(activityDate.getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(activityDate.getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+							resourcemetadataList.add(rMetadata);
 						}
 
 						// detail.performer : reference
 						if (activity.getDetail().hasPerformer()) {
 
-							String performerReference = null;
 							for (Reference performer : activity.getDetail().getPerformer()) {
-
-								if (performer.hasReference()) {
-									performerReference = generateFullLocalReference(performer.getReference(), baseUrl);
-
-									Resourcemetadata rDetailPerformer = generateResourcemetadata(resource, chainedResource, chainedParameter+"performer", performerReference);
-									resourcemetadataList.add(rDetailPerformer);
-
-									if (chainedResource == null) {
-										// Add chained parameters for any
-										List<Resourcemetadata> rPerformerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "performer", 0, performer.getReference(), null);
-										resourcemetadataList.addAll(rPerformerChain);
-									}
-								}
+								rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "performer", 0, performer, null);
+								resourcemetadataList.addAll(rMetadataChain);
 							}
 						}
 					}
 
 					// (activity-reference) activity.reference : reference
-					if (activity.hasReference() && activity.getReference().hasReference()) {
-						String activityreferenceReference = generateFullLocalReference(activity.getReference().getReference(), baseUrl);
-
-						Resourcemetadata rActivityReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"activity-reference", activityreferenceReference);
-						resourcemetadataList.add(rActivityReference);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							List<Resourcemetadata> rActivityReferenceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "activity-reference", 0, activity.getReference().getReference(), null);
-							resourcemetadataList.addAll(rActivityReferenceChain);
-						}
+					if (activity.hasReference()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "activity-reference", 0, activity.getReference(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
@@ -187,52 +151,29 @@ public class ResourcemetadataCarePlan extends ResourcemetadataProxy {
 			if (carePlan.hasBasedOn()) {
 
 				for (Reference basedOn : carePlan.getBasedOn()) {
-
-					// based-on : reference
-					if (basedOn.hasReference()) {
-						Resourcemetadata rBasedOn = generateResourcemetadata(resource, chainedResource, chainedParameter+"based-on", generateFullLocalReference(basedOn.getReference(), baseUrl));
-						resourcemetadataList.add(rBasedOn);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							List<Resourcemetadata> rBasedOnChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "based-on", 0, basedOn.getReference(), null);
-							resourcemetadataList.addAll(rBasedOnChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "based-on", 0, basedOn, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// care-team : reference
 			if (carePlan.hasCareTeam()) {
 
-				String careteamReference = null;
 				for (Reference careteam : carePlan.getAddresses()) {
-
-					if (careteam.hasReference()) {
-						careteamReference = generateFullLocalReference(careteam.getReference(), baseUrl);
-
-						Resourcemetadata rCareTeam = generateResourcemetadata(resource, chainedResource, chainedParameter+"care-team", careteamReference);
-						resourcemetadataList.add(rCareTeam);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							List<Resourcemetadata> rCareTeamChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "care-team", 0, careteam.getReference(), null);
-							resourcemetadataList.addAll(rCareTeamChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "care-team", 0, careteam, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// category : token
 			if (carePlan.hasCategory()) {
 
-				Resourcemetadata rCode = null;
 				for (CodeableConcept category : carePlan.getCategory()) {
 
 					if (category.hasCoding()) {
 						for (Coding code : category.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -241,62 +182,30 @@ public class ResourcemetadataCarePlan extends ResourcemetadataProxy {
 			// condition : reference
 			if (carePlan.hasAddresses()) {
 
-				String conditionReference = null;
 				for (Reference condition : carePlan.getAddresses()) {
-
-					if (condition.hasReference()) {
-						conditionReference = generateFullLocalReference(condition.getReference(), baseUrl);
-
-						Resourcemetadata rAddresses = generateResourcemetadata(resource, chainedResource, chainedParameter+"condition", conditionReference);
-						resourcemetadataList.add(rAddresses);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							List<Resourcemetadata> rAddressesChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "condition", 0, condition.getReference(), null);
-							resourcemetadataList.addAll(rAddressesChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "condition", 0, condition, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// encounter : reference
-			if (carePlan.hasEncounter() && carePlan.getEncounter().hasReference()) {
-				String encounterReference = generateFullLocalReference(carePlan.getEncounter().getReference(), baseUrl);
-
-				Resourcemetadata rEncounter = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", encounterReference);
-				resourcemetadataList.add(rEncounter);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, carePlan.getEncounter().getReference(), null);
-					resourcemetadataList.addAll(rEncounterChain);
-				}
+			if (carePlan.hasEncounter()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "encounter", 0, carePlan.getEncounter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// date : date(period)
 			if (carePlan.hasPeriod()) {
-				Resourcemetadata rDateStart = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(carePlan.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(carePlan.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(carePlan.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(carePlan.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-				resourcemetadataList.add(rDateStart);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(carePlan.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(carePlan.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(carePlan.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(carePlan.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// goal : reference
 			if (carePlan.hasGoal()) {
 
-				String goalReference = null;
 				for (Reference goal : carePlan.getGoal()) {
-
-					if (goal.hasReference()) {
-						goalReference = generateFullLocalReference(goal.getReference(), baseUrl);
-
-						Resourcemetadata rGoal = generateResourcemetadata(resource, chainedResource, chainedParameter+"goal", goalReference);
-						resourcemetadataList.add(rGoal);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							List<Resourcemetadata> rGoalChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "goal", 0, goal.getReference(), null);
-							resourcemetadataList.addAll(rGoalChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "goal", 0, goal, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -304,26 +213,24 @@ public class ResourcemetadataCarePlan extends ResourcemetadataProxy {
 			if (carePlan.hasIdentifier()) {
 
 				for (Identifier identifier : carePlan.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
-			// instantiates-canonical : reference
+			// instantiates-canonical : reference - instantiatesCanonical is a Canonical, no Reference.identifier
 			if (carePlan.hasInstantiatesCanonical()) {
 
 				for (CanonicalType instantiates : carePlan.getInstantiatesCanonical()) {
 					String objectReference = generateFullLocalReference(instantiates.asStringValue(), baseUrl);
 
-					List<Resourcemetadata> rInstantiatesChain = null;
-					Resourcemetadata rReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-canonical", objectReference);
-					resourcemetadataList.add(rReference);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-canonical", objectReference);
+					resourcemetadataList.add(rMetadata);
 
 					if (chainedResource == null) {
 						// Add chained parameters
-						rInstantiatesChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "instantiates-canonical", 0, instantiates.asStringValue(), null);
-						resourcemetadataList.addAll(rInstantiatesChain);
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "instantiates-canonical", 0, instantiates.asStringValue(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
@@ -332,60 +239,36 @@ public class ResourcemetadataCarePlan extends ResourcemetadataProxy {
 			if (carePlan.hasInstantiatesUri()) {
 
 				for (UriType instantiates : carePlan.getInstantiatesUri()) {
-
-					Resourcemetadata rInstantiates = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-uri", instantiates.asStringValue());
-					resourcemetadataList.add(rInstantiates);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-uri", instantiates.asStringValue());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// intent : token
 			if (carePlan.hasIntent() && carePlan.getIntent() != null) {
-				Resourcemetadata rIntent = generateResourcemetadata(resource, chainedResource, chainedParameter+"intent", carePlan.getIntent().toCode(), carePlan.getIntent().getSystem());
-				resourcemetadataList.add(rIntent);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"intent", carePlan.getIntent().toCode(), carePlan.getIntent().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// carePlan.part-of
 			if (carePlan.hasPartOf()) {
 
 				for (Reference partOf : carePlan.getPartOf()) {
-
-					// replaces : reference
-					if (partOf.hasReference()) {
-						Resourcemetadata rPartOf = generateResourcemetadata(resource, chainedResource, chainedParameter+"part-of", generateFullLocalReference(partOf.getReference(), baseUrl));
-						resourcemetadataList.add(rPartOf);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							List<Resourcemetadata> rPartOfChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "part-of", 0, partOf.getReference(), null);
-							resourcemetadataList.addAll(rPartOfChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "part-of", 0, partOf, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
-			// patient : reference
 			// subject : reference
 			if (carePlan.hasSubject() && carePlan.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(carePlan.getSubject().getReference(), baseUrl);
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, carePlan.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, carePlan.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, carePlan.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((carePlan.getSubject().hasReference() && carePlan.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (carePlan.getSubject().hasType() && carePlan.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, carePlan.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -393,31 +276,31 @@ public class ResourcemetadataCarePlan extends ResourcemetadataProxy {
 			if (carePlan.hasReplaces()) {
 
 				for (Reference replaces : carePlan.getReplaces()) {
-
-					// replaces : reference
-					if (replaces.hasReference()) {
-						Resourcemetadata rReplaces = generateResourcemetadata(resource, chainedResource, chainedParameter+"replaces", generateFullLocalReference(replaces.getReference(), baseUrl));
-						resourcemetadataList.add(rReplaces);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							List<Resourcemetadata> rReplacesChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "replaces", 0, replaces.getReference(), null);
-							resourcemetadataList.addAll(rReplacesChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "replaces", 0, replaces, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// status : token
 			if (carePlan.hasStatus() && carePlan.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", carePlan.getStatus().toCode(), carePlan.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", carePlan.getStatus().toCode(), carePlan.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iCarePlan != null) {
+                try {
+                	iCarePlan.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

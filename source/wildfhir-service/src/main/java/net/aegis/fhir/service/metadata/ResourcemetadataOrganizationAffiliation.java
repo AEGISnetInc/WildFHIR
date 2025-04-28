@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -79,6 +80,8 @@ public class ResourcemetadataOrganizationAffiliation extends ResourcemetadataPro
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iOrganizationAffiliation = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a OrganizationAffiliation object
@@ -96,38 +99,20 @@ public class ResourcemetadataOrganizationAffiliation extends ResourcemetadataPro
              * Create new Resourcemetadata objects for each OrganizationAffiliation metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, organizationAffiliation, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (organizationAffiliation.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", organizationAffiliation.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (organizationAffiliation.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", organizationAffiliation.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (organizationAffiliation.getMeta() != null && organizationAffiliation.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(organizationAffiliation.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(organizationAffiliation.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, organizationAffiliation, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// active : token
 			if (organizationAffiliation.hasActive()) {
-				Resourcemetadata rActive = generateResourcemetadata(resource, chainedResource, chainedParameter+"active", Boolean.toString(organizationAffiliation.getActive()));
-				resourcemetadataList.add(rActive);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"active", Boolean.toString(organizationAffiliation.getActive()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// date : date(period)
 			if (organizationAffiliation.hasPeriod()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(organizationAffiliation.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(organizationAffiliation.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(organizationAffiliation.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(organizationAffiliation.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(organizationAffiliation.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(organizationAffiliation.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(organizationAffiliation.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(organizationAffiliation.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// (email) telecom.system=email : token
@@ -143,127 +128,76 @@ public class ResourcemetadataOrganizationAffiliation extends ResourcemetadataPro
 						telecomSystemName = telecom.getSystem().toCode();
 
 						if (telecom.getSystem().equals(ContactPointSystem.EMAIL)) {
-
-							Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter+"email", telecom.getValue(), telecomSystemName);
-							resourcemetadataList.add(rTelecom);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"email", telecom.getValue(), telecomSystemName);
+							resourcemetadataList.add(rMetadata);
 						}
 						else if (telecom.getSystem().equals(ContactPointSystem.PHONE)) {
-
-							Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter+"phone", telecom.getValue(), telecomSystemName);
-							resourcemetadataList.add(rTelecom);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"phone", telecom.getValue(), telecomSystemName);
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 
-					Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter+"telecom", telecom.getValue(), telecomSystemName);
-					resourcemetadataList.add(rTelecom);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"telecom", telecom.getValue(), telecomSystemName);
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// endpoint : reference
 			if (organizationAffiliation.hasEndpoint()) {
 
-				Resourcemetadata rEndpoint = null;
-				List<Resourcemetadata> rEndpointChain = null;
 				for (Reference endpoint : organizationAffiliation.getEndpoint()) {
-
-					if (endpoint.hasReference()) {
-						rEndpoint = generateResourcemetadata(resource, chainedResource, chainedParameter+"endpoint", generateFullLocalReference(endpoint.getReference(), baseUrl));
-						resourcemetadataList.add(rEndpoint);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rEndpointChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "endpoint", 0, endpoint.getReference(), null);
-							resourcemetadataList.addAll(rEndpointChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "endpoint", 0, endpoint, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// identifier : token
 			if (organizationAffiliation.hasIdentifier()) {
 
-				Resourcemetadata rIdentifier = null;
 				for (Identifier identifier : organizationAffiliation.getIdentifier()) {
-
-					rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// location : reference
 			if (organizationAffiliation.hasLocation()) {
 
-				Resourcemetadata rLocation = null;
-				List<Resourcemetadata> rLocationChain = null;
 				for (Reference location : organizationAffiliation.getLocation()) {
-
-					if (location.hasReference()) {
-						rLocation = generateResourcemetadata(resource, chainedResource, chainedParameter+"location", generateFullLocalReference(location.getReference(), baseUrl));
-						resourcemetadataList.add(rLocation);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rLocationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, location.getReference(), null);
-							resourcemetadataList.addAll(rLocationChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "location", 0, location, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// network : reference
 			if (organizationAffiliation.hasNetwork()) {
 
-				Resourcemetadata rNetwork = null;
-				List<Resourcemetadata> rNetworkChain = null;
 				for (Reference network : organizationAffiliation.getNetwork()) {
-
-					if (network.hasReference()) {
-						rNetwork = generateResourcemetadata(resource, chainedResource, chainedParameter+"network", generateFullLocalReference(network.getReference(), baseUrl));
-						resourcemetadataList.add(rNetwork);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rNetworkChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "network", 0, network.getReference(), null);
-							resourcemetadataList.addAll(rNetworkChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "network", 0, network, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// participating-organization : reference
-			if (organizationAffiliation.hasParticipatingOrganization() && organizationAffiliation.getParticipatingOrganization().hasReference()) {
-				Resourcemetadata rParticipatingOrganization = generateResourcemetadata(resource, chainedResource, chainedParameter+"participating-organization", generateFullLocalReference(organizationAffiliation.getParticipatingOrganization().getReference(), baseUrl));
-				resourcemetadataList.add(rParticipatingOrganization);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rParticipatingOrganizationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "participating-organization", 0, organizationAffiliation.getParticipatingOrganization().getReference(), null);
-					resourcemetadataList.addAll(rParticipatingOrganizationChain);
-				}
+			if (organizationAffiliation.hasParticipatingOrganization()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "participating-organization", 0, organizationAffiliation.getParticipatingOrganization(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// primary-organization : reference
-			if (organizationAffiliation.hasOrganization() && organizationAffiliation.getOrganization().hasReference()) {
-				Resourcemetadata rOrganization = generateResourcemetadata(resource, chainedResource, chainedParameter+"primary-organization", generateFullLocalReference(organizationAffiliation.getOrganization().getReference(), baseUrl));
-				resourcemetadataList.add(rOrganization);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rOrganizationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "primary-organization", 0, organizationAffiliation.getOrganization().getReference(), null);
-					resourcemetadataList.addAll(rOrganizationChain);
-				}
+			if (organizationAffiliation.hasOrganization()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "primary-organization", 0, organizationAffiliation.getOrganization(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// role : token
 			if (organizationAffiliation.hasCode()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept role : organizationAffiliation.getCode()) {
 
 					if (role.hasCoding()) {
 						for (Coding code : role.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"role", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"role", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -272,33 +206,20 @@ public class ResourcemetadataOrganizationAffiliation extends ResourcemetadataPro
 			// service : reference
 			if (organizationAffiliation.hasHealthcareService()) {
 
-				Resourcemetadata rService = null;
-				List<Resourcemetadata> rServiceChain = null;
 				for (Reference service : organizationAffiliation.getHealthcareService()) {
-
-					if (service.hasReference()) {
-						rService = generateResourcemetadata(resource, chainedResource, chainedParameter+"service", generateFullLocalReference(service.getReference(), baseUrl));
-						resourcemetadataList.add(rService);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rServiceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "service", 0, service.getReference(), null);
-							resourcemetadataList.addAll(rServiceChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "service", 0, service, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// specialty : token
 			if (organizationAffiliation.hasSpecialty()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept specialty : organizationAffiliation.getSpecialty()) {
 
 					if (specialty.hasCoding()) {
 						for (Coding code : specialty.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"specialty", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"specialty", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -308,6 +229,16 @@ public class ResourcemetadataOrganizationAffiliation extends ResourcemetadataPro
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iOrganizationAffiliation != null) {
+                try {
+                	iOrganizationAffiliation.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

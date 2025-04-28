@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -79,6 +80,8 @@ public class ResourcemetadataSpecimen extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iSpecimen = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Specimen object
@@ -96,102 +99,59 @@ public class ResourcemetadataSpecimen extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Specimen metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, specimen, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (specimen.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", specimen.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (specimen.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", specimen.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (specimen.getMeta() != null && specimen.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(specimen.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(specimen.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, specimen, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// accession : token
 			if (specimen.hasAccessionIdentifier()) {
-				Resourcemetadata rAccessionIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"accession", specimen.getAccessionIdentifier().getValue(), specimen.getAccessionIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(specimen.getAccessionIdentifier()));
-				resourcemetadataList.add(rAccessionIdentifier);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"accession", specimen.getAccessionIdentifier().getValue(), specimen.getAccessionIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(specimen.getAccessionIdentifier()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (specimen.hasIdentifier()) {
 
 				for (Identifier identifier : specimen.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
-			// parent : token
+			// parent : reference
 			if (specimen.hasParent()) {
 
-				List<Resourcemetadata> rParentChain = null;
 				for (Reference parent : specimen.getParent()) {
-
-					if (parent.hasReference()) {
-						Resourcemetadata rParent = generateResourcemetadata(resource, chainedResource, chainedParameter+"parent", parent.getReference());
-						resourcemetadataList.add(rParent);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rParentChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "parent", 0, parent.getReference(), null);
-							resourcemetadataList.addAll(rParentChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "parent", 0, parent, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
-			// patient : reference
 			// subject : reference
 			if (specimen.hasSubject() && specimen.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(specimen.getSubject().getReference(), baseUrl);
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, specimen.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, specimen.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, specimen.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((specimen.getSubject().hasReference() && specimen.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (specimen.getSubject().hasType() && specimen.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, specimen.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// status : token
 			if (specimen.hasStatus() && specimen.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", specimen.getStatus().toCode(), specimen.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", specimen.getStatus().toCode(), specimen.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// type : token
 			if (specimen.hasType() && specimen.getType().hasCoding()) {
 
-				Resourcemetadata rType = null;
 				for (Coding type : specimen.getType().getCoding()) {
-					rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-					resourcemetadataList.add(rType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -200,10 +160,9 @@ public class ResourcemetadataSpecimen extends ResourcemetadataProxy {
 				// bodysite : token
 				if (specimen.getCollection().hasBodySite() && specimen.getCollection().getBodySite().hasCoding()) {
 
-					Resourcemetadata rCode = null;
 					for (Coding code : specimen.getCollection().getBodySite().getCoding()) {
-						rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"bodysite", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-						resourcemetadataList.add(rCode);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"bodysite", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 
@@ -211,39 +170,31 @@ public class ResourcemetadataSpecimen extends ResourcemetadataProxy {
 				if (specimen.getCollection().hasCollected()) {
 
 					if (specimen.getCollection().getCollected() instanceof DateTimeType) {
-						Resourcemetadata rCollectedDateTime = generateResourcemetadata(resource, chainedResource, chainedParameter+"collected", utcDateUtil.formatDate(specimen.getCollection().getCollectedDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(specimen.getCollection().getCollectedDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-						resourcemetadataList.add(rCollectedDateTime);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"collected", utcDateUtil.formatDate(specimen.getCollection().getCollectedDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(specimen.getCollection().getCollectedDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+						resourcemetadataList.add(rMetadata);
 					}
 					else if (specimen.getCollection().getCollected() instanceof Period) {
-						Resourcemetadata rCollectedPeriod = generateResourcemetadata(resource, chainedResource, chainedParameter+"collected", utcDateUtil.formatDate(specimen.getCollection().getCollectedPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(specimen.getCollection().getCollectedPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(specimen.getCollection().getCollectedPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(specimen.getCollection().getCollectedPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-						resourcemetadataList.add(rCollectedPeriod);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"collected", utcDateUtil.formatDate(specimen.getCollection().getCollectedPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(specimen.getCollection().getCollectedPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(specimen.getCollection().getCollectedPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(specimen.getCollection().getCollectedPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 
 				// collector : reference
-				if (specimen.getCollection().hasCollector() && specimen.getCollection().getCollector().hasReference()) {
-					Resourcemetadata rCollector = generateResourcemetadata(resource, chainedResource, chainedParameter+"collector", specimen.getCollection().getCollector().getReference());
-					resourcemetadataList.add(rCollector);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rCollectorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "collector", 0, specimen.getCollection().getCollector().getReference(), null);
-						resourcemetadataList.addAll(rCollectorChain);
-					}
+				if (specimen.getCollection().hasCollector()) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "collector", 0, specimen.getCollection().getCollector(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			if (specimen.hasContainer()) {
-
 				for (SpecimenContainerComponent container : specimen.getContainer()) {
 
 					// container : token
 					if (container.hasType()) {
 
 						for (Coding coding : container.getType().getCoding()) {
-
-							Resourcemetadata rSiteCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"container", coding.getCode(), coding.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(coding));
-							resourcemetadataList.add(rSiteCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"container", coding.getCode(), coding.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(coding));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 
@@ -251,9 +202,8 @@ public class ResourcemetadataSpecimen extends ResourcemetadataProxy {
 					if (container.hasIdentifier()) {
 
 						for (Identifier containerid : container.getIdentifier()) {
-
-							Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"container-id", containerid.getValue(), containerid.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(containerid));
-							resourcemetadataList.add(rIdentifier);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"container-id", containerid.getValue(), containerid.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(containerid));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -263,6 +213,16 @@ public class ResourcemetadataSpecimen extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iSpecimen != null) {
+                try {
+                	iSpecimen.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

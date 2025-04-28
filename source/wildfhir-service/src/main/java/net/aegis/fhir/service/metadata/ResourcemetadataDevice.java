@@ -36,13 +36,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -77,6 +75,8 @@ public class ResourcemetadataDevice extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iDevice = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Device object
@@ -94,119 +94,80 @@ public class ResourcemetadataDevice extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Device metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, device, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (device.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", device.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (device.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", device.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (device.getMeta() != null && device.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(device.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(device.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, device, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// identifier : token
 			if (device.hasIdentifier()) {
 
 				for (Identifier identifier : device.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// location : reference
-			if (device.hasLocation() && device.getLocation().hasReference()) {
-				Resourcemetadata rLocation = generateResourcemetadata(resource, chainedResource, chainedParameter+"location", generateFullLocalReference(device.getLocation().getReference(), baseUrl));
-				resourcemetadataList.add(rLocation);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rLocationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, device.getLocation().getReference(), null);
-					resourcemetadataList.addAll(rLocationChain);
-				}
+			if (device.hasLocation()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "location", 0, device.getLocation(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// manufacturer : string
 			if (device.hasManufacturer()) {
-				Resourcemetadata rManufacturer = generateResourcemetadata(resource, chainedResource, chainedParameter+"manufacturer", device.getManufacturer());
-				resourcemetadataList.add(rManufacturer);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"manufacturer", device.getManufacturer());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// model : string
 			if (device.hasModelNumber()) {
-				Resourcemetadata rModel = generateResourcemetadata(resource, chainedResource, chainedParameter+"model", device.getModelNumber());
-				resourcemetadataList.add(rModel);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"model", device.getModelNumber());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// organization : reference
-			if (device.hasOwner() && device.getOwner().hasReference()) {
-				Resourcemetadata rOwner = generateResourcemetadata(resource, chainedResource, chainedParameter+"organization", generateFullLocalReference(device.getOwner().getReference(), baseUrl));
-				resourcemetadataList.add(rOwner);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rOwnerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "organization", 0, device.getOwner().getReference(), null);
-					resourcemetadataList.addAll(rOwnerChain);
-				}
+			if (device.hasOwner()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "organization", 0, device.getOwner(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// patient : reference
-			if (device.hasPatient() && device.getPatient().hasReference()) {
-				Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", generateFullLocalReference(device.getPatient().getReference(), baseUrl));
-				resourcemetadataList.add(rPatient);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, device.getPatient().getReference(), null);
-					resourcemetadataList.addAll(rPatientChain);
-				}
+			if (device.hasPatient()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, device.getPatient(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// status : token
 			if (device.hasStatus() && device.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", device.getStatus().toCode(), device.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", device.getStatus().toCode(), device.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// type : token
 			if (device.hasType() && device.getType().hasCoding()) {
 
-				Resourcemetadata rType = null;
-				Resourcemetadata rDeviceName = null;
 				for (Coding type : device.getType().getCoding()) {
-					rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-					resourcemetadataList.add(rType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+					resourcemetadataList.add(rMetadata);
 
 					// device-name : string
 					if (type.hasDisplay()) {
-						rDeviceName = generateResourcemetadata(resource, chainedResource, chainedParameter+"device-name", type.getDisplay());
-						resourcemetadataList.add(rDeviceName);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"device-name", type.getDisplay());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 
 				// device-name : string
 				if (device.getType().hasText()) {
-					rDeviceName = generateResourcemetadata(resource, chainedResource, chainedParameter+"device-name", device.getType().getText());
-					resourcemetadataList.add(rDeviceName);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"device-name", device.getType().getText());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// url : uri
 			if (device.hasUrl()) {
-				Resourcemetadata rUrl = generateResourcemetadata(resource, chainedResource, chainedParameter+"url", device.getUrl());
-				resourcemetadataList.add(rUrl);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"url", device.getUrl());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			if (device.hasUdiCarrier()) {
@@ -214,18 +175,18 @@ public class ResourcemetadataDevice extends ResourcemetadataProxy {
 				for (DeviceUdiCarrierComponent udiCarrier : device.getUdiCarrier()) {
 					// udi-di : string
 					if (udiCarrier.hasDeviceIdentifier()) {
-						Resourcemetadata rDeviceIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"udi-di", udiCarrier.getDeviceIdentifier());
-						resourcemetadataList.add(rDeviceIdentifier);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"udi-di", udiCarrier.getDeviceIdentifier());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// udi-carrier : string
 					if (udiCarrier.hasCarrierHRF()) {
-						Resourcemetadata rUdiCarrier = generateResourcemetadata(resource, chainedResource, chainedParameter+"udi-carrier", udiCarrier.getCarrierHRF());
-						resourcemetadataList.add(rUdiCarrier);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"udi-carrier", udiCarrier.getCarrierHRF());
+						resourcemetadataList.add(rMetadata);
 					}
 					if (udiCarrier.hasCarrierAIDC()) {
-						Resourcemetadata rUdiCarrier = generateResourcemetadata(resource, chainedResource, chainedParameter+"udi-carrier", udiCarrier.getCarrierAIDC().toString());
-						resourcemetadataList.add(rUdiCarrier);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"udi-carrier", udiCarrier.getCarrierAIDC().toString());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 
@@ -236,6 +197,8 @@ public class ResourcemetadataDevice extends ResourcemetadataProxy {
 			e.printStackTrace();
 			throw e;
         } finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
             if (iDevice != null) {
                 try {
                     iDevice.close();

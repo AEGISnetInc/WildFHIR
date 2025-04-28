@@ -36,6 +36,7 @@ package net.aegis.fhir.service.metadata;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.ws.rs.core.Response;
 
@@ -44,6 +45,7 @@ import org.hl7.fhir.r4.formats.IParser.OutputStyle;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.UriType;
 
 import net.aegis.fhir.model.LabelKeyValueBean;
@@ -190,7 +192,7 @@ public abstract class ResourcemetadataProxy {
 
 		if (value != null && !value.isEmpty()) {
 			r.setParamValue(value);
-			r.setParamValueU(value);
+			r.setParamValueU(value.toUpperCase());
 		}
 
 		if (systemValue != null && !systemValue.isEmpty()) {
@@ -203,7 +205,7 @@ public abstract class ResourcemetadataProxy {
 
 		if (textValue != null && !textValue.isEmpty()) {
 			r.setTextValue(textValue);
-			r.setTextValueU(textValue);
+			r.setTextValueU(textValue.toUpperCase());
 		}
 
 		return r;
@@ -217,7 +219,6 @@ public abstract class ResourcemetadataProxy {
 	 * @param resourceService
 	 * @param chainedParameter
 	 * @param chainedIndex
-	 * @param chainedResourceType
 	 * @param reference
 	 * @param fhirResource
 	 * @return Generated <code>List<Resourcemetadata></code>
@@ -235,49 +236,106 @@ public abstract class ResourcemetadataProxy {
 
 		List<Resourcemetadata> rList = new ArrayList<Resourcemetadata>();
 
-			try {
-				// Determine resource type from reference
-				String chainedResourceType = ServicesUtil.INSTANCE.getResourceTypeFromReference(reference);
+		try {
+			// Determine resource type from reference
+			String chainedResourceType = ServicesUtil.INSTANCE.getResourceTypeFromReference(reference);
 
-				if ((chainedResourceType == null || chainedResourceType.isEmpty()) && fhirResource != null) {
-					// Use fhirResource type if chainedResourceType not found from reference; this happens if reference is not http based
-					chainedResourceType = fhirResource.fhirType();
-				}
+			if ((chainedResourceType == null || chainedResourceType.isEmpty()) && fhirResource != null) {
+				// Use fhirResource type if chainedResourceType not found from reference; this happens if reference is not http based
+				chainedResourceType = fhirResource.fhirType();
+			}
 
-				if (chainedResourceType != null) {
-//					System.out.println("   -- chainedResourceType: " + chainedResourceType);
+			if (chainedResourceType != null) {
+//				System.out.println("   -- chainedResourceType: " + chainedResourceType);
 
-					// Check reference resource type; if single resource type, generate chained parameters without explicit chained resource type
-					LabelKeyValueBean resourceSearchParam = ResourceType.findResourceTypeResourceCriteria(resource.getResourceType(), chainedParameter);
-					if (resourceSearchParam != null && resourceSearchParam.getRefType() != null && !resourceSearchParam.getRefType().isEmpty() && !resourceSearchParam.getRefType().equals("*")) {
-//						System.out.println("   -- search param type:   " + resourceSearchParam.getRefType());
+				// Check reference resource type; if single resource type, generate chained parameters without explicit chained resource type
+				LabelKeyValueBean resourceSearchParam = ResourceType.findResourceTypeResourceCriteria(resource.getResourceType(), chainedParameter);
+				if (resourceSearchParam != null && resourceSearchParam.getRefType() != null && !resourceSearchParam.getRefType().isEmpty() && !resourceSearchParam.getRefType().equals("*")) {
+//					System.out.println("   -- search param type:   " + resourceSearchParam.getRefType());
 
-						if (resourceSearchParam.getRefType().equals(chainedResourceType)) {
-							String chainedParameterSingle = chainedParameter + ".";
+					if (resourceSearchParam.getRefType().equals(chainedResourceType)) {
+						String chainedParameterSingle = chainedParameter + ".";
 
-							List<Resourcemetadata> rList1 = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, chainedParameterSingle, chainedIndex, chainedResourceType, reference, fhirResource);
+						List<Resourcemetadata> rList1 = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, chainedParameterSingle, chainedIndex, chainedResourceType, reference, fhirResource);
 
-							rList.addAll(rList1);
-						}
+						rList.addAll(rList1);
 					}
+				}
 
-					// Generate parameter with explicit chained resource type
-					String fullReference = generateFullLocalReference(reference, baseUrl);
-					Resourcemetadata rChainedRef = generateResourcemetadata(resource, null, chainedParameter + ":" + chainedResourceType, fullReference);
-					rList.add(rChainedRef);
+				// Generate parameter with explicit chained resource type
+				String fullReference = generateFullLocalReference(reference, baseUrl);
+				Resourcemetadata rChainedRef = generateResourcemetadata(resource, null, chainedParameter + ":" + chainedResourceType, fullReference);
+				rList.add(rChainedRef);
 
-					// Generate chained parameters with explicit chained resource type
-					String chainedParameterAny = chainedParameter + ":" + chainedResourceType + ".";
+				// Generate chained parameters with explicit chained resource type
+				String chainedParameterAny = chainedParameter + ":" + chainedResourceType + ".";
 
-					List<Resourcemetadata> rList2 = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, chainedParameterAny, chainedIndex, chainedResourceType, reference, fhirResource);
+				List<Resourcemetadata> rList2 = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, chainedParameterAny, chainedIndex, chainedResourceType, reference, fhirResource);
 
-					rList.addAll(rList2);
+				rList.addAll(rList2);
+			}
+		}
+		catch (Exception e) {
+			// Swallow exception for now which means no chained parameter values will be saved
+			System.out.println("Chained resource any generation of search parameters failed! " + e.getMessage());
+		}
+
+		return rList;
+	}
+
+	/**
+	 * Generate the Resourcemetadata instances for the Reference reference and any chained plus identifier if present.
+	 *
+	 * @param resource
+	 * @param chainedResource
+	 * @param baseUrl
+	 * @param resourceService
+	 * @param chainedParameter
+	 * @param parameterName
+	 * @param chainedIndex
+	 * @param reference
+	 * @param fhirResource
+	 * @return Generated <code>List<Resourcemetadata></code>
+	 */
+	protected List<Resourcemetadata> generateChainedResourcemetadataAny(Resource resource, Resource chainedResource, String baseUrl, ResourceService resourceService,
+			String chainedParameter, String parameterName, int chainedIndex, Reference reference, org.hl7.fhir.r4.model.Resource fhirResource) throws Exception {
+
+//		System.out.println("");
+//		System.out.println(">> generateChainedResourcemetadataAny");
+//		System.out.println("   -- resource:             " + (resource != null ? resource.getResourceType() : "null"));
+//		System.out.println("   -- chainedResource:      " + (chainedResource != null ? chainedResource.getResourceType() : "null"));
+//		System.out.println("   -- baseUrl:              " + baseUrl);
+//		System.out.println("   -- chainedParameter:     " + chainedParameter);
+//		System.out.println("   -- parameterName:        " + parameterName);
+//		System.out.println("   -- chainedIndex:         " + chainedIndex);
+//		System.out.println("   -- reference.reference:  " + (reference.hasReference() ? reference.getReference() : "null"));
+//		System.out.println("   -- reference.identifier: " + (reference.hasIdentifier() ? (reference.getIdentifier().hasSystem() ? reference.getIdentifier().getSystem() + "|" : "") + (reference.getIdentifier().hasValue() ? reference.getIdentifier().getValue() : "") : "null"));
+//		System.out.println("   -- fhirResource:         " + (fhirResource != null ? fhirResource.fhirType() : "null"));
+
+		List<Resourcemetadata> rList = new ArrayList<Resourcemetadata>();
+
+		try {
+			// reference with chained
+			if (reference.hasReference()) {
+				String fullReference = generateFullLocalReference(reference.getReference(), baseUrl);
+
+				rList.add(generateResourcemetadata(resource, chainedResource, chainedParameter+parameterName, fullReference));
+
+				if (chainedResource == null) {
+					// Add chained parameters
+					rList.addAll(generateChainedResourcemetadataAny(resource, baseUrl, resourceService, parameterName, 0, reference.getReference(), fhirResource));
 				}
 			}
-			catch (Exception e) {
-				// Swallow exception for now which means no chained parameter values will be saved
-				System.out.println("Chained resource any generation of search parameters failed! " + e.getMessage());
+
+			// reference with identifier
+			if (reference.hasIdentifier()) {
+				rList.add(generateResourcemetadata(resource, chainedResource, chainedParameter+parameterName+":identifier", reference.getIdentifier().getValue(), reference.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(reference.getIdentifier())));
 			}
+		}
+		catch (Exception e) {
+			// Swallow exception for now which means no chained parameter values will be saved
+			System.out.println("Reference, Chained resource and or Reference identifier generation of search parameters failed! " + e.getMessage());
+		}
 
 		return rList;
 	}
@@ -493,7 +551,8 @@ public abstract class ResourcemetadataProxy {
 //	}
 
 	/**
-	 * Generate a list of Resourcemetadata instances initialized for all tags
+	 * Generate a list of Resourcemetadata instances initialized for the Resource common
+	 * search parameters: _id, _language, _lastUpdated, _profile, _security, _source and _tag
 	 *
 	 * @param resource
 	 * @param fhirResource
@@ -503,6 +562,7 @@ public abstract class ResourcemetadataProxy {
 	protected List<Resourcemetadata> generateResourcemetadataTagList(Resource resource, org.hl7.fhir.r4.model.Resource fhirResource, String chainedParameter) {
 
 		List<Resourcemetadata> resourcemetadataTagList = new ArrayList<Resourcemetadata>();
+		Resourcemetadata r = null;
 
 		/*
 		 *  Process meta data within the resource
@@ -510,58 +570,55 @@ public abstract class ResourcemetadataProxy {
 		try {
 			if (resource != null && resource.getResourceContents() != null) {
 
-				if (fhirResource != null && fhirResource.getMeta() != null) {
+				if (fhirResource != null) {
 
-					if (fhirResource.getMeta().getTag() != null) {
-						for (Coding tagCoding : fhirResource.getMeta().getTag()) {
-							Resourcemetadata r = new Resourcemetadata();
-
-							r.setResource(resource);
-							r.setParamName(chainedParameter + Tag.METADATA_NAME_GENERAL_TAG);
-							r.setParamType("tag");
-							r.setParamValue(tagCoding.getCode());
-							r.setParamValueU(tagCoding.getCode());
-							if (tagCoding.hasSystem()) {
-								r.setSystemValue(tagCoding.getSystem());
-							}
-							if (tagCoding.hasDisplay()) {
-								r.setCodeValue(tagCoding.getDisplay());
-							}
-
-							resourcemetadataTagList.add(r);
-						}
+					// _id : token
+					if (fhirResource.hasId()) {
+						r = generateResourcemetadata(resource, null, chainedParameter+"_id", fhirResource.getId());
+						resourcemetadataTagList.add(r);
 					}
 
-					if (fhirResource.getMeta().getProfile() != null) {
-						for (UriType tagUri : fhirResource.getMeta().getProfile()) {
-							Resourcemetadata r = new Resourcemetadata();
-
-							r.setResource(resource);
-							r.setParamName(chainedParameter + Tag.METADATA_NAME_PROFILE_TAG);
-							r.setParamType("tag");
-							r.setParamValue(tagUri.getValue());
-							r.setParamValueU(tagUri.getValue());
-
-							resourcemetadataTagList.add(r);
-						}
+					// _language : token
+					if (fhirResource.hasLanguage()) {
+						r = generateResourcemetadata(resource, null, chainedParameter+"_language", fhirResource.getLanguage());
+						resourcemetadataTagList.add(r);
 					}
 
-					if (fhirResource.getMeta().getSecurity() != null) {
-						for (Coding tagCoding : fhirResource.getMeta().getSecurity()) {
-							Resourcemetadata r = new Resourcemetadata();
+					if (fhirResource.getMeta() != null) {
 
-							r.setResource(resource);
-							r.setParamName(chainedParameter + Tag.METADATA_NAME_SECURITY_TAG);
-							r.setParamType("tag");
-							r.setParamValue(tagCoding.getCode());
-							r.setParamValueU(tagCoding.getCode());
-							if (tagCoding.hasSystem()) {
-								r.setSystemValue(tagCoding.getSystem());
-							}
-							if (tagCoding.hasDisplay()) {
-								r.setCodeValue(tagCoding.getDisplay());
-							}
+						// _lastUpdated : date
+						if (fhirResource.getMeta().getLastUpdated() != null) {
+							r = generateResourcemetadata(resource, null, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(fhirResource.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(fhirResource.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+							resourcemetadataTagList.add(r);
+						}
 
+						// _tag : token
+						if (fhirResource.getMeta().hasTag()) {
+							for (Coding tagCoding : fhirResource.getMeta().getTag()) {
+								r = generateResourcemetadata(resource, null, chainedParameter+Tag.METADATA_NAME_GENERAL_TAG, tagCoding.getCode(), tagCoding.getSystem(), null, tagCoding.getDisplay(), "tag");
+								resourcemetadataTagList.add(r);
+							}
+						}
+
+						// _profile : uri
+						if (fhirResource.getMeta().hasProfile()) {
+							for (UriType tagUri : fhirResource.getMeta().getProfile()) {
+								r = generateResourcemetadata(resource, null, chainedParameter+Tag.METADATA_NAME_PROFILE_TAG, tagUri.getValue(), null, null, null, "tag");
+								resourcemetadataTagList.add(r);
+							}
+						}
+
+						// _security : token
+						if (fhirResource.getMeta().hasSecurity()) {
+							for (Coding tagCoding : fhirResource.getMeta().getSecurity()) {
+								r = generateResourcemetadata(resource, null, chainedParameter+Tag.METADATA_NAME_SECURITY_TAG, tagCoding.getCode(), tagCoding.getSystem(), null, tagCoding.getDisplay(), "tag");
+								resourcemetadataTagList.add(r);
+							}
+						}
+
+						// _source : uri
+						if (fhirResource.getMeta().hasSource()) {
+							r = generateResourcemetadata(resource, null, chainedParameter+"_source", fhirResource.getMeta().getSource());
 							resourcemetadataTagList.add(r);
 						}
 					}
@@ -570,6 +627,9 @@ public abstract class ResourcemetadataProxy {
 		}
 		catch (Exception e) {
 			e.printStackTrace();
+		}
+		finally {
+			r = null;
 		}
 
 		return resourcemetadataTagList;

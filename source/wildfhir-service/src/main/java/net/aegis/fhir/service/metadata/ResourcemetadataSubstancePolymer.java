@@ -33,9 +33,9 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -47,7 +47,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -75,6 +74,8 @@ public class ResourcemetadataSubstancePolymer extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iSubstancePolymer = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a SubstancePolymer object
@@ -92,45 +93,25 @@ public class ResourcemetadataSubstancePolymer extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each SubstancePolymer metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, substancePolymer, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (substancePolymer.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", substancePolymer.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (substancePolymer.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", substancePolymer.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (substancePolymer.getMeta() != null && substancePolymer.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(substancePolymer.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(substancePolymer.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, substancePolymer, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// class : token
 			if (substancePolymer.hasClass_() && substancePolymer.getClass_().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : substancePolymer.getClass_().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"class", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"class", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// geometry : token
 			if (substancePolymer.hasGeometry() && substancePolymer.getGeometry().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : substancePolymer.getGeometry().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"geometry", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"geometry", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -138,9 +119,8 @@ public class ResourcemetadataSubstancePolymer extends ResourcemetadataProxy {
 			if (substancePolymer.hasModification()) {
 
 				for (StringType modification : substancePolymer.getModification()) {
-
-					Resourcemetadata rModification = generateResourcemetadata(resource, chainedResource, chainedParameter+"modification", modification.asStringValue());
-					resourcemetadataList.add(rModification);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"modification", modification.asStringValue());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -148,6 +128,16 @@ public class ResourcemetadataSubstancePolymer extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iSubstancePolymer != null) {
+                try {
+                	iSubstancePolymer.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;
