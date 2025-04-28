@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -75,6 +76,8 @@ public class ResourcemetadataImmunizationEvaluation extends ResourcemetadataProx
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iImmunizationEvaluation = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a ImmunizationEvaluation object
@@ -92,41 +95,22 @@ public class ResourcemetadataImmunizationEvaluation extends ResourcemetadataProx
 			 * Create new Resourcemetadata objects for each ImmunizationEvaluation metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, immunizationEvaluation, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (immunizationEvaluation.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", immunizationEvaluation.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (immunizationEvaluation.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", immunizationEvaluation.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (immunizationEvaluation.getMeta() != null && immunizationEvaluation.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(immunizationEvaluation.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(immunizationEvaluation.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, immunizationEvaluation, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// date : datetime
 			if (immunizationEvaluation.hasDate()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(immunizationEvaluation.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(immunizationEvaluation.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(immunizationEvaluation.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(immunizationEvaluation.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// dose-status : token
 			if (immunizationEvaluation.hasDoseStatus() && immunizationEvaluation.getDoseStatus().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : immunizationEvaluation.getDoseStatus().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"dose-status", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"dose-status", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -134,49 +118,35 @@ public class ResourcemetadataImmunizationEvaluation extends ResourcemetadataProx
 			if (immunizationEvaluation.hasIdentifier()) {
 
 				for (Identifier identifier : immunizationEvaluation.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// immunization-event : reference
-			if (immunizationEvaluation.hasImmunizationEvent() && immunizationEvaluation.getImmunizationEvent().hasReference()) {
-				Resourcemetadata rImmunizationEvent = generateResourcemetadata(resource, chainedResource, chainedParameter+"immunization-event", generateFullLocalReference(immunizationEvaluation.getImmunizationEvent().getReference(), baseUrl));
-				resourcemetadataList.add(rImmunizationEvent);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rImmunizationEventChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "immunization-event", 0, immunizationEvaluation.getImmunizationEvent().getReference(), null);
-					resourcemetadataList.addAll(rImmunizationEventChain);
-				}
+			if (immunizationEvaluation.hasImmunizationEvent()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "immunization-event", 0, immunizationEvaluation.getImmunizationEvent(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// patient : reference
-			if (immunizationEvaluation.hasPatient() && immunizationEvaluation.getPatient().hasReference()) {
-				Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", generateFullLocalReference(immunizationEvaluation.getPatient().getReference(), baseUrl));
-				resourcemetadataList.add(rPatient);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, immunizationEvaluation.getPatient().getReference(), null);
-					resourcemetadataList.addAll(rPatientChain);
-				}
+			if (immunizationEvaluation.hasPatient()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, immunizationEvaluation.getPatient(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// status : token
 			if (immunizationEvaluation.hasStatus() && immunizationEvaluation.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", immunizationEvaluation.getStatus().toCode(), immunizationEvaluation.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", immunizationEvaluation.getStatus().toCode(), immunizationEvaluation.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// target-disease : token
 			if (immunizationEvaluation.hasTargetDisease() && immunizationEvaluation.getTargetDisease().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : immunizationEvaluation.getTargetDisease().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"target-disease", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"target-disease", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -184,6 +154,16 @@ public class ResourcemetadataImmunizationEvaluation extends ResourcemetadataProx
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iImmunizationEvaluation != null) {
+                try {
+                	iImmunizationEvaluation.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

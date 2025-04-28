@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -84,7 +85,8 @@ public class ResourcemetadataCondition extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iCondition = null;
-		Resourcemetadata rCode = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Condition object
@@ -102,27 +104,9 @@ public class ResourcemetadataCondition extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Condition metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, condition, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (condition.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", condition.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (condition.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", condition.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (condition.getMeta() != null && condition.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(condition.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(condition.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, condition, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// abatement-age : age(range)
 			// abatement-date : datetime(period)
@@ -130,50 +114,42 @@ public class ResourcemetadataCondition extends ResourcemetadataProxy {
 			if (condition.hasAbatement()) {
 
 				if (condition.getAbatement() instanceof DateTimeType) {
-					Resourcemetadata rAbatementDateTimeType = generateResourcemetadata(resource, chainedResource, chainedParameter+"abatement-date", utcDateUtil.formatDate(condition.getAbatementDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(condition.getAbatementDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-					resourcemetadataList.add(rAbatementDateTimeType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"abatement-date", utcDateUtil.formatDate(condition.getAbatementDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(condition.getAbatementDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+					resourcemetadataList.add(rMetadata);
 				}
 				else if (condition.getAbatement() instanceof Period) {
-					Resourcemetadata rAbatementPeriod = generateResourcemetadata(resource, chainedResource, chainedParameter+"abatement-date", utcDateUtil.formatDate(condition.getAbatementPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(condition.getAbatementPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(condition.getAbatementPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(condition.getAbatementPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-					resourcemetadataList.add(rAbatementPeriod);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"abatement-date", utcDateUtil.formatDate(condition.getAbatementPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(condition.getAbatementPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(condition.getAbatementPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(condition.getAbatementPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+					resourcemetadataList.add(rMetadata);
 				}
 				else if (condition.getAbatement() instanceof Age) {
-					Resourcemetadata rAbatementAge = generateResourcemetadata(resource, chainedResource, chainedParameter+"abatement-age", condition.getAbatementAge().getValueElement().asStringValue());
-					resourcemetadataList.add(rAbatementAge);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"abatement-age", condition.getAbatementAge().getValueElement().asStringValue());
+					resourcemetadataList.add(rMetadata);
 				}
 				else if (condition.getAbatement() instanceof Range) {
-					Resourcemetadata rAbatementRange = generateResourcemetadata(resource, chainedResource, chainedParameter+"abatement-age", condition.getAbatementRange().getLow().getValueElement().asStringValue());
-					resourcemetadataList.add(rAbatementRange);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"abatement-age", condition.getAbatementRange().getLow().getValueElement().asStringValue());
+					resourcemetadataList.add(rMetadata);
 				}
 				else if (condition.getAbatement() instanceof StringType) {
-					Resourcemetadata rAbatementStringType = generateResourcemetadata(resource, chainedResource, chainedParameter+"abatement-string", condition.getAbatementStringType().asStringValue());
-					resourcemetadataList.add(rAbatementStringType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"abatement-string", condition.getAbatementStringType().asStringValue());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// asserter : reference
 			if (condition.hasAsserter() && condition.getAsserter().hasReference()) {
-				String asserterString = generateFullLocalReference(condition.getAsserter().getReference(), baseUrl);
-
-				Resourcemetadata rAsserter = generateResourcemetadata(resource, chainedResource, chainedParameter+"asserter", asserterString);
-				resourcemetadataList.add(rAsserter);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rAsserterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "asserter", 0, condition.getAsserter().getReference(), null);
-					resourcemetadataList.addAll(rAsserterChain);
-				}
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "asserter", 0, condition.getAsserter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// body-site : token
 			if (condition.hasBodySite()) {
 
 				for (CodeableConcept bodySite : condition.getBodySite()) {
-
 					if (bodySite.hasCoding()) {
+
 						for (Coding code : bodySite.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"body-site", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"body-site", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -183,11 +159,11 @@ public class ResourcemetadataCondition extends ResourcemetadataProxy {
 			if (condition.hasCategory()) {
 
 				for (CodeableConcept category : condition.getCategory()) {
-
 					if (category.hasCoding()) {
+
 						for (Coding code : category.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -197,8 +173,8 @@ public class ResourcemetadataCondition extends ResourcemetadataProxy {
 			if (condition.hasClinicalStatus() && condition.getClinicalStatus().hasCoding()) {
 
 				for (Coding code : condition.getClinicalStatus().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"clinical-status", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"clinical-status", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -206,40 +182,30 @@ public class ResourcemetadataCondition extends ResourcemetadataProxy {
 			if (condition.hasCode() && condition.getCode().hasCoding()) {
 
 				for (Coding code : condition.getCode().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// encounter : reference
 			if (condition.hasEncounter() && condition.getEncounter().hasReference()) {
-				String encounterReference = generateFullLocalReference(condition.getEncounter().getReference(), baseUrl);
-
-				Resourcemetadata rEncounter = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", encounterReference);
-				resourcemetadataList.add(rEncounter);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, condition.getEncounter().getReference(), null);
-					resourcemetadataList.addAll(rEncounterChain);
-				}
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "encounter", 0, condition.getEncounter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// evidence : token
 			// evidence-detail : reference
 			if (condition.hasEvidence()) {
 
-				String detailReference = null;
 				for (ConditionEvidenceComponent evidence : condition.getEvidence()) {
-
 					if (evidence.hasCode()) {
 
 						for (CodeableConcept evidenceCode : evidence.getCode()) {
-
 							if (evidenceCode.hasCoding()) {
+
 								for (Coding code : evidenceCode.getCoding()) {
-									rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"evidence", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-									resourcemetadataList.add(rCode);
+									rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"evidence", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+									resourcemetadataList.add(rMetadata);
 								}
 							}
 						}
@@ -248,19 +214,8 @@ public class ResourcemetadataCondition extends ResourcemetadataProxy {
 					if (evidence.hasDetail()) {
 
 						for (Reference detail : evidence.getDetail()) {
-
-							if (detail.hasReference()) {
-								detailReference = generateFullLocalReference(detail.getReference(), baseUrl);
-
-								Resourcemetadata rDetail = generateResourcemetadata(resource, chainedResource, chainedParameter+"evidence-detail", detailReference);
-								resourcemetadataList.add(rDetail);
-
-								if (chainedResource == null) {
-									// Add chained parameters for any
-									List<Resourcemetadata> rDetailChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "evidence-detail", 02, detail.getReference(), null);
-									resourcemetadataList.addAll(rDetailChain);
-								}
-							}
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "evidence-detail", 0, detail, null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 				}
@@ -270,9 +225,8 @@ public class ResourcemetadataCondition extends ResourcemetadataProxy {
 			if (condition.hasIdentifier()) {
 
 				for (Identifier identifier : condition.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -282,65 +236,52 @@ public class ResourcemetadataCondition extends ResourcemetadataProxy {
 			if (condition.hasOnset()) {
 
 				if (condition.getOnset() instanceof DateTimeType) {
-					Resourcemetadata rOnsetDateTimeType = generateResourcemetadata(resource, chainedResource, chainedParameter+"onset-date", utcDateUtil.formatDate(condition.getOnsetDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(condition.getOnsetDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-					resourcemetadataList.add(rOnsetDateTimeType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"onset-date", utcDateUtil.formatDate(condition.getOnsetDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(condition.getOnsetDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+					resourcemetadataList.add(rMetadata);
 				}
 				else if (condition.getOnset() instanceof Period) {
-					Resourcemetadata rOnsetPeriod = generateResourcemetadata(resource, chainedResource, chainedParameter+"onset-date", utcDateUtil.formatDate(condition.getOnsetPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(condition.getOnsetPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(condition.getOnsetPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(condition.getOnsetPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-					resourcemetadataList.add(rOnsetPeriod);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"onset-date", utcDateUtil.formatDate(condition.getOnsetPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(condition.getOnsetPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(condition.getOnsetPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(condition.getOnsetPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+					resourcemetadataList.add(rMetadata);
 				}
 				else if (condition.getOnset() instanceof Age) {
-					Resourcemetadata rOnsetAge = generateResourcemetadata(resource, chainedResource, chainedParameter+"onset-age", condition.getOnsetAge().getValueElement().asStringValue());
-					resourcemetadataList.add(rOnsetAge);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"onset-age", condition.getOnsetAge().getValueElement().asStringValue());
+					resourcemetadataList.add(rMetadata);
 				}
 				else if (condition.getOnset() instanceof Range) {
-					Resourcemetadata rOnsetRange = generateResourcemetadata(resource, chainedResource, chainedParameter+"onset-age", condition.getOnsetRange().getLow().getValueElement().asStringValue());
-					resourcemetadataList.add(rOnsetRange);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"onset-age", condition.getOnsetRange().getLow().getValueElement().asStringValue());
+					resourcemetadataList.add(rMetadata);
 				}
 				else if (condition.getOnset() instanceof StringType) {
-					Resourcemetadata rOnsetStringType = generateResourcemetadata(resource, chainedResource, chainedParameter+"onset-info", condition.getOnsetStringType().asStringValue());
-					resourcemetadataList.add(rOnsetStringType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"onset-info", condition.getOnsetStringType().asStringValue());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
-			// patient : reference
 			// subject : reference
-			if (condition.hasSubject() && condition.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(condition.getSubject().getReference(), baseUrl);
+			if (condition.hasSubject()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, condition.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, condition.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, condition.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((condition.getSubject().hasReference() && condition.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (condition.getSubject().hasType() && condition.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, condition.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// recorded-date : date
 			if (condition.hasRecordedDate()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"recorded-date", utcDateUtil.formatDate(condition.getRecordedDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(condition.getRecordedDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"recorded-date", utcDateUtil.formatDate(condition.getRecordedDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(condition.getRecordedDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// severity : token
 			if (condition.hasSeverity() && condition.getSeverity().hasCoding()) {
 
 				for (Coding code : condition.getSeverity().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"severity", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"severity", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -348,11 +289,11 @@ public class ResourcemetadataCondition extends ResourcemetadataProxy {
 			if (condition.hasStage()) {
 
 				for (ConditionStageComponent stage : condition.getStage()) {
-
 					if (stage.hasSummary() && stage.getSummary().hasCoding()) {
+
 						for (Coding code : stage.getSummary().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"stage", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"stage", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -362,8 +303,8 @@ public class ResourcemetadataCondition extends ResourcemetadataProxy {
 			if (condition.hasVerificationStatus() && condition.getVerificationStatus().hasCoding()) {
 
 				for (Coding code : condition.getVerificationStatus().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"verification-status", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"verification-status", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -371,6 +312,16 @@ public class ResourcemetadataCondition extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iCondition != null) {
+                try {
+                	iCondition.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

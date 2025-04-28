@@ -85,6 +85,8 @@ public class ResourcemetadataPatientMatch extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iPatient = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Remove 'Match' suffix from resource.resourceType
@@ -105,103 +107,113 @@ public class ResourcemetadataPatientMatch extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Patient metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, patient, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (patient.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", patient.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (patient.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", patient.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (patient.getMeta() != null && patient.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(patient.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(patient.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, patient, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// active : token
 			if (patient.hasActive()) {
-				Resourcemetadata rActive = generateResourcemetadata(resource, chainedResource, chainedParameter+"active", Boolean.toString(patient.getActive()));
-				resourcemetadataList.add(rActive);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"active", Boolean.toString(patient.getActive()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// address : string - one for each address
 			if (patient.hasAddress()) {
 
+				StringBuilder sbAddress = null;
+
 				for (Address address : patient.getAddress()) {
+
+					sbAddress = new StringBuilder();
+
+					// address : string
+					if (address.hasLine()) {
+
+						for (StringType line : address.getLine()) {
+							if (line.hasValue()) {
+								if (sbAddress.length() > 0) {
+									sbAddress.append(" ");
+								}
+								sbAddress.append(line.getValue());
+							}
+						}
+					}
 
 					// address-city : string
 					if (address.hasCity()) {
-						Resourcemetadata rCity = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-city", address.getCity());
-						resourcemetadataList.add(rCity);
+						if (sbAddress.length() > 0) {
+							sbAddress.append(" ");
+						}
+						sbAddress.append(address.getCity());
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-city", address.getCity());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address-state : string
 					if (address.hasState()) {
-						Resourcemetadata rState = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-state", address.getState());
-						resourcemetadataList.add(rState);
+						if (sbAddress.length() > 0) {
+							sbAddress.append(" ");
+						}
+						sbAddress.append(address.getState());
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-state", address.getState());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address-district : string
 					if (address.hasDistrict()) {
-						Resourcemetadata rDistrict = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-district", address.getDistrict());
-						resourcemetadataList.add(rDistrict);
+						if (sbAddress.length() > 0) {
+							sbAddress.append(" ");
+						}
+						sbAddress.append(address.getDistrict());
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-district", address.getDistrict());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address-country : string
 					if (address.hasCountry()) {
-						Resourcemetadata rCountry = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-country", address.getCountry());
-						resourcemetadataList.add(rCountry);
+						if (sbAddress.length() > 0) {
+							sbAddress.append(" ");
+						}
+						sbAddress.append(address.getCountry());
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-country", address.getCountry());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address-postalcode : string
 					if (address.hasPostalCode()) {
-						Resourcemetadata rPostalCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-postalcode", address.getPostalCode());
-						resourcemetadataList.add(rPostalCode);
+						if (sbAddress.length() > 0) {
+							sbAddress.append(" ");
+						}
+						sbAddress.append(address.getPostalCode());
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-postalcode", address.getPostalCode());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address-use : token
 					if (address.hasUse() && address.getUse() != null) {
-						Resourcemetadata rUse = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-use", address.getUse().toCode(), address.getUse().getSystem());
-						resourcemetadataList.add(rUse);
-					}
-				}
-			}
-
-			// birthOrderBoolean : token
-			if (patient.hasMultipleBirth()) {
-
-				if (patient.hasMultipleBirthBooleanType()) {
-
-					Resourcemetadata rBirthOrderBoolean = generateResourcemetadata(resource, chainedResource, chainedParameter+"birthOrderBoolean", Boolean.toString(patient.getMultipleBirthBooleanType().getValue()));
-					resourcemetadataList.add(rBirthOrderBoolean);
-				}
-
-				if (patient.hasMultipleBirthIntegerType()) {
-
-					boolean birthBoolean = false;
-					int birthInteger = patient.getMultipleBirthIntegerType().getValue();
-					if (birthInteger > 0) {
-						birthBoolean = true;
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-use", address.getUse().toCode(), address.getUse().getSystem());
+						resourcemetadataList.add(rMetadata);
 					}
 
-					Resourcemetadata rBirthOrderBoolean = generateResourcemetadata(resource, chainedResource, chainedParameter+"birthOrderBoolean", Boolean.toString(birthBoolean));
-					resourcemetadataList.add(rBirthOrderBoolean);
+					// address : string
+					if (address.hasText()) {
+						if (sbAddress.length() > 0) {
+							sbAddress.append(" ");
+						}
+						sbAddress.append(address.getText());
+					}
+
+					if (sbAddress.length() > 0) {
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address", sbAddress.toString());
+						resourcemetadataList.add(rMetadata);
+					}
 				}
 			}
 
 			// birthdate : date
 			if (patient.hasBirthDate()) {
-				Resourcemetadata rBirthDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"birthdate", utcDateUtil.formatDate(patient.getBirthDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(patient.getBirthDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rBirthDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"birthdate", utcDateUtil.formatDate(patient.getBirthDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), null, utcDateUtil.formatDate(patient.getBirthDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// death-date : date
@@ -210,8 +222,8 @@ public class ResourcemetadataPatientMatch extends ResourcemetadataProxy {
 
 				try {
 					if (patient.getDeceasedDateTimeType() != null) {
-						Resourcemetadata rDeathDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"death-date", utcDateUtil.formatDate(patient.getDeceasedDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(patient.getDeceasedDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-						resourcemetadataList.add(rDeathDate);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"death-date", utcDateUtil.formatDate(patient.getDeceasedDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(patient.getDeceasedDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+						resourcemetadataList.add(rMetadata);
 					}
 				} catch (Exception e) {
 					// Swallow exception; not ideal but an exception here means the expected data type was not set
@@ -219,14 +231,16 @@ public class ResourcemetadataPatientMatch extends ResourcemetadataProxy {
 
 				try {
 					if (patient.getDeceasedBooleanType() != null) {
-						Resourcemetadata rDeceased = generateResourcemetadata(resource, chainedResource, chainedParameter+"deceased", patient.getDeceasedBooleanType().getValueAsString());
-						resourcemetadataList.add(rDeceased);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"deceased", patient.getDeceasedBooleanType().getValueAsString());
+						resourcemetadataList.add(rMetadata);
 					}
 				} catch (Exception e) {
 					// Swallow exception; not ideal but an exception here means the expected data type was not set
 				}
 			}
 
+			// (email) telecom.system=email : token
+			// (phone) telecom.system=phone : token
 			// telecom : token
 			if (patient.hasTelecom()) {
 
@@ -241,47 +255,34 @@ public class ResourcemetadataPatientMatch extends ResourcemetadataProxy {
 
 							if (telecom.getSystem().equals(ContactPointSystem.EMAIL)) {
 
-								Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter + "email", telecom.getValue(), telecomSystemName);
-								resourcemetadataList.add(rTelecom);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "email", telecom.getValue(), telecomSystemName);
+								resourcemetadataList.add(rMetadata);
 							}
 							else if (telecom.getSystem().equals(ContactPointSystem.PHONE)) {
 
-								Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter + "phone", telecom.getValue(), telecomSystemName);
-								resourcemetadataList.add(rTelecom);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "phone", telecom.getValue(), telecomSystemName);
+								resourcemetadataList.add(rMetadata);
 							}
 						}
 
-						Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter + "telecom", telecom.getValue(), telecomSystemName);
-						resourcemetadataList.add(rTelecom);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "telecom", telecom.getValue(), telecomSystemName);
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// gender : token
 			if (patient.hasGender() && patient.getGender() != null) {
-				Resourcemetadata rCoding = generateResourcemetadata(resource, chainedResource, chainedParameter+"gender", patient.getGender().toCode(), patient.getGender().getSystem());
-				resourcemetadataList.add(rCoding);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"gender", patient.getGender().toCode(), patient.getGender().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// general-practitioner : reference
 			if (patient.hasGeneralPractitioner()) {
 
-				String generalPractitionerReference = null;
-				List<Resourcemetadata> rGeneralPractitionerChain = null;
 				for (Reference generalPractitioner : patient.getGeneralPractitioner()) {
-
-					if (generalPractitioner.hasReference()) {
-						generalPractitionerReference = generateFullLocalReference(generalPractitioner.getReference(), baseUrl);
-
-						Resourcemetadata rCareprovider = generateResourcemetadata(resource, chainedResource, chainedParameter+"general-practitioner", generalPractitionerReference);
-						resourcemetadataList.add(rCareprovider);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rGeneralPractitionerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "general-practitioner", 0, generalPractitioner.getReference(), null);
-							resourcemetadataList.addAll(rGeneralPractitionerChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "general-practitioner", 0, generalPractitioner, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -289,52 +290,32 @@ public class ResourcemetadataPatientMatch extends ResourcemetadataProxy {
 			if (patient.hasIdentifier()) {
 
 				for (Identifier identifier : patient.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// language : token
 			if (patient.hasLanguage()) {
-				Resourcemetadata rLanguage = generateResourcemetadata(resource, chainedResource, chainedParameter+"language", patient.getLanguage());
-				resourcemetadataList.add(rLanguage);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"language", patient.getLanguage());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// link : reference
 			if (patient.hasLink()) {
-
-				String linkReference = null;
-				List<Resourcemetadata> rLinkChain = null;
 				for (PatientLinkComponent link : patient.getLink()) {
 
-					if (link.hasOther() && link.getOther().hasReference()) {
-						linkReference = generateFullLocalReference(link.getOther().getReference(), baseUrl);
-
-						Resourcemetadata rLink = generateResourcemetadata(resource, chainedResource, chainedParameter+"link", linkReference);
-						resourcemetadataList.add(rLink);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rLinkChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "link", 0, link.getOther().getReference(), null);
-							resourcemetadataList.addAll(rLinkChain);
-						}
+					if (link.hasOther()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "link", 0, link.getOther(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
 
 			// organization : reference
-			if (patient.hasManagingOrganization() && patient.getManagingOrganization().hasReference()) {
-				String organizationReference = generateFullLocalReference(patient.getManagingOrganization().getReference(), baseUrl);
-
-				Resourcemetadata rOrganization = generateResourcemetadata(resource, chainedResource, chainedParameter+"organization", organizationReference);
-				resourcemetadataList.add(rOrganization);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rOrganizationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "organization", 0, patient.getManagingOrganization().getReference(), null);
-					resourcemetadataList.addAll(rOrganizationChain);
-				}
+			if (patient.hasManagingOrganization()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "organization", 0, patient.getManagingOrganization(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// family : string
@@ -344,17 +325,84 @@ public class ResourcemetadataPatientMatch extends ResourcemetadataProxy {
 				for (HumanName humanName : patient.getName()) {
 
 					if (humanName.hasFamily()) {
-						Resourcemetadata rFamily = generateResourcemetadata(resource, chainedResource, chainedParameter+"family", humanName.getFamily());
-						resourcemetadataList.add(rFamily);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"family", humanName.getFamily());
+						resourcemetadataList.add(rMetadata);
 					}
 					if (humanName.hasGiven()) {
 
 						for (StringType given : humanName.getGiven()) {
 							if (given != null && given.getValue() != null) {
-								Resourcemetadata rGiven = generateResourcemetadata(resource, chainedResource, chainedParameter+"given", given.getValue());
-								resourcemetadataList.add(rGiven);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"given", given.getValue());
+								resourcemetadataList.add(rMetadata);
 							}
 						}
+					}
+				}
+			}
+
+			// name : string
+			// phonetic : string
+			if (patient.hasName()) {
+
+				for (HumanName humanName : patient.getName()) {
+					StringBuffer sb = new StringBuffer("");
+
+					if (humanName.hasPrefix()) {
+
+						for (StringType prefix : humanName.getPrefix()) {
+							if (prefix != null && prefix.getValue() != null) {
+								if (sb.length() > 0) {
+									sb.append(" ");
+								}
+								sb.append(prefix.getValue());
+							}
+						}
+					}
+					if (humanName.hasGiven()) {
+
+						for (StringType given : humanName.getGiven()) {
+							if (given != null && given.getValue() != null) {
+								if (sb.length() > 0) {
+									sb.append(" ");
+								}
+								sb.append(given.getValue());
+							}
+						}
+					}
+					if (humanName.hasFamily()) {
+
+						if (humanName.getFamily() != null) {
+							if (sb.length() > 0) {
+								sb.append(" ");
+							}
+							sb.append(humanName.getFamily());
+						}
+					}
+					if (humanName.hasSuffix()) {
+
+						for (StringType suffix : humanName.getSuffix()) {
+							if (suffix != null && suffix.getValue() != null) {
+								if (sb.length() > 0) {
+									sb.append(" ");
+								}
+								sb.append(suffix.getValue());
+							}
+						}
+					}
+					if (humanName.hasText()) {
+
+						if (humanName.getText() != null) {
+							if (sb.length() > 0) {
+								sb.append(" ");
+							}
+							sb.append(humanName.getText());
+						}
+					}
+					if (sb.length() > 0) {
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", sb.toString());
+						resourcemetadataList.add(rMetadata);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"phonetic", sb.toString());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
@@ -370,9 +418,8 @@ public class ResourcemetadataPatientMatch extends ResourcemetadataProxy {
 						if (extension.getUrl().equals("http://hl7.org/fhir/StructureDefinition/us-core-ethnicity") && extension.getValue() instanceof CodeableConcept) {
 
 							for (Coding ethnicity : ((CodeableConcept)extension.getValue()).getCoding()) {
-
-								Resourcemetadata rEthnicity = generateResourcemetadata(resource, chainedResource, chainedParameter+"ethnicity", ethnicity.getCode(), ethnicity.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(ethnicity));
-								resourcemetadataList.add(rEthnicity);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"ethnicity", ethnicity.getCode(), ethnicity.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(ethnicity));
+								resourcemetadataList.add(rMetadata);
 							}
 						}
 
@@ -380,17 +427,16 @@ public class ResourcemetadataPatientMatch extends ResourcemetadataProxy {
 						if (extension.getUrl().equals("http://hl7.org/fhir/StructureDefinition/patient-mothersMaidenName") && extension.getValue() instanceof StringType) {
 							String mothersMaidenName = ((StringType)extension.getValue()).getValue();
 
-							Resourcemetadata rMothersMaidenName = generateResourcemetadata(resource, chainedResource, chainedParameter+"mothersMaidenName", mothersMaidenName);
-							resourcemetadataList.add(rMothersMaidenName);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"mothersMaidenName", mothersMaidenName);
+							resourcemetadataList.add(rMetadata);
 						}
 
 						// race : token
 						if (extension.getUrl().equals("http://hl7.org/fhir/StructureDefinition/us-core-race") && extension.getValue() instanceof CodeableConcept) {
 
 							for (Coding race : ((CodeableConcept)extension.getValue()).getCoding()) {
-
-								Resourcemetadata rRace = generateResourcemetadata(resource, chainedResource, chainedParameter+"race", race.getCode(), race.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(race));
-								resourcemetadataList.add(rRace);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"race", race.getCode(), race.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(race));
+								resourcemetadataList.add(rMetadata);
 							}
 						}
 					}
@@ -402,6 +448,8 @@ public class ResourcemetadataPatientMatch extends ResourcemetadataProxy {
 			e.printStackTrace();
 			throw e;
         } finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
             if (iPatient != null) {
                 try {
                     iPatient.close();

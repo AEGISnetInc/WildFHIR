@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -76,6 +77,8 @@ public class ResourcemetadataRiskAssessment extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iRiskAssessment = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a RiskAssessment object
@@ -93,114 +96,63 @@ public class ResourcemetadataRiskAssessment extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each RiskAssessment metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, riskAssessment, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (riskAssessment.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", riskAssessment.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (riskAssessment.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", riskAssessment.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (riskAssessment.getMeta() != null && riskAssessment.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(riskAssessment.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(riskAssessment.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, riskAssessment, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// condition : reference
-			if (riskAssessment.hasCondition() && riskAssessment.getCondition().hasReference()) {
-				Resourcemetadata rCondition = generateResourcemetadata(resource, chainedResource, chainedParameter+"condition", generateFullLocalReference(riskAssessment.getCondition().getReference(), baseUrl));
-				resourcemetadataList.add(rCondition);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rConditionChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "condition", 0, riskAssessment.getCondition().getReference(), null);
-					resourcemetadataList.addAll(rConditionChain);
-				}
+			if (riskAssessment.hasCondition()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "condition", 0, riskAssessment.getCondition(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// date : datetime
 			if (riskAssessment.hasOccurrenceDateTimeType()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(riskAssessment.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(riskAssessment.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(riskAssessment.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(riskAssessment.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// encounter : reference
-			if (riskAssessment.hasEncounter() && riskAssessment.getEncounter().hasReference() && riskAssessment.getEncounter().getReference().contains("Encounter")) {
-				Resourcemetadata rEncounter = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", generateFullLocalReference(riskAssessment.getEncounter().getReference(), baseUrl));
-				resourcemetadataList.add(rEncounter);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, riskAssessment.getEncounter().getReference(), null);
-					resourcemetadataList.addAll(rEncounterChain);
-				}
+			if (riskAssessment.hasEncounter()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "encounter", 0, riskAssessment.getEncounter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// identifier : token
 			if (riskAssessment.hasIdentifier()) {
 
 				for (Identifier identifier : riskAssessment.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// method : token
 			if (riskAssessment.hasMethod() && riskAssessment.getMethod().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : riskAssessment.getMethod().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"method", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"method", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
-			// patient : reference
 			// subject : reference
 			if (riskAssessment.hasSubject() && riskAssessment.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(riskAssessment.getSubject().getReference(), baseUrl);
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, riskAssessment.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, riskAssessment.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, riskAssessment.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((riskAssessment.getSubject().hasReference() && riskAssessment.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (riskAssessment.getSubject().hasType() && riskAssessment.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, riskAssessment.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// performer : reference
-			if (riskAssessment.hasPerformer() && riskAssessment.getPerformer().hasReference()) {
-				Resourcemetadata rPerformer = generateResourcemetadata(resource, chainedResource, chainedParameter+"performer", generateFullLocalReference(riskAssessment.getPerformer().getReference(), baseUrl));
-				resourcemetadataList.add(rPerformer);
-
-				if (chainedResource == null) {
-					// Add chained parameters for any
-					List<Resourcemetadata> rPerformerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "performer", 0, riskAssessment.getPerformer().getReference(), null);
-					resourcemetadataList.addAll(rPerformerChain);
-				}
+			if (riskAssessment.hasPerformer()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "performer", 0, riskAssessment.getPerformer(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// probability : number
@@ -210,20 +162,19 @@ public class ResourcemetadataRiskAssessment extends ResourcemetadataProxy {
 				for (RiskAssessmentPredictionComponent prediction : riskAssessment.getPrediction()) {
 
 					if (prediction.hasProbabilityDecimalType()) {
-						Resourcemetadata rProbability = generateResourcemetadata(resource, chainedResource, chainedParameter+"probability", prediction.getProbabilityDecimalType().getValueAsString());
-						resourcemetadataList.add(rProbability);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"probability", prediction.getProbabilityDecimalType().getValueAsString());
+						resourcemetadataList.add(rMetadata);
 					}
 					else if (prediction.hasProbabilityRange() && prediction.getProbabilityRange().hasHigh()) {
-						Resourcemetadata rProbability = generateResourcemetadata(resource, chainedResource, chainedParameter+"probability", prediction.getProbabilityRange().getHigh().primitiveValue());
-						resourcemetadataList.add(rProbability);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"probability", prediction.getProbabilityRange().getHigh().primitiveValue());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					if (prediction.hasQualitativeRisk() && prediction.getQualitativeRisk().hasCoding()) {
 
-						Resourcemetadata rCode = null;
 						for (Coding code : prediction.getQualitativeRisk().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"risk", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"risk", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -233,6 +184,16 @@ public class ResourcemetadataRiskAssessment extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iRiskAssessment != null) {
+                try {
+                	iRiskAssessment.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

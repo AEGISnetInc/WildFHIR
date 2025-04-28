@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -76,6 +77,8 @@ public class ResourcemetadataContract extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iContract = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a Contract object
@@ -93,45 +96,16 @@ public class ResourcemetadataContract extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each Contract metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, contract, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (contract.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", contract.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (contract.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", contract.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (contract.getMeta() != null && contract.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(contract.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(contract.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, contract, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// authority : reference
 			if (contract.hasAuthority()) {
 
 				for (Reference authority : contract.getAuthority()) {
-
-					if (authority.hasReference()) {
-						String authorityReference = generateFullLocalReference(authority.getReference(), baseUrl);
-
-						Resourcemetadata rAuthority = generateResourcemetadata(resource, chainedResource, chainedParameter+"authority", authorityReference);
-						resourcemetadataList.add(rAuthority);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							List<Resourcemetadata> rAuthorityChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "authority", 0, authority.getReference(), null);
-							resourcemetadataList.addAll(rAuthorityChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "authority", 0, authority, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -139,19 +113,8 @@ public class ResourcemetadataContract extends ResourcemetadataProxy {
 			if (contract.hasDomain()) {
 
 				for (Reference domain : contract.getDomain()) {
-
-					if (domain.hasReference()) {
-						String authorityReference = generateFullLocalReference(domain.getReference(), baseUrl);
-
-						Resourcemetadata rDomain = generateResourcemetadata(resource, chainedResource, chainedParameter+"domain", authorityReference);
-						resourcemetadataList.add(rDomain);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							List<Resourcemetadata> rDomainChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "domain", 0, domain.getReference(), null);
-							resourcemetadataList.addAll(rDomainChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "domain", 0, domain, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -159,55 +122,35 @@ public class ResourcemetadataContract extends ResourcemetadataProxy {
 			if (contract.hasIdentifier()) {
 
 				for (Identifier identifier : contract.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// instantiates : uri
 			if (contract.hasInstantiatesUri()) {
-				Resourcemetadata rInstantiates = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates", contract.getInstantiatesUri());
-				resourcemetadataList.add(rInstantiates);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates", contract.getInstantiatesUri());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// issued : date
 			if (contract.hasIssued()) {
-				Resourcemetadata rIssued = generateResourcemetadata(resource, chainedResource, chainedParameter+"issued", utcDateUtil.formatDate(contract.getIssued(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(contract.getIssued(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rIssued);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"issued", utcDateUtil.formatDate(contract.getIssued(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(contract.getIssued(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
-			// patient : reference
 			// subject : reference
 			if (contract.hasSubject()) {
 
-				String subjectReference = null;
-				List<Resourcemetadata> rSubjectChain = null;
 				for (Reference subject : contract.getSubject()) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, subject, null);
+					resourcemetadataList.addAll(rMetadataChain);
 
-					if (subject.hasReference()) {
-						subjectReference = generateFullLocalReference(subject.getReference(), baseUrl);
-
-						Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-						resourcemetadataList.add(rSubject);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, subject.getReference(), null);
-							resourcemetadataList.addAll(rSubjectChain);
-						}
-
-						// patient : reference
-						if (subjectReference.indexOf("Patient") >= 0) {
-							Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-							resourcemetadataList.add(rPatient);
-
-							if (chainedResource == null) {
-								// Add chained parameters
-								rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, subject.getReference(), null);
-								resourcemetadataList.addAll(rSubjectChain);
-							}
-						}
+					// patient : reference
+					if ((subject.hasReference() && subject.getReference().indexOf("Patient") >= 0)
+							|| (subject.hasType() && subject.getType().equals("Patient"))) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, subject, null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
@@ -215,38 +158,41 @@ public class ResourcemetadataContract extends ResourcemetadataProxy {
 			// signer : reference
 			if (contract.hasSigner()) {
 
-				List<Resourcemetadata> rSignerChain = null;
 				for (SignatoryComponent signer : contract.getSigner()) {
 
-					if (signer.hasParty() && signer.getParty().hasReference()) {
-						Resourcemetadata rSigner = generateResourcemetadata(resource, chainedResource, chainedParameter+"signer", generateFullLocalReference(signer.getParty().getReference(), baseUrl));
-						resourcemetadataList.add(rSigner);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rSignerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "signer", 0, signer.getParty().getReference(), null);
-							resourcemetadataList.addAll(rSignerChain);
-						}
+					if (signer.hasParty()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "signer", 0, signer.getParty(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
 
 			// status : token
 			if (contract.hasStatus() && contract.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", contract.getStatus().toCode(), contract.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", contract.getStatus().toCode(), contract.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// url : uri
 			if (contract.hasUrl()) {
-				Resourcemetadata rUrl = generateResourcemetadata(resource, chainedResource, chainedParameter+"url", contract.getUrl());
-				resourcemetadataList.add(rUrl);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"url", contract.getUrl());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iContract != null) {
+                try {
+                	iContract.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

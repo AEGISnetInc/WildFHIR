@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -77,6 +78,8 @@ public class ResourcemetadataCareTeam extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iCareTeam = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a CareTeam object
@@ -94,38 +97,19 @@ public class ResourcemetadataCareTeam extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each CareTeam metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, careTeam, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (careTeam.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", careTeam.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (careTeam.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", careTeam.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (careTeam.getMeta() != null && careTeam.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(careTeam.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(careTeam.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, careTeam, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// category : token
 			if (careTeam.hasCategory()) {
 
-				Resourcemetadata rCode = null;
 				for (CodeableConcept category : careTeam.getCategory()) {
 
 					if (category.hasCoding()) {
 						for (Coding code : category.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -133,94 +117,70 @@ public class ResourcemetadataCareTeam extends ResourcemetadataProxy {
 
 			// date : date(period)
 			if (careTeam.hasPeriod()) {
-				Resourcemetadata rPeriod = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(careTeam.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(careTeam.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(careTeam.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(careTeam.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-				resourcemetadataList.add(rPeriod);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(careTeam.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(careTeam.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(careTeam.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(careTeam.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// encounter : reference
-			if (careTeam.hasEncounter() && careTeam.getEncounter().hasReference()) {
-				String encounterReference = generateFullLocalReference(careTeam.getEncounter().getReference(), baseUrl);
-
-				Resourcemetadata rEncounter = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", encounterReference);
-				resourcemetadataList.add(rEncounter);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, careTeam.getEncounter().getReference(), null);
-					resourcemetadataList.addAll(rEncounterChain);
-				}
+			if (careTeam.hasEncounter()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "encounter", 0, careTeam.getEncounter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// identifier : token
 			if (careTeam.hasIdentifier()) {
 
-				Resourcemetadata rIdentifier = null;
 				for (Identifier identifier : careTeam.getIdentifier()) {
-
-					rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// participant : reference
 			if (careTeam.hasParticipant()) {
 
-				String participantReference = null;
-				Resourcemetadata rParticipant = null;
-				List<Resourcemetadata> rParticipantChain = null;
 				for (CareTeamParticipantComponent participant : careTeam.getParticipant()) {
 
-					if (participant.hasMember() && participant.getMember().hasReference()) {
-						participantReference = generateFullLocalReference(participant.getMember().getReference(), baseUrl);
-
-						rParticipant = generateResourcemetadata(resource, chainedResource, chainedParameter+"participant", participantReference);
-						resourcemetadataList.add(rParticipant);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rParticipantChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "participant", 0, participant.getMember().getReference(), null);
-							resourcemetadataList.addAll(rParticipantChain);
-						}
+					if (participant.hasMember()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "participant", 0, participant.getMember(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
 
-			// patient : reference
 			// subject : reference
-			if (careTeam.hasSubject() && careTeam.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(careTeam.getSubject().getReference(), baseUrl);
+			if (careTeam.hasSubject()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, careTeam.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, careTeam.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, careTeam.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((careTeam.getSubject().hasReference() && careTeam.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (careTeam.getSubject().hasType() && careTeam.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, careTeam.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// status : token
 			if (careTeam.hasStatus() && careTeam.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", careTeam.getStatus().toCode(), careTeam.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", careTeam.getStatus().toCode(), careTeam.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iCareTeam != null) {
+                try {
+                	iCareTeam.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

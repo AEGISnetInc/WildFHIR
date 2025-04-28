@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -79,6 +80,8 @@ public class ResourcemetadataPractitionerRole extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iPractitionerRole = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a PractitionerRole object
@@ -96,45 +99,26 @@ public class ResourcemetadataPractitionerRole extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each PractitionerRole metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, practitionerRole, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (practitionerRole.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", practitionerRole.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (practitionerRole.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", practitionerRole.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (practitionerRole.getMeta() != null && practitionerRole.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(practitionerRole.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(practitionerRole.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, practitionerRole, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// active : token
 			if (practitionerRole.hasActive()) {
-				Resourcemetadata rActive = generateResourcemetadata(resource, chainedResource, chainedParameter+"active", Boolean.toString(practitionerRole.getActive()));
-				resourcemetadataList.add(rActive);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"active", Boolean.toString(practitionerRole.getActive()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// date : date(period)
 			if (practitionerRole.hasPeriod()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(practitionerRole.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(practitionerRole.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(practitionerRole.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(practitionerRole.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(practitionerRole.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(practitionerRole.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(practitionerRole.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(practitionerRole.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// (email) telecom.system=email : token
 			// (phone) telecom.system=phone : token
 			// telecom : token
 			if (practitionerRole.hasTelecom()) {
-
 				for (ContactPoint telecom : practitionerRole.getTelecom()) {
 
 					if (telecom.hasValue()) {
@@ -145,19 +129,17 @@ public class ResourcemetadataPractitionerRole extends ResourcemetadataProxy {
 							telecomSystemName = telecom.getSystem().toCode();
 
 							if (telecom.getSystem().equals(ContactPointSystem.EMAIL)) {
-
-								Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter + "email", telecom.getValue(), telecomSystemName);
-								resourcemetadataList.add(rTelecom);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "email", telecom.getValue(), telecomSystemName);
+								resourcemetadataList.add(rMetadata);
 							}
 							else if (telecom.getSystem().equals(ContactPointSystem.PHONE)) {
-
-								Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter + "phone", telecom.getValue(), telecomSystemName);
-								resourcemetadataList.add(rTelecom);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "phone", telecom.getValue(), telecomSystemName);
+								resourcemetadataList.add(rMetadata);
 							}
 						}
 
-						Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter + "telecom", telecom.getValue(), telecomSystemName);
-						resourcemetadataList.add(rTelecom);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "telecom", telecom.getValue(), telecomSystemName);
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
@@ -165,88 +147,50 @@ public class ResourcemetadataPractitionerRole extends ResourcemetadataProxy {
 			// endpoint : reference
 			if (practitionerRole.hasEndpoint()) {
 
-				Resourcemetadata rEndpoint = null;
-				List<Resourcemetadata> rEndpointChain = null;
 				for (Reference endpoint : practitionerRole.getEndpoint()) {
-
-					if (endpoint.hasReference()) {
-						rEndpoint = generateResourcemetadata(resource, chainedResource, chainedParameter+"endpoint", generateFullLocalReference(endpoint.getReference(), baseUrl));
-						resourcemetadataList.add(rEndpoint);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rEndpointChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "endpoint", 0, endpoint.getReference(), null);
-							resourcemetadataList.addAll(rEndpointChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "endpoint", 0, endpoint, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// identifier : token
 			if (practitionerRole.hasIdentifier()) {
 
-				Resourcemetadata rIdentifier = null;
 				for (Identifier identifier : practitionerRole.getIdentifier()) {
-
-					rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// location : reference
 			if (practitionerRole.hasLocation()) {
 
-				Resourcemetadata rLocation = null;
-				List<Resourcemetadata> rLocationChain = null;
 				for (Reference location : practitionerRole.getLocation()) {
-
-					if (location.hasReference()) {
-						rLocation = generateResourcemetadata(resource, chainedResource, chainedParameter+"location", generateFullLocalReference(location.getReference(), baseUrl));
-						resourcemetadataList.add(rLocation);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rLocationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, location.getReference(), null);
-							resourcemetadataList.addAll(rLocationChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "location", 0, location, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// organization : reference
-			if (practitionerRole.hasOrganization() && practitionerRole.getOrganization().hasReference()) {
-				Resourcemetadata rOrganization = generateResourcemetadata(resource, chainedResource, chainedParameter+"organization", generateFullLocalReference(practitionerRole.getOrganization().getReference(), baseUrl));
-				resourcemetadataList.add(rOrganization);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rOrganizationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "organization", 0, practitionerRole.getOrganization().getReference(), null);
-					resourcemetadataList.addAll(rOrganizationChain);
-				}
+			if (practitionerRole.hasOrganization()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "organization", 0, practitionerRole.getOrganization(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// practitioner : reference
-			if (practitionerRole.hasPractitioner() && practitionerRole.getPractitioner().hasReference()) {
-				Resourcemetadata rPractitioner = generateResourcemetadata(resource, chainedResource, chainedParameter+"practitioner", generateFullLocalReference(practitionerRole.getPractitioner().getReference(), baseUrl));
-				resourcemetadataList.add(rPractitioner);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPractitionerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "practitioner", 0, practitionerRole.getPractitioner().getReference(), null);
-					resourcemetadataList.addAll(rPractitionerChain);
-				}
+			if (practitionerRole.hasPractitioner()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "practitioner", 0, practitionerRole.getPractitioner(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// role : token
 			if (practitionerRole.hasCode()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept role : practitionerRole.getCode()) {
 
 					if (role.hasCoding()) {
 						for (Coding code : role.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"role", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"role", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -255,33 +199,20 @@ public class ResourcemetadataPractitionerRole extends ResourcemetadataProxy {
 			// service : reference
 			if (practitionerRole.hasHealthcareService()) {
 
-				Resourcemetadata rService = null;
-				List<Resourcemetadata> rServiceChain = null;
 				for (Reference service : practitionerRole.getHealthcareService()) {
-
-					if (service.hasReference()) {
-						rService = generateResourcemetadata(resource, chainedResource, chainedParameter+"service", generateFullLocalReference(service.getReference(), baseUrl));
-						resourcemetadataList.add(rService);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rServiceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "service", 0, service.getReference(), null);
-							resourcemetadataList.addAll(rServiceChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "service", 0, service, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// specialty : token
 			if (practitionerRole.hasSpecialty()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept specialty : practitionerRole.getSpecialty()) {
 
 					if (specialty.hasCoding()) {
 						for (Coding code : specialty.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"specialty", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"specialty", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -291,6 +222,16 @@ public class ResourcemetadataPractitionerRole extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iPractitionerRole != null) {
+                try {
+                	iPractitionerRole.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

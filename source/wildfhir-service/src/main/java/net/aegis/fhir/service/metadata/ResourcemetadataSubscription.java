@@ -33,9 +33,9 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -45,7 +45,6 @@ import org.hl7.fhir.r4.model.Subscription;
 import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -73,6 +72,8 @@ public class ResourcemetadataSubscription extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iSubscription = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a Subscription object
@@ -90,27 +91,9 @@ public class ResourcemetadataSubscription extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each Subscription metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, subscription, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (subscription.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", subscription.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (subscription.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", subscription.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (subscription.getMeta() != null && subscription.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(subscription.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(subscription.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, subscription, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// contact : token
 			if (subscription.hasContact()) {
@@ -120,21 +103,21 @@ public class ResourcemetadataSubscription extends ResourcemetadataProxy {
 					if (contact.hasSystem() && contact.getSystem() != null) {
 						contactSystem = contact.getSystem().toCode();
 					}
-					Resourcemetadata rContact = generateResourcemetadata(resource, chainedResource, chainedParameter+"contact", contact.getValue(), contactSystem);
-					resourcemetadataList.add(rContact);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"contact", contact.getValue(), contactSystem);
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// criteria : string
 			if (subscription.hasCriteria()) {
-				Resourcemetadata rCriteria = generateResourcemetadata(resource, chainedResource, chainedParameter+"criteria", subscription.getCriteria());
-				resourcemetadataList.add(rCriteria);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"criteria", subscription.getCriteria());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// status : token
 			if (subscription.hasStatus() && subscription.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", subscription.getStatus().toCode(), subscription.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", subscription.getStatus().toCode(), subscription.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// payload : string
@@ -143,18 +126,18 @@ public class ResourcemetadataSubscription extends ResourcemetadataProxy {
 			if (subscription.hasChannel()) {
 
 				if (subscription.getChannel().hasPayload()) {
-					Resourcemetadata rPayload = generateResourcemetadata(resource, chainedResource, chainedParameter+"payload", subscription.getChannel().getPayload());
-					resourcemetadataList.add(rPayload);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"payload", subscription.getChannel().getPayload());
+					resourcemetadataList.add(rMetadata);
 				}
 
 				if (subscription.getChannel().hasType() && subscription.getChannel().getType() != null) {
-					Resourcemetadata rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", subscription.getChannel().getType().toCode(), subscription.getChannel().getType().getSystem());
-					resourcemetadataList.add(rType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", subscription.getChannel().getType().toCode(), subscription.getChannel().getType().getSystem());
+					resourcemetadataList.add(rMetadata);
 				}
 
 				if (subscription.getChannel().hasEndpoint()) {
-					Resourcemetadata rEndpoint = generateResourcemetadata(resource, chainedResource, chainedParameter+"url", subscription.getChannel().getEndpoint());
-					resourcemetadataList.add(rEndpoint);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"url", subscription.getChannel().getEndpoint());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -163,6 +146,16 @@ public class ResourcemetadataSubscription extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iSubscription != null) {
+                try {
+                	iSubscription.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

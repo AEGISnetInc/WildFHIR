@@ -77,6 +77,8 @@ public class ResourcemetadataAccount extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iAccount = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Account object
@@ -94,101 +96,56 @@ public class ResourcemetadataAccount extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Account metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, account, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (account.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", account.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (account.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", account.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (account.getMeta() != null && account.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(account.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(account.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, account, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// identifier : token
 			if (account.hasIdentifier()) {
 
 				for (Identifier identifier : account.getIdentifier()) {
 
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// name : string
 			if (account.hasName()) {
-				Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", account.getName());
-				resourcemetadataList.add(rName);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", account.getName());
+				resourcemetadataList.add(rMetadata);
 			}
 
-			// owner : reference
-			if (account.hasOwner() && account.getOwner().hasReference()) {
-				String ownerReference = generateFullLocalReference(account.getOwner().getReference(), baseUrl);
-
-				Resourcemetadata rOwner = generateResourcemetadata(resource, chainedResource, chainedParameter+"owner", ownerReference);
-				resourcemetadataList.add(rOwner);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rOwnerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "owner", 0, account.getOwner().getReference(), null);
-					resourcemetadataList.addAll(rOwnerChain);
-				}
+			// owner : reference (reference, chained and identifier)
+			if (account.hasOwner()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "owner", 0, account.getOwner(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// period : date(period)
 			if (account.hasServicePeriod()) {
-				Resourcemetadata rPeriod = generateResourcemetadata(resource, chainedResource, chainedParameter+"period", utcDateUtil.formatDate(account.getServicePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(account.getServicePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(account.getServicePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(account.getServicePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-				resourcemetadataList.add(rPeriod);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"period", utcDateUtil.formatDate(account.getServicePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(account.getServicePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(account.getServicePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(account.getServicePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// status : token
 			if (account.hasStatus() && account.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", account.getStatus().toCode(), account.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", account.getStatus().toCode(), account.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
-			// patient : reference
 			// subject : reference
 			if (account.hasSubject()) {
 
-				String subjectReference = null;
-				List<Resourcemetadata> rSubjectChain = null;
 				for (Reference subject : account.getSubject()) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, subject, null);
+					resourcemetadataList.addAll(rMetadataChain);
 
-					if (subject.hasReference()) {
-						subjectReference = generateFullLocalReference(subject.getReference(), baseUrl);
-
-						Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-						resourcemetadataList.add(rSubject);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, subject.getReference(), null);
-							resourcemetadataList.addAll(rSubjectChain);
-						}
-
-						// patient : reference
-						if (subjectReference.indexOf("Patient") >= 0) {
-							Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-							resourcemetadataList.add(rPatient);
-
-							if (chainedResource == null) {
-								// Add chained parameters
-								rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, subject.getReference(), null);
-								resourcemetadataList.addAll(rSubjectChain);
-							}
-						}
+					// patient : reference
+					if ((subject.hasReference() && subject.getReference().indexOf("Patient") >= 0)
+							|| (subject.hasType() && subject.getType().equals("Patient"))) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, subject, null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
@@ -196,10 +153,9 @@ public class ResourcemetadataAccount extends ResourcemetadataProxy {
 			// type : token
 			if (account.hasType() && account.getType().hasCoding()) {
 
-				Resourcemetadata rType = null;
 				for (Coding type : account.getType().getCoding()) {
-					rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-					resourcemetadataList.add(rType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -208,6 +164,8 @@ public class ResourcemetadataAccount extends ResourcemetadataProxy {
 			e.printStackTrace();
 			throw e;
         } finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
             if (iAccount != null) {
                 try {
                 	iAccount.close();

@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -74,6 +75,8 @@ public class ResourcemetadataResearchSubject extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iResearchSubject = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a ResearchSubject object
@@ -91,90 +94,64 @@ public class ResourcemetadataResearchSubject extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each ResearchSubject metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, researchSubject, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (researchSubject.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", researchSubject.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (researchSubject.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", researchSubject.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (researchSubject.getMeta() != null && researchSubject.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(researchSubject.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(researchSubject.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, researchSubject, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// date : date(period)
 			if (researchSubject.hasPeriod()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(researchSubject.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(researchSubject.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(researchSubject.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(researchSubject.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(researchSubject.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(researchSubject.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(researchSubject.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(researchSubject.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (researchSubject.hasIdentifier()) {
 
 				for (Identifier identifier : researchSubject.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// individual : reference
-			// patient : reference
-			if (researchSubject.hasIndividual() && researchSubject.getIndividual().hasReference()) {
-				String individualReference = generateFullLocalReference(researchSubject.getIndividual().getReference(), baseUrl);
+			if (researchSubject.hasIndividual()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "individual", 0, researchSubject.getIndividual(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rIndividual = generateResourcemetadata(resource, chainedResource, chainedParameter+"individual", individualReference);
-				resourcemetadataList.add(rIndividual);
-
-				Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", individualReference);
-				resourcemetadataList.add(rPatient);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rIndividualChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "individual", 0, researchSubject.getIndividual().getReference(), null);
-					resourcemetadataList.addAll(rIndividualChain);
-
-					// Add chained parameters for any
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, researchSubject.getIndividual().getReference(), null);
-					resourcemetadataList.addAll(rPatientChain);
+				// patient : reference
+				if ((researchSubject.getIndividual().hasReference() && researchSubject.getIndividual().getReference().indexOf("Patient") >= 0)
+						|| (researchSubject.getIndividual().hasType() && researchSubject.getIndividual().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, researchSubject.getIndividual(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// status : token
 			if (researchSubject.hasStatus() && researchSubject.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", researchSubject.getStatus().toCode(), researchSubject.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", researchSubject.getStatus().toCode(), researchSubject.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// study : reference
-			if (researchSubject.hasStudy() && researchSubject.getStudy().hasReference()) {
-				String studyReference = generateFullLocalReference(researchSubject.getStudy().getReference(), baseUrl);
-
-				Resourcemetadata rStudy = generateResourcemetadata(resource, chainedResource, chainedParameter+"study", studyReference);
-				resourcemetadataList.add(rStudy);
-
-				if (chainedResource == null) {
-					// Add chained parameters for any
-					List<Resourcemetadata> rStudyChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "study", 0, researchSubject.getStudy().getReference(), null);
-					resourcemetadataList.addAll(rStudyChain);
-				}
+			if (researchSubject.hasStudy()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "study", 0, researchSubject.getStudy(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iResearchSubject != null) {
+                try {
+                	iResearchSubject.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

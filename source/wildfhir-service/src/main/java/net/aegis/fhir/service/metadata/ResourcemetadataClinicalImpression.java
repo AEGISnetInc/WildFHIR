@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -78,6 +79,8 @@ public class ResourcemetadataClinicalImpression extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iClinicalImpression = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a ClinicalImpression object
@@ -95,85 +98,43 @@ public class ResourcemetadataClinicalImpression extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each ClinicalImpression metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, clinicalImpression, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (clinicalImpression.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", clinicalImpression.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (clinicalImpression.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", clinicalImpression.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (clinicalImpression.getMeta() != null && clinicalImpression.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(clinicalImpression.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(clinicalImpression.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, clinicalImpression, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// assessor : reference
 			if (clinicalImpression.hasAssessor() && clinicalImpression.getAssessor().hasReference()) {
-				Resourcemetadata rAssessor = generateResourcemetadata(resource, chainedResource, chainedParameter+"assessor", generateFullLocalReference(clinicalImpression.getAssessor().getReference(), baseUrl));
-				resourcemetadataList.add(rAssessor);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rAssessorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "assessor", 0, clinicalImpression.getAssessor().getReference(), null);
-					resourcemetadataList.addAll(rAssessorChain);
-				}
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "assessor", 0, clinicalImpression.getAssessor(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// date : date
 			if (clinicalImpression.hasDate()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(clinicalImpression.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(clinicalImpression.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(clinicalImpression.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(clinicalImpression.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// encounter : reference
-			if (clinicalImpression.hasEncounter() && clinicalImpression.getEncounter().hasReference()) {
-				String encounterReference = generateFullLocalReference(clinicalImpression.getEncounter().getReference(), baseUrl);
-
-				Resourcemetadata rEncounter = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", encounterReference);
-				resourcemetadataList.add(rEncounter);
-
-				if (chainedResource == null) {
-					// Add chained parameters for any
-					List<Resourcemetadata> rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, clinicalImpression.getEncounter().getReference(), null);
-					resourcemetadataList.addAll(rEncounterChain);
-				}
+			if (clinicalImpression.hasEncounter()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "encounter", 0, clinicalImpression.getEncounter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// finding : token
 			if (clinicalImpression.hasFinding()) {
 
-				Resourcemetadata rCode = null;
-				String findingReference = null;
 				for (ClinicalImpressionFindingComponent finding : clinicalImpression.getFinding()) {
 
 					if (finding.hasItemCodeableConcept() && finding.getItemCodeableConcept().hasCoding()) {
 
 						for (Coding code : finding.getItemCodeableConcept().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"finding-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"finding-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
-					else if (finding.hasItemReference() && finding.getItemReference().hasReference()) {
-						findingReference = generateFullLocalReference(finding.getItemReference().getReference(), baseUrl);
-
-						Resourcemetadata rFindingRef = generateResourcemetadata(resource, chainedResource, chainedParameter+"finding-ref", findingReference);
-						resourcemetadataList.add(rFindingRef);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							List<Resourcemetadata> rFindingRefChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "finding-ref", 02, finding.getItemReference().getReference(), null);
-							resourcemetadataList.addAll(rFindingRefChain);
-						}
+					else if (finding.hasItemReference()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "finding-ref", 0, finding.getItemReference(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
@@ -182,124 +143,65 @@ public class ResourcemetadataClinicalImpression extends ResourcemetadataProxy {
 			if (clinicalImpression.hasIdentifier()) {
 
 				for (Identifier identifier : clinicalImpression.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// investigation : reference
 			if (clinicalImpression.hasInvestigation()) {
 
-				String investigationReference = null;
 				for (ClinicalImpressionInvestigationComponent investigation : clinicalImpression.getInvestigation()) {
-
 					if (investigation.hasItem()) {
 
 						for (Reference item : investigation.getItem()) {
-
-							if (item.hasReference()) {
-								investigationReference = generateFullLocalReference(item.getReference(), baseUrl);
-
-								Resourcemetadata rInvestigation = generateResourcemetadata(resource, chainedResource, chainedParameter+"investigation", investigationReference);
-								resourcemetadataList.add(rInvestigation);
-
-								if (chainedResource == null) {
-									// Add chained parameters for any
-									List<Resourcemetadata> rInvestigationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "investigation", 0, item.getReference(), null);
-									resourcemetadataList.addAll(rInvestigationChain);
-								}
-							}
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "investigation", 0, item, null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 				}
 			}
 
-			// patient : reference
 			// subject : reference
 			if (clinicalImpression.hasSubject() && clinicalImpression.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(clinicalImpression.getSubject().getReference(), baseUrl);
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, clinicalImpression.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, clinicalImpression.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, clinicalImpression.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((clinicalImpression.getSubject().hasReference() && clinicalImpression.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (clinicalImpression.getSubject().hasType() && clinicalImpression.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, clinicalImpression.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// previous : reference
-			if (clinicalImpression.hasPrevious() && clinicalImpression.getPrevious().hasReference()) {
-				Resourcemetadata rPrevious = generateResourcemetadata(resource, chainedResource, chainedParameter+"previous", generateFullLocalReference(clinicalImpression.getPrevious().getReference(), baseUrl));
-				resourcemetadataList.add(rPrevious);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPreviousChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "previous", 0, clinicalImpression.getPrevious().getReference(), null);
-					resourcemetadataList.addAll(rPreviousChain);
-				}
+			if (clinicalImpression.hasPrevious()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "previous", 0, clinicalImpression.getPrevious(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// problem : reference
 			if (clinicalImpression.hasProblem()) {
 
-				String problemReference = null;
 				for (Reference problem : clinicalImpression.getProblem()) {
-
-					if (problem.hasReference()) {
-						problemReference = generateFullLocalReference(problem.getReference(), baseUrl);
-
-						Resourcemetadata rProblem = generateResourcemetadata(resource, chainedResource, chainedParameter+"problem", problemReference);
-						resourcemetadataList.add(rProblem);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							List<Resourcemetadata> rProblemChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "problem", 0, problem.getReference(), null);
-							resourcemetadataList.addAll(rProblemChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "problem", 0, problem, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// status : token
 			if (clinicalImpression.hasStatus() && clinicalImpression.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", clinicalImpression.getStatus().toCode(), clinicalImpression.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", clinicalImpression.getStatus().toCode(), clinicalImpression.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// supporting-info : reference
 			if (clinicalImpression.hasSupportingInfo()) {
 
-				String supportingInfoReference = null;
-				Resourcemetadata rSupportingInfo = null;
-				List<Resourcemetadata> rSupportingInfoChain = null;
 				for (Reference supportingInfo : clinicalImpression.getSupportingInfo()) {
-
-					if (supportingInfo.hasReference()) {
-						supportingInfoReference = generateFullLocalReference(supportingInfo.getReference(), baseUrl);
-
-						rSupportingInfo = generateResourcemetadata(resource, chainedResource, chainedParameter+"supporting-info", supportingInfoReference);
-						resourcemetadataList.add(rSupportingInfo);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rSupportingInfoChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "supporting-info", 0, supportingInfo.getReference(), null);
-							resourcemetadataList.addAll(rSupportingInfoChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "supporting-info", 0, supportingInfo, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -307,6 +209,16 @@ public class ResourcemetadataClinicalImpression extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iClinicalImpression != null) {
+                try {
+                	iClinicalImpression.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

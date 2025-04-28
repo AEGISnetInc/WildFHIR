@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -85,6 +86,8 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iObservation = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a Observation object
@@ -102,82 +105,44 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each Observation metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, observation, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (observation.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", observation.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (observation.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", observation.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (observation.getMeta() != null && observation.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(observation.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(observation.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, observation, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// based-on : reference
 			if (observation.hasBasedOn()) {
 
-				List<Resourcemetadata> rBasedOnChain = null;
 				for (Reference basedOn : observation.getBasedOn()) {
-
-					if (basedOn.hasReference()) {
-						Resourcemetadata rBasedOn = generateResourcemetadata(resource, chainedResource, chainedParameter+"based-on", generateFullLocalReference(basedOn.getReference(), baseUrl));
-						resourcemetadataList.add(rBasedOn);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rBasedOnChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "based-on", 0, basedOn.getReference(), null);
-							resourcemetadataList.addAll(rBasedOnChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "based-on", 0, basedOn, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// category : token
 			if (observation.hasCategory()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept category : observation.getCategory()) {
 
 					if (category.hasCoding()) {
 						for (Coding code : category.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
 			}
 
 			// encounter : reference
-			if (observation.hasEncounter() && observation.getEncounter().hasReference()) {
-
-				Resourcemetadata rEncounter = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", generateFullLocalReference(observation.getEncounter().getReference(), baseUrl));
-				resourcemetadataList.add(rEncounter);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, observation.getEncounter().getReference(), null);
-					resourcemetadataList.addAll(rEncounterChain);
-				}
+			if (observation.hasEncounter()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "encounter", 0, observation.getEncounter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// data-absent-reason : token
 			if (observation.hasDataAbsentReason()) {
 
 				for (Coding coding : observation.getDataAbsentReason().getCoding()) {
-
-					Resourcemetadata rDataAbsentReason = generateResourcemetadata(resource, chainedResource, chainedParameter+"data-absent-reason", coding.getCode(), coding.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(coding));
-					resourcemetadataList.add(rDataAbsentReason);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"data-absent-reason", coding.getCode(), coding.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(coding));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -185,16 +150,16 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 			if (observation.hasEffective()) {
 
 				if (observation.hasEffectiveDateTimeType()) {
-					Resourcemetadata rDateDateTime = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(observation.getEffectiveDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(observation.getEffectiveDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-					resourcemetadataList.add(rDateDateTime);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(observation.getEffectiveDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(observation.getEffectiveDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+					resourcemetadataList.add(rMetadata);
 				}
 				else if (observation.hasEffectiveInstantType()) {
-					Resourcemetadata rDateDateTime = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(observation.getEffectiveInstantType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(observation.getEffectiveInstantType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-					resourcemetadataList.add(rDateDateTime);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(observation.getEffectiveInstantType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(observation.getEffectiveInstantType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+					resourcemetadataList.add(rMetadata);
 				}
 				else if (observation.hasEffectivePeriod()) {
-					Resourcemetadata rDatePeriod = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(observation.getEffectivePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(observation.getEffectivePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(observation.getEffectivePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(observation.getEffectivePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-					resourcemetadataList.add(rDatePeriod);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(observation.getEffectivePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(observation.getEffectivePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(observation.getEffectivePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(observation.getEffectivePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+					resourcemetadataList.add(rMetadata);
 				}
 				else if (observation.hasEffectiveTiming()) {
 					// Special logic for Timing - evaluate earliest and latest event values, treat like Period start and end
@@ -213,59 +178,34 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 							}
 						}
 
-						Resourcemetadata rDatePeriod = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(earliest, UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(latest, UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(earliest, UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(latest, UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-						resourcemetadataList.add(rDatePeriod);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(earliest, UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(latest, UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(earliest, UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(latest, UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 
 			}
 
 			// device : reference
-			if (observation.hasDevice() && observation.getDevice().hasReference()) {
-				Resourcemetadata rDevice = generateResourcemetadata(resource, chainedResource, chainedParameter+"device", generateFullLocalReference(observation.getDevice().getReference(), baseUrl));
-				resourcemetadataList.add(rDevice);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rDeviceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "device", 0, observation.getDevice().getReference(), null);
-					resourcemetadataList.addAll(rDeviceChain);
-				}
+			if (observation.hasDevice()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "device", 0, observation.getDevice(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// focus : reference
 			if (observation.hasFocus()) {
 
 				for (Reference focus : observation.getFocus()) {
-
-					if (focus.hasReference()) {
-						Resourcemetadata rFocus = generateResourcemetadata(resource, chainedResource, chainedParameter+"focus", generateFullLocalReference(focus.getReference(), baseUrl));
-						resourcemetadataList.add(rFocus);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							List<Resourcemetadata> rFocusChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "focus", 0, focus.getReference(), null);
-							resourcemetadataList.addAll(rFocusChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "focus", 0, focus, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// has-member : reference
 			if (observation.hasHasMember()) {
 
-				List<Resourcemetadata> rHasMemberChain = null;
 				for (Reference hasMember : observation.getHasMember()) {
-
-					if (hasMember.hasReference()) {
-						Resourcemetadata rHasMember = generateResourcemetadata(resource, chainedResource, chainedParameter+"has-member", generateFullLocalReference(hasMember.getReference(), baseUrl));
-						resourcemetadataList.add(rHasMember);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rHasMemberChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "has-member", 0, hasMember.getReference(), null);
-							resourcemetadataList.addAll(rHasMemberChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "has-member", 0, hasMember, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -273,102 +213,61 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 			if (observation.hasIdentifier()) {
 
 				for (Identifier identifier : observation.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// method : token
 			if (observation.hasMethod() && observation.getMethod().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : observation.getMethod().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"method", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"method", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// part-of : reference
 			if (observation.hasPartOf()) {
 
-				List<Resourcemetadata> rPartOfChain = null;
 				for (Reference partOf : observation.getPartOf()) {
-
-					if (partOf.hasReference()) {
-						Resourcemetadata rPartOf = generateResourcemetadata(resource, chainedResource, chainedParameter+"part-of", generateFullLocalReference(partOf.getReference(), baseUrl));
-						resourcemetadataList.add(rPartOf);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rPartOfChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "part-of", 0, partOf.getReference(), null);
-							resourcemetadataList.addAll(rPartOfChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "part-of", 0, partOf, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
-			// patient : reference
 			// subject : reference
-			if (observation.hasSubject() && observation.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(observation.getSubject().getReference(), baseUrl);
+			if (observation.hasSubject()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, observation.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, observation.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, observation.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((observation.getSubject().hasReference() && observation.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (observation.getSubject().hasType() && observation.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, observation.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// performer : reference
 			if (observation.hasPerformer()) {
 
-				List<Resourcemetadata> rPerformerChain = null;
 				for (Reference performer : observation.getPerformer()) {
-
-					if (performer.hasReference()) {
-						Resourcemetadata rPerformer = generateResourcemetadata(resource, chainedResource, chainedParameter+"performer", generateFullLocalReference(performer.getReference(), baseUrl));
-						resourcemetadataList.add(rPerformer);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rPerformerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "performer", 0, performer.getReference(), null);
-							resourcemetadataList.addAll(rPerformerChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "performer", 0, performer, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// specimen : reference
-			if (observation.hasSpecimen() && observation.getSpecimen().hasReference()) {
-				Resourcemetadata rSpecimen = generateResourcemetadata(resource, chainedResource, chainedParameter+"specimen", generateFullLocalReference(observation.getSpecimen().getReference(), baseUrl));
-				resourcemetadataList.add(rSpecimen);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSpecimenChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "specimen", 0, observation.getSpecimen().getReference(), null);
-					resourcemetadataList.addAll(rSpecimenChain);
-				}
+			if (observation.hasSpecimen()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "specimen", 0, observation.getSpecimen(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// status : token
 			if (observation.hasStatus() && observation.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", observation.getStatus().toCode(), observation.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", observation.getStatus().toCode(), observation.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// code-value[x] : composite
@@ -377,13 +276,12 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 			// code : token
 			if (observation.hasCode() && observation.getCode().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : observation.getCode().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code), "COMPOSITE");
+					resourcemetadataList.add(rMetadata);
 				}
 
 				// Use only the first one for the code-value[x] composite
@@ -399,13 +297,12 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 				// value-concept : token
 				if (observation.getValue() instanceof CodeableConcept && observation.getValueCodeableConcept().hasCoding()) {
 
-					Resourcemetadata rCode = null;
 					for (Coding code : observation.getValueCodeableConcept().getCoding()) {
-						rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"value-concept", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-						resourcemetadataList.add(rCode);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"value-concept", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+						resourcemetadataList.add(rMetadata);
 
-						rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-value-concept", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-						resourcemetadataList.add(rCode);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-value-concept", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code), "COMPOSITE");
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// If CodeableConcept has text, create string composite
@@ -413,8 +310,8 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 						StringBuilder codeValueCompositeConceptText = new StringBuilder(codeValueComposite.toString());
 						codeValueCompositeConceptText.append("$").append(observation.getValueCodeableConcept().getText());
 
-						Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-string", codeValueCompositeConceptText.toString());
-						resourcemetadataList.add(rCodeValueCodeableConcept);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-string", codeValueCompositeConceptText.toString(), null, null, null, "COMPOSITE");
+						resourcemetadataList.add(rMetadata);
 					}
 
 					codeValueComposite.append("$");
@@ -423,16 +320,16 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 					}
 					codeValueComposite.append("|").append(observation.getValueCodeableConcept().getCodingFirstRep().getCode());
 
-					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-concept", codeValueComposite.toString(), null, null, null, "COMPOSITE");
-					resourcemetadataList.add(rCodeValueCodeableConcept);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-concept", codeValueComposite.toString(), null, null, null, "COMPOSITE");
+					resourcemetadataList.add(rMetadata);
 
-					rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-concept", codeValueComposite.toString(), null, null, null, "COMPOSITE");
-					resourcemetadataList.add(rCodeValueCodeableConcept);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-concept", codeValueComposite.toString(), null, null, null, "COMPOSITE");
+					resourcemetadataList.add(rMetadata);
 				}
 				// value-date : date
 				else if (observation.getValue() instanceof DateTimeType) {
-					Resourcemetadata rValueDateTime = generateResourcemetadata(resource, chainedResource, chainedParameter+"value-date", utcDateUtil.formatDate(observation.getValueDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(observation.getValueDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-					resourcemetadataList.add(rValueDateTime);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"value-date", utcDateUtil.formatDate(observation.getValueDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(observation.getValueDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+					resourcemetadataList.add(rMetadata);
 
 					StringBuilder codeValueDateGMTText = new StringBuilder(codeValueComposite.toString());
 					codeValueDateGMTText.append("$");
@@ -441,13 +338,13 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 					codeValueDateAsIsText.append("$");
 					codeValueDateAsIsText.append(utcDateUtil.formatDate(observation.getValueDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
 
-					rValueDateTime = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-date", codeValueDateGMTText.toString(), null, codeValueDateAsIsText.toString(), null, "COMPOSITE");
-					resourcemetadataList.add(rValueDateTime);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-date", codeValueDateGMTText.toString(), null, codeValueDateAsIsText.toString(), null, "COMPOSITE");
+					resourcemetadataList.add(rMetadata);
 				}
 				// value-date : date(period)
 				else if (observation.getValue() instanceof Period) {
-					Resourcemetadata rValuePeriod = generateResourcemetadata(resource, chainedResource, chainedParameter+"value-date", utcDateUtil.formatDate(observation.getValuePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(observation.getValuePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(observation.getValuePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(observation.getValuePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-					resourcemetadataList.add(rValuePeriod);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"value-date", utcDateUtil.formatDate(observation.getValuePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(observation.getValuePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(observation.getValuePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(observation.getValuePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+					resourcemetadataList.add(rMetadata);
 
 					StringBuilder codeValueDateStartGMTText = new StringBuilder(codeValueComposite.toString());
 					codeValueDateStartGMTText.append("$");
@@ -462,17 +359,17 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 					codeValueDateEndAsIsText.append("$");
 					codeValueDateEndAsIsText.append(utcDateUtil.formatDate(observation.getValuePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
 
-					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-date", codeValueDateStartGMTText.toString(), codeValueDateEndGMTText.toString(), codeValueDateStartAsIsText.toString(), codeValueDateEndAsIsText.toString(), "COMPOSITE");
-					resourcemetadataList.add(rCodeValueCodeableConcept);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-date", codeValueDateStartGMTText.toString(), codeValueDateEndGMTText.toString(), codeValueDateStartAsIsText.toString(), codeValueDateEndAsIsText.toString(), "COMPOSITE");
+					resourcemetadataList.add(rMetadata);
 				}
 				// value-quantity : quantity
 				else if (observation.getValue() instanceof Quantity) {
 					String valueQuantityCode = (observation.getValueQuantity().getCode() != null ? observation.getValueQuantity().getCode() : observation.getValueQuantity().getUnit());
-					Resourcemetadata rValueQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"value-quantity", observation.getValueQuantity().getValue().toString(), observation.getValueQuantity().getSystem(), valueQuantityCode);
-					resourcemetadataList.add(rValueQuantity);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"value-quantity", observation.getValueQuantity().getValue().toString(), observation.getValueQuantity().getSystem(), valueQuantityCode);
+					resourcemetadataList.add(rMetadata);
 
-					rValueQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-value-quantity", observation.getValueQuantity().getValue().toString(), observation.getValueQuantity().getSystem(), valueQuantityCode);
-					resourcemetadataList.add(rValueQuantity);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-value-quantity", observation.getValueQuantity().getValue().toString(), observation.getValueQuantity().getSystem(), valueQuantityCode, null, "COMPOSITE");
+					resourcemetadataList.add(rMetadata);
 
 					codeValueComposite.append("$");
 					if (observation.getValueQuantity().getSystem() != null) {
@@ -480,55 +377,54 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 					}
 					codeValueComposite.append("|").append(observation.getValueQuantity().getValue().toString());
 
-					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-quantity", codeValueComposite.toString(), null, null, null, "COMPOSITE");
-					resourcemetadataList.add(rCodeValueCodeableConcept);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-quantity", codeValueComposite.toString(), null, null, null, "COMPOSITE");
+					resourcemetadataList.add(rMetadata);
 
-					rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", codeValueComposite.toString(), null, null, null, "COMPOSITE");
-					resourcemetadataList.add(rCodeValueCodeableConcept);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", codeValueComposite.toString(), null, null, null, "COMPOSITE");
+					resourcemetadataList.add(rMetadata);
 				}
 				// value-quantity : quantity(sampled data)
 				else if (observation.getValue() instanceof SampledData) {
-					Resourcemetadata rValueQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"value-quantity", observation.getValueSampledData().getLowerLimit().toString());
-					resourcemetadataList.add(rValueQuantity);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"value-quantity", observation.getValueSampledData().getLowerLimit().toString());
+					resourcemetadataList.add(rMetadata);
 
-					rValueQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-value-quantity", observation.getValueSampledData().getLowerLimit().toString());
-					resourcemetadataList.add(rValueQuantity);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-value-quantity", observation.getValueSampledData().getLowerLimit().toString());
+					resourcemetadataList.add(rMetadata);
 
 					codeValueComposite.append("$");
 					codeValueComposite.append(observation.getValueSampledData().getLowerLimit().toString());
 
-					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-quantity", codeValueComposite.toString(), null, null, null, "COMPOSITE");
-					resourcemetadataList.add(rCodeValueCodeableConcept);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-quantity", codeValueComposite.toString(), null, null, null, "COMPOSITE");
+					resourcemetadataList.add(rMetadata);
 
-					rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", codeValueComposite.toString(), null, null, null, "COMPOSITE");
-					resourcemetadataList.add(rCodeValueCodeableConcept);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", codeValueComposite.toString(), null, null, null, "COMPOSITE");
+					resourcemetadataList.add(rMetadata);
 				}
 				// value-string : string
 				else if (observation.getValue() instanceof StringType) {
-					Resourcemetadata rValueStringType = generateResourcemetadata(resource, chainedResource, chainedParameter+"value-string", observation.getValueStringType().getValue());
-					resourcemetadataList.add(rValueStringType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"value-string", observation.getValueStringType().getValue());
+					resourcemetadataList.add(rMetadata);
 
 					codeValueComposite.append("$");
 					codeValueComposite.append(observation.getValueStringType().getValue());
 
-					Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-string", codeValueComposite.toString(), null, null, null, "COMPOSITE");
-					resourcemetadataList.add(rCodeValueCodeableConcept);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code-value-string", codeValueComposite.toString(), null, null, null, "COMPOSITE");
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			if (observation.hasComponent()) {
 
-				Resourcemetadata rCode = null;
 				for (ObservationComponentComponent component : observation.getComponent()) {
 
 					// component-data-absent-reason : token
 					if (component.hasDataAbsentReason() && component.getDataAbsentReason().hasCoding()) {
 						for (Coding code : component.getDataAbsentReason().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-data-absent-reason", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-data-absent-reason", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-data-absent-reason", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-data-absent-reason", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 
@@ -538,11 +434,11 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 					// component-code : token
 					if (component.hasCode() && component.getCode().hasCoding()) {
 						for (Coding code : component.getCode().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 
 						// Use only the first one for the component-code-value[x] composite
@@ -558,11 +454,11 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 						// component-value-concept : token
 						if (component.getValue() instanceof CodeableConcept && component.getValueCodeableConcept().hasCoding()) {
 							for (Coding code : component.getValueCodeableConcept().getCoding()) {
-								rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-value-concept", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-								resourcemetadataList.add(rCode);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-value-concept", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+								resourcemetadataList.add(rMetadata);
 
-								rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-value-concept", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-								resourcemetadataList.add(rCode);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-value-concept", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+								resourcemetadataList.add(rMetadata);
 							}
 
 							// If CodeableConcept has text, create string composite
@@ -570,11 +466,11 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 								StringBuilder componentCodeValueCompositeConceptText = new StringBuilder(componentCodeValueComposite.toString());
 								componentCodeValueCompositeConceptText.append("$").append(component.getValueCodeableConcept().getText());
 
-								Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-string", componentCodeValueCompositeConceptText.toString(), null, null, null, "COMPOSITE");
-								resourcemetadataList.add(rCodeValueCodeableConcept);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-string", componentCodeValueCompositeConceptText.toString(), null, null, null, "COMPOSITE");
+								resourcemetadataList.add(rMetadata);
 
-								rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-string", componentCodeValueCompositeConceptText.toString(), null, null, null, "COMPOSITE");
-								resourcemetadataList.add(rCodeValueCodeableConcept);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-string", componentCodeValueCompositeConceptText.toString(), null, null, null, "COMPOSITE");
+								resourcemetadataList.add(rMetadata);
 							}
 
 							componentCodeValueComposite.append("$");
@@ -583,20 +479,20 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 							}
 							componentCodeValueComposite.append("|").append(component.getValueCodeableConcept().getCodingFirstRep().getCode());
 
-							Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-concept", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
-							resourcemetadataList.add(rCodeValueCodeableConcept);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-concept", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
+							resourcemetadataList.add(rMetadata);
 
-							rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-concept", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
-							resourcemetadataList.add(rCodeValueCodeableConcept);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-concept", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
+							resourcemetadataList.add(rMetadata);
 						}
 						// component-value-quantity : quantity
 						else if (component.getValue() instanceof Quantity) {
 							String valueQuantityCode = (component.getValueQuantity().getCode() != null ? component.getValueQuantity().getCode() : component.getValueQuantity().getUnit());
-							Resourcemetadata rValueQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-value-quantity", component.getValueQuantity().getValue().toString(), component.getValueQuantity().getSystem(), valueQuantityCode);
-							resourcemetadataList.add(rValueQuantity);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-value-quantity", component.getValueQuantity().getValue().toString(), component.getValueQuantity().getSystem(), valueQuantityCode);
+							resourcemetadataList.add(rMetadata);
 
-							rValueQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", component.getValueQuantity().getValue().toString(), component.getValueQuantity().getSystem(), valueQuantityCode);
-							resourcemetadataList.add(rValueQuantity);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", component.getValueQuantity().getValue().toString(), component.getValueQuantity().getSystem(), valueQuantityCode);
+							resourcemetadataList.add(rMetadata);
 
 							componentCodeValueComposite.append("$");
 							if (component.getValueQuantity().getSystem() != null) {
@@ -604,54 +500,65 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 							}
 							componentCodeValueComposite.append("|").append(component.getValueQuantity().getValue().toString());
 
-							Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-quantity", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
-							resourcemetadataList.add(rCodeValueCodeableConcept);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-quantity", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
+							resourcemetadataList.add(rMetadata);
 
-							rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
-							resourcemetadataList.add(rCodeValueCodeableConcept);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
+							resourcemetadataList.add(rMetadata);
 						}
 						// component-value-quantity : quantity(sampled data)
 						else if (component.getValue() instanceof SampledData) {
-							Resourcemetadata rValueQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-value-quantity", component.getValueSampledData().getLowerLimit().toString());
-							resourcemetadataList.add(rValueQuantity);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-value-quantity", component.getValueSampledData().getLowerLimit().toString());
+							resourcemetadataList.add(rMetadata);
 
-							rValueQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-value-quantity", component.getValueSampledData().getLowerLimit().toString());
-							resourcemetadataList.add(rValueQuantity);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-value-quantity", component.getValueSampledData().getLowerLimit().toString());
+							resourcemetadataList.add(rMetadata);
 
 							componentCodeValueComposite.append("$");
 							componentCodeValueComposite.append(component.getValueSampledData().getLowerLimit().toString());
 
-							Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-quantity", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
-							resourcemetadataList.add(rCodeValueCodeableConcept);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-quantity", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
+							resourcemetadataList.add(rMetadata);
 
-							rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
-							resourcemetadataList.add(rCodeValueCodeableConcept);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-quantity", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
+							resourcemetadataList.add(rMetadata);
 						}
 						// component-value-string : string
 						else if (component.getValue() instanceof StringType) {
-							Resourcemetadata rValueStringType = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-value-string", component.getValueStringType().getValue());
-							resourcemetadataList.add(rValueStringType);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-value-string", component.getValueStringType().getValue());
+							resourcemetadataList.add(rMetadata);
 
-							rValueStringType = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-value-string", component.getValueStringType().getValue());
-							resourcemetadataList.add(rValueStringType);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-value-string", component.getValueStringType().getValue());
+							resourcemetadataList.add(rMetadata);
 
 							componentCodeValueComposite.append("$");
 							componentCodeValueComposite.append(component.getValueStringType().getValue());
 
-							Resourcemetadata rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-string", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
-							resourcemetadataList.add(rCodeValueCodeableConcept);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"component-code-value-string", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
+							resourcemetadataList.add(rMetadata);
 
-							rCodeValueCodeableConcept = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-string", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
-							resourcemetadataList.add(rCodeValueCodeableConcept);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"combo-code-value-string", componentCodeValueComposite.toString(), null, null, null, "COMPOSITE");
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
 			}
 
+
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iObservation != null) {
+                try {
+                	iObservation.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

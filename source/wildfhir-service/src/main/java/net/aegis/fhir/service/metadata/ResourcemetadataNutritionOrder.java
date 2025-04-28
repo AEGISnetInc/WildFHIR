@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -78,6 +79,8 @@ public class ResourcemetadataNutritionOrder extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iNutritionOrder = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a NutritionOrder object
@@ -95,70 +98,44 @@ public class ResourcemetadataNutritionOrder extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each NutritionOrder metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, nutritionOrder, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (nutritionOrder.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", nutritionOrder.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (nutritionOrder.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", nutritionOrder.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (nutritionOrder.getMeta() != null && nutritionOrder.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(nutritionOrder.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(nutritionOrder.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, nutritionOrder, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// datetime : datetime
 			if (nutritionOrder.hasDateTime()) {
-				Resourcemetadata rDateTime = generateResourcemetadata(resource, chainedResource, chainedParameter+"datetime", utcDateUtil.formatDate(nutritionOrder.getDateTime(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(nutritionOrder.getDateTime(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDateTime);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"datetime", utcDateUtil.formatDate(nutritionOrder.getDateTime(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(nutritionOrder.getDateTime(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// encounter : reference
-			if (nutritionOrder.hasEncounter() && nutritionOrder.getEncounter().hasReference()) {
-				Resourcemetadata rEncounter = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", generateFullLocalReference(nutritionOrder.getEncounter().getReference(), baseUrl));
-				resourcemetadataList.add(rEncounter);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, nutritionOrder.getEncounter().getReference(), null);
-					resourcemetadataList.addAll(rEncounterChain);
-				}
+			if (nutritionOrder.hasEncounter()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "encounter", 0, nutritionOrder.getEncounter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
-			// identifier : reference
+			// identifier : token
 			if (nutritionOrder.hasIdentifier()) {
 
 				for (Identifier identifier : nutritionOrder.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
-			// instantiates-canonical : reference
+			// instantiates-canonical : reference - instantiates is a Canonical, no Reference.identifier
 			if (nutritionOrder.hasInstantiatesCanonical()) {
 
 				for (CanonicalType instantiates : nutritionOrder.getInstantiatesCanonical()) {
 					String objectReference = generateFullLocalReference(instantiates.asStringValue(), baseUrl);
 
-					List<Resourcemetadata> rInstantiatesChain = null;
-					Resourcemetadata rReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-canonical", objectReference);
-					resourcemetadataList.add(rReference);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-canonical", objectReference);
+					resourcemetadataList.add(rMetadata);
 
 					if (chainedResource == null) {
 						// Add chained parameters
-						rInstantiatesChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "instantiates-canonical", 0, instantiates.asStringValue(), null);
-						resourcemetadataList.addAll(rInstantiatesChain);
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "instantiates-canonical", 0, instantiates.asStringValue(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
@@ -167,40 +144,27 @@ public class ResourcemetadataNutritionOrder extends ResourcemetadataProxy {
 			if (nutritionOrder.hasInstantiatesUri()) {
 
 				for (UriType instantiates : nutritionOrder.getInstantiatesUri()) {
-
-					Resourcemetadata rInstantiates = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-uri", instantiates.asStringValue());
-					resourcemetadataList.add(rInstantiates);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-uri", instantiates.asStringValue());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// patient : reference
-			if (nutritionOrder.hasPatient() && nutritionOrder.getPatient().hasReference()) {
-				Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", generateFullLocalReference(nutritionOrder.getPatient().getReference(), baseUrl));
-				resourcemetadataList.add(rPatient);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, nutritionOrder.getPatient().getReference(), null);
-					resourcemetadataList.addAll(rPatientChain);
-				}
+			if (nutritionOrder.hasPatient()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, nutritionOrder.getPatient(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// provider : reference
-			if (nutritionOrder.hasOrderer() && nutritionOrder.getOrderer().hasReference()) {
-				Resourcemetadata rOrderer = generateResourcemetadata(resource, chainedResource, chainedParameter+"provider", generateFullLocalReference(nutritionOrder.getOrderer().getReference(), baseUrl));
-				resourcemetadataList.add(rOrderer);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rProviderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "provider", 0, nutritionOrder.getOrderer().getReference(), null);
-					resourcemetadataList.addAll(rProviderChain);
-				}
+			if (nutritionOrder.hasOrderer()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "provider", 0, nutritionOrder.getOrderer(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// status : token
 			if (nutritionOrder.hasStatus() && nutritionOrder.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", nutritionOrder.getStatus().toCode(), nutritionOrder.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", nutritionOrder.getStatus().toCode(), nutritionOrder.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			if (nutritionOrder.hasEnteralFormula()) {
@@ -208,44 +172,49 @@ public class ResourcemetadataNutritionOrder extends ResourcemetadataProxy {
 				// additive : token
 				if (nutritionOrder.getEnteralFormula().hasAdditiveType() && nutritionOrder.getEnteralFormula().getAdditiveType().hasCoding()) {
 
-					Resourcemetadata rCode = null;
 					for (Coding code : nutritionOrder.getEnteralFormula().getAdditiveType().getCoding()) {
-						rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"additive", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-						resourcemetadataList.add(rCode);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"additive", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 
 				// formula : token
 				if (nutritionOrder.getEnteralFormula().hasBaseFormulaType() && nutritionOrder.getEnteralFormula().getBaseFormulaType().hasCoding()) {
 
-					Resourcemetadata rCode = null;
 					for (Coding code : nutritionOrder.getEnteralFormula().getBaseFormulaType().getCoding()) {
-						rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"formula", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-						resourcemetadataList.add(rCode);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"formula", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// supplement : token
 			if (nutritionOrder.hasSupplement()) {
-
-				Resourcemetadata rCode = null;
 				for (NutritionOrderSupplementComponent supplement : nutritionOrder.getSupplement()) {
 
 					if (supplement.hasType() && supplement.getType().hasCoding()) {
 						for (Coding code : supplement.getType().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"supplement", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"supplement", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
-
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iNutritionOrder != null) {
+                try {
+                	iNutritionOrder.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

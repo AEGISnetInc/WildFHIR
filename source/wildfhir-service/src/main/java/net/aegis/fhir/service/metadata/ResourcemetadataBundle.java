@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -75,6 +76,8 @@ public class ResourcemetadataBundle extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iBundle = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a Bundle object
@@ -92,32 +95,14 @@ public class ResourcemetadataBundle extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each Bundle metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, bundle, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (bundle.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", bundle.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (bundle.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", bundle.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (bundle.getMeta() != null && bundle.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(bundle.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(bundle.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, bundle, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// identifier : token
 			if (bundle.hasIdentifier()) {
-				Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", bundle.getIdentifier().getValue(), bundle.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(bundle.getIdentifier()));
-				resourcemetadataList.add(rIdentifier);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", bundle.getIdentifier().getValue(), bundle.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(bundle.getIdentifier()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// composition : reference
@@ -131,23 +116,21 @@ public class ResourcemetadataBundle extends ResourcemetadataProxy {
 					if (first != null) {
 
 						String entryReference = null;
-						Resourcemetadata rFirst = null;
 						// Add reference and chained parameters
-						List<Resourcemetadata> rFirstEntryChain = null;
 						if (first.getResourceType().equals(ResourceType.Composition)) {
 							// Add Composition reference search parameter constructed from Composition.id
 							if (first.hasId()) {
 								entryReference = "Composition/" + first.getId();
 							}
 							if (entryReference != null) {
-								rFirst = generateResourcemetadata(resource, chainedResource, chainedParameter+"composition", entryReference);
-								resourcemetadataList.add(rFirst);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"composition", entryReference);
+								resourcemetadataList.add(rMetadata);
 							}
 
 							if (chainedResource == null) {
 								// Add Composition chained parameters
-								rFirstEntryChain = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, "composition.", ResourceType.Composition.name(), first, null);
-								resourcemetadataList.addAll(rFirstEntryChain);
+								rMetadataChain = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, "composition.", ResourceType.Composition.name(), first, null);
+								resourcemetadataList.addAll(rMetadataChain);
 							}
 						}
 						else if (first.getResourceType().equals(ResourceType.MessageHeader)) {
@@ -156,14 +139,14 @@ public class ResourcemetadataBundle extends ResourcemetadataProxy {
 								entryReference = "MessageHeader/" + first.getId();
 							}
 							if (entryReference != null) {
-								rFirst = generateResourcemetadata(resource, chainedResource, chainedParameter+"message", entryReference);
-								resourcemetadataList.add(rFirst);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"message", entryReference);
+								resourcemetadataList.add(rMetadata);
 							}
 
 							if (chainedResource == null) {
 								// Add MessageHeader chained parameters
-								rFirstEntryChain = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, "message.", ResourceType.MessageHeader.name(), first, null);
-								resourcemetadataList.addAll(rFirstEntryChain);
+								rMetadataChain = this.generateChainedResourcemetadata(resource, baseUrl, resourceService, "message.", ResourceType.MessageHeader.name(), first, null);
+								resourcemetadataList.addAll(rMetadataChain);
 							}
 						}
 					}
@@ -172,20 +155,30 @@ public class ResourcemetadataBundle extends ResourcemetadataProxy {
 
 			// timestamp : date
 			if (bundle.hasTimestamp()) {
-				Resourcemetadata rTimestamp = generateResourcemetadata(resource, chainedResource, chainedParameter+"timestamp", utcDateUtil.formatDate(bundle.getTimestamp(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(bundle.getTimestamp(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rTimestamp);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"timestamp", utcDateUtil.formatDate(bundle.getTimestamp(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(bundle.getTimestamp(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// type : token
 			if (bundle.hasType() && bundle.getType() != null) {
-				Resourcemetadata rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", bundle.getType().toCode(), bundle.getType().getSystem());
-				resourcemetadataList.add(rType);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", bundle.getType().toCode(), bundle.getType().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iBundle != null) {
+                try {
+                	iBundle.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

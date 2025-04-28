@@ -80,6 +80,8 @@ public class ResourcemetadataAllergyIntolerance extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iAllergyIntolerance = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a AllergyIntolerance object
@@ -97,40 +99,14 @@ public class ResourcemetadataAllergyIntolerance extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each AllergyIntolerance metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, allergyIntolerance, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (allergyIntolerance.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", allergyIntolerance.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (allergyIntolerance.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", allergyIntolerance.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (allergyIntolerance.getMeta() != null && allergyIntolerance.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(allergyIntolerance.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(allergyIntolerance.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, allergyIntolerance, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// asserter : reference
-			if (allergyIntolerance.hasAsserter() && allergyIntolerance.getAsserter().hasReference()) {
-				String asserterReference = generateFullLocalReference(allergyIntolerance.getAsserter().getReference(), baseUrl);
-
-				Resourcemetadata rAsserter = generateResourcemetadata(resource, chainedResource, chainedParameter+"asserter", asserterReference);
-				resourcemetadataList.add(rAsserter);
-
-				if (chainedResource == null) {
-					// Add chained parameters for any
-					List<Resourcemetadata> rAsserterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "asserter", 0, allergyIntolerance.getAsserter().getReference(), null);
-					resourcemetadataList.addAll(rAsserterChain);
-				}
+			if (allergyIntolerance.hasAsserter()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "asserter", 0, allergyIntolerance.getAsserter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// category : token
@@ -139,8 +115,8 @@ public class ResourcemetadataAllergyIntolerance extends ResourcemetadataProxy {
 				for (Enumeration<AllergyIntoleranceCategory> category : allergyIntolerance.getCategory()) {
 
 					if (category != null) {
-						Resourcemetadata rCategory = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", category.getValue().toCode(), category.getValue().getSystem());
-						resourcemetadataList.add(rCategory);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", category.getValue().toCode(), category.getValue().getSystem());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
@@ -148,89 +124,69 @@ public class ResourcemetadataAllergyIntolerance extends ResourcemetadataProxy {
 			// clinical-status : token
 			if (allergyIntolerance.hasClinicalStatus() && allergyIntolerance.getClinicalStatus().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : allergyIntolerance.getClinicalStatus().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"clinical-status", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"clinical-status", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// code : token
 			if (allergyIntolerance.hasCode() && allergyIntolerance.getCode().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : allergyIntolerance.getCode().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// criticality : token
 			if (allergyIntolerance.hasCriticality() && allergyIntolerance.getCriticality() != null) {
-				Resourcemetadata rCriticality = generateResourcemetadata(resource, chainedResource, chainedParameter+"criticality", allergyIntolerance.getCriticality().toCode(), allergyIntolerance.getCriticality().getSystem());
-				resourcemetadataList.add(rCriticality);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"criticality", allergyIntolerance.getCriticality().toCode(), allergyIntolerance.getCriticality().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// date : date
 			if (allergyIntolerance.hasRecordedDate()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(allergyIntolerance.getRecordedDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(allergyIntolerance.getRecordedDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(allergyIntolerance.getRecordedDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(allergyIntolerance.getRecordedDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (allergyIntolerance.hasIdentifier()) {
 
 				for (Identifier identifier : allergyIntolerance.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// last-date : date
 			if (allergyIntolerance.hasLastOccurrence()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"last-date", utcDateUtil.formatDate(allergyIntolerance.getLastOccurrence(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(allergyIntolerance.getLastOccurrence(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"last-date", utcDateUtil.formatDate(allergyIntolerance.getLastOccurrence(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(allergyIntolerance.getLastOccurrence(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// patient : reference
-			if (allergyIntolerance.hasPatient() && allergyIntolerance.getPatient().hasReference()) {
-				String patientReference = generateFullLocalReference(allergyIntolerance.getPatient().getReference(), baseUrl);
-
-				Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", patientReference);
-				resourcemetadataList.add(rPatient);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, allergyIntolerance.getPatient().getReference(), null);
-					resourcemetadataList.addAll(rPatientChain);
-				}
+			if (allergyIntolerance.hasPatient()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, allergyIntolerance.getPatient(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// recorder : reference
-			if (allergyIntolerance.hasRecorder() && allergyIntolerance.getRecorder().hasReference()) {
-				String recorderReference = generateFullLocalReference(allergyIntolerance.getRecorder().getReference(), baseUrl);
-
-				Resourcemetadata rRecorder = generateResourcemetadata(resource, chainedResource, chainedParameter+"recorder", recorderReference);
-				resourcemetadataList.add(rRecorder);
-
-				if (chainedResource == null) {
-					// Add chained parameters for any
-					List<Resourcemetadata> rRecorderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "recorder", 0, allergyIntolerance.getRecorder().getReference(), null);
-					resourcemetadataList.addAll(rRecorderChain);
-				}
+			if (allergyIntolerance.hasRecorder()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "recorder", 0, allergyIntolerance.getRecorder(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// type : token
 			if (allergyIntolerance.hasType() && allergyIntolerance.getType() != null) {
-				Resourcemetadata rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", allergyIntolerance.getType().toCode(), allergyIntolerance.getType().getSystem());
-				resourcemetadataList.add(rType);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", allergyIntolerance.getType().toCode(), allergyIntolerance.getType().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// AllergyIntolerance.reaction parameters
 			if (allergyIntolerance.hasReaction()) {
 
-				Resourcemetadata rCode = null;
 				for (AllergyIntoleranceReactionComponent reaction : allergyIntolerance.getReaction()) {
 
 					// reaction.manifestation : token
@@ -240,8 +196,8 @@ public class ResourcemetadataAllergyIntolerance extends ResourcemetadataProxy {
 
 							if (manifestation.hasCoding()) {
 								for (Coding code : manifestation.getCoding()) {
-									rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"manifestation", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-									resourcemetadataList.add(rCode);
+									rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"manifestation", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+									resourcemetadataList.add(rMetadata);
 								}
 							}
 						}
@@ -249,31 +205,31 @@ public class ResourcemetadataAllergyIntolerance extends ResourcemetadataProxy {
 
 					// reaction.onset : date
 					if (reaction.hasOnset()) {
-						Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"onset", utcDateUtil.formatDate(reaction.getOnset(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(reaction.getOnset(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-						resourcemetadataList.add(rDate);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"onset", utcDateUtil.formatDate(reaction.getOnset(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(reaction.getOnset(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// reaction.route : token
 					if (reaction.hasExposureRoute() && reaction.getExposureRoute().hasCoding()) {
 
 						for (Coding code : reaction.getExposureRoute().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"route", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"route", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 
 					// reaction.severity : token
 					if (reaction.hasSeverity() && reaction.getSeverity() != null) {
-						Resourcemetadata rSeverity = generateResourcemetadata(resource, chainedResource, chainedParameter+"severity", reaction.getSeverity().toCode(), reaction.getSeverity().getSystem());
-						resourcemetadataList.add(rSeverity);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"severity", reaction.getSeverity().toCode(), reaction.getSeverity().getSystem());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// reaction.substance(code) : token
 					if (reaction.hasSubstance() && reaction.getSubstance().hasCoding()) {
 
 						for (Coding code : reaction.getSubstance().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -282,10 +238,9 @@ public class ResourcemetadataAllergyIntolerance extends ResourcemetadataProxy {
 			// verification-status : token
 			if (allergyIntolerance.hasVerificationStatus() && allergyIntolerance.getVerificationStatus().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : allergyIntolerance.getVerificationStatus().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"verification-status", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"verification-status", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -294,6 +249,8 @@ public class ResourcemetadataAllergyIntolerance extends ResourcemetadataProxy {
 			e.printStackTrace();
 			throw e;
         } finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
             if (iAllergyIntolerance != null) {
                 try {
                 	iAllergyIntolerance.close();

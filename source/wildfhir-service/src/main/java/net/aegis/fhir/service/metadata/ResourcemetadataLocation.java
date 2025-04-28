@@ -36,7 +36,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -51,7 +50,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -79,6 +77,8 @@ public class ResourcemetadataLocation extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iLocation = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Location object
@@ -96,27 +96,9 @@ public class ResourcemetadataLocation extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Location metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, location, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (location.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", location.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (location.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", location.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (location.getMeta() != null && location.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(location.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(location.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, location, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// address : string
 			if (location.hasAddress()) {
@@ -141,8 +123,8 @@ public class ResourcemetadataLocation extends ResourcemetadataProxy {
 						sbAddress.append(" ");
 					}
 					sbAddress.append(location.getAddress().getCity());
-					Resourcemetadata rCity = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-city", location.getAddress().getCity());
-					resourcemetadataList.add(rCity);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-city", location.getAddress().getCity());
+					resourcemetadataList.add(rMetadata);
 				}
 
 				// address-state : string
@@ -151,8 +133,18 @@ public class ResourcemetadataLocation extends ResourcemetadataProxy {
 						sbAddress.append(" ");
 					}
 					sbAddress.append(location.getAddress().getState());
-					Resourcemetadata rState = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-state", location.getAddress().getState());
-					resourcemetadataList.add(rState);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-state", location.getAddress().getState());
+					resourcemetadataList.add(rMetadata);
+				}
+
+				// address-district : string
+				if (location.getAddress().hasDistrict()) {
+					if (sbAddress.length() > 0) {
+						sbAddress.append(" ");
+					}
+					sbAddress.append(location.getAddress().getDistrict());
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-district", location.getAddress().getDistrict());
+					resourcemetadataList.add(rMetadata);
 				}
 
 				// address-country : string
@@ -161,8 +153,8 @@ public class ResourcemetadataLocation extends ResourcemetadataProxy {
 						sbAddress.append(" ");
 					}
 					sbAddress.append(location.getAddress().getCountry());
-					Resourcemetadata rCountry = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-country", location.getAddress().getCountry());
-					resourcemetadataList.add(rCountry);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-country", location.getAddress().getCountry());
+					resourcemetadataList.add(rMetadata);
 				}
 
 				// address-postalcode : string
@@ -171,14 +163,14 @@ public class ResourcemetadataLocation extends ResourcemetadataProxy {
 						sbAddress.append(" ");
 					}
 					sbAddress.append(location.getAddress().getPostalCode());
-					Resourcemetadata rPostalCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-postalcode", location.getAddress().getPostalCode());
-					resourcemetadataList.add(rPostalCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-postalcode", location.getAddress().getPostalCode());
+					resourcemetadataList.add(rMetadata);
 				}
 
 				// address-use : token
 				if (location.getAddress().hasUse() && location.getAddress().getUse() != null) {
-					Resourcemetadata rUse = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-use", location.getAddress().getUse().toCode(), location.getAddress().getUse().getSystem());
-					resourcemetadataList.add(rUse);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-use", location.getAddress().getUse().toCode(), location.getAddress().getUse().getSystem());
+					resourcemetadataList.add(rMetadata);
 				}
 
 				// address : string
@@ -190,8 +182,8 @@ public class ResourcemetadataLocation extends ResourcemetadataProxy {
 				}
 
 				if (sbAddress.length() > 0) {
-					Resourcemetadata rAddress = generateResourcemetadata(resource, chainedResource, chainedParameter+"address", sbAddress.toString());
-					resourcemetadataList.add(rAddress);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address", sbAddress.toString());
+					resourcemetadataList.add(rMetadata);
 				}
 
 			}
@@ -199,48 +191,31 @@ public class ResourcemetadataLocation extends ResourcemetadataProxy {
 			// endpoint : reference
 			if (location.hasEndpoint()) {
 
-				Resourcemetadata rEndpoint = null;
-				String endpointReference = null;
-				List<Resourcemetadata> rEndpointChain = null;
 				for (Reference endpoint : location.getEndpoint()) {
-
-					if (endpoint.hasReference()) {
-						endpointReference = generateFullLocalReference(endpoint.getReference(), baseUrl);
-
-						rEndpoint = generateResourcemetadata(resource, chainedResource, chainedParameter+"endpoint", endpointReference);
-						resourcemetadataList.add(rEndpoint);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rEndpointChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "endpoint", 0, endpoint.getReference(), null);
-							resourcemetadataList.addAll(rEndpointChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "endpoint", 0, endpoint, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// identifier : token
 			if (location.getIdentifier() != null) {
 
-				Resourcemetadata rIdentifier = null;
 				for (Identifier identifier : location.getIdentifier()) {
-
-					rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// name : string
 			if (location.hasName()) {
-				Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", location.getName());
-				resourcemetadataList.add(rName);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", location.getName());
+				resourcemetadataList.add(rMetadata);
 			}
 			if (location.hasAlias()) {
 
 				for (StringType alias : location.getAlias()) {
-
-					Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", alias.getValue());
-					resourcemetadataList.add(rName);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", alias.getValue());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -262,56 +237,42 @@ public class ResourcemetadataLocation extends ResourcemetadataProxy {
 					sLongitude = location.getPosition().getLongitude().toPlainString();
 				}
 
-				Resourcemetadata rNear = generateResourcemetadata(resource, chainedResource, chainedParameter+"near", sLatitude, sLongitude);
-				resourcemetadataList.add(rNear);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"near", sLatitude, sLongitude);
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// operational-status : token
 			if (location.hasOperationalStatus()) {
-				Resourcemetadata rOperationalStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"operational-status", location.getOperationalStatus().getCode(), location.getOperationalStatus().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(location.getOperationalStatus()));
-				resourcemetadataList.add(rOperationalStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"operational-status", location.getOperationalStatus().getCode(), location.getOperationalStatus().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(location.getOperationalStatus()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// organization : reference
-			if (location.hasManagingOrganization() && location.getManagingOrganization().hasReference()) {
-				Resourcemetadata rOrganization = generateResourcemetadata(resource, chainedResource, chainedParameter+"organization", generateFullLocalReference(location.getManagingOrganization().getReference(), baseUrl));
-				resourcemetadataList.add(rOrganization);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rOrganizationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "organization", 0, location.getManagingOrganization().getReference(), null);
-					resourcemetadataList.addAll(rOrganizationChain);
-				}
+			if (location.hasManagingOrganization()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "organization", 0, location.getManagingOrganization(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// partof : reference
-			if (location.hasPartOf() && location.getPartOf().hasReference()) {
-				Resourcemetadata rPartOf = generateResourcemetadata(resource, chainedResource, chainedParameter+"partof", generateFullLocalReference(location.getPartOf().getReference(), baseUrl));
-				resourcemetadataList.add(rPartOf);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPartOfChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "partof", 0, location.getPartOf().getReference(), null);
-					resourcemetadataList.addAll(rPartOfChain);
-				}
+			if (location.hasPartOf()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "partof", 0, location.getPartOf(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// status : token
 			if (location.hasStatus() && location.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", location.getStatus().toCode(), location.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", location.getStatus().toCode(), location.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// type : token
 			if (location.hasType()) {
-
-				Resourcemetadata rType = null;
 				for (CodeableConcept locationType : location.getType()) {
 
 					if (locationType.hasCoding()) {
 						for (Coding type : locationType.getCoding()) {
-							rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-							resourcemetadataList.add(rType);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -322,6 +283,8 @@ public class ResourcemetadataLocation extends ResourcemetadataProxy {
 			e.printStackTrace();
 			throw e;
         } finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
             if (iLocation != null) {
                 try {
                     iLocation.close();

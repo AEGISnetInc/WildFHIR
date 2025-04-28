@@ -33,9 +33,9 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -49,7 +49,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -77,6 +76,8 @@ public class ResourcemetadataMedicinalProduct extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iMedicinalProduct = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a MedicinalProduct object
@@ -94,27 +95,9 @@ public class ResourcemetadataMedicinalProduct extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each MedicinalProduct metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, medicinalProduct, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (medicinalProduct.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", medicinalProduct.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (medicinalProduct.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", medicinalProduct.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (medicinalProduct.getMeta() != null && medicinalProduct.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(medicinalProduct.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(medicinalProduct.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, medicinalProduct, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// identifier : token
 			if (medicinalProduct.hasIdentifier()) {
@@ -130,13 +113,11 @@ public class ResourcemetadataMedicinalProduct extends ResourcemetadataProxy {
 			// name-language : token
 			if (medicinalProduct.hasName()) {
 
-				Resourcemetadata rCode = null;
-				Resourcemetadata rName = null;
 				for (MedicinalProductNameComponent name : medicinalProduct.getName()) {
 
 					if (name.hasProductName()) {
-						rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", name.getProductName());
-						resourcemetadataList.add(rName);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", name.getProductName());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					if (name.hasCountryLanguage()) {
@@ -144,8 +125,8 @@ public class ResourcemetadataMedicinalProduct extends ResourcemetadataProxy {
 
 							if (countryLanguage.hasLanguage() && countryLanguage.getLanguage().hasCoding()) {
 								for (Coding code : countryLanguage.getLanguage().getCoding()) {
-									rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"name-language", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-									resourcemetadataList.add(rCode);
+									rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name-language", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+									resourcemetadataList.add(rMetadata);
 
 								}
 							}
@@ -157,10 +138,9 @@ public class ResourcemetadataMedicinalProduct extends ResourcemetadataProxy {
 			// type : token
 			if (medicinalProduct.hasType() && medicinalProduct.getType().hasCoding()) {
 
-				Resourcemetadata rType = null;
 				for (Coding type : medicinalProduct.getType().getCoding()) {
-					rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-					resourcemetadataList.add(rType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -168,6 +148,16 @@ public class ResourcemetadataMedicinalProduct extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iMedicinalProduct != null) {
+                try {
+                	iMedicinalProduct.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

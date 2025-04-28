@@ -33,9 +33,9 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -44,7 +44,6 @@ import org.hl7.fhir.r4.model.SubstanceSourceMaterial;
 import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -72,6 +71,7 @@ public class ResourcemetadataSubstanceSourceMaterial extends ResourcemetadataPro
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iSubstanceSourceMaterial = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a SubstanceSourceMaterial object
@@ -89,32 +89,23 @@ public class ResourcemetadataSubstanceSourceMaterial extends ResourcemetadataPro
              * Create new Resourcemetadata objects for each SubstanceSourceMaterial metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, substanceSourceMaterial, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (substanceSourceMaterial.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", substanceSourceMaterial.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (substanceSourceMaterial.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", substanceSourceMaterial.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (substanceSourceMaterial.getMeta() != null && substanceSourceMaterial.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(substanceSourceMaterial.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(substanceSourceMaterial.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, substanceSourceMaterial, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadataChain = null;
+            if (iSubstanceSourceMaterial != null) {
+                try {
+                	iSubstanceSourceMaterial.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

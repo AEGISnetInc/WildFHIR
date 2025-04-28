@@ -33,9 +33,9 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -46,7 +46,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -74,6 +73,8 @@ public class ResourcemetadataGuidanceResponse extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iGuidanceResponse = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a GuidanceResponse object
@@ -91,74 +92,52 @@ public class ResourcemetadataGuidanceResponse extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each GuidanceResponse metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, guidanceResponse, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (guidanceResponse.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", guidanceResponse.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (guidanceResponse.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", guidanceResponse.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (guidanceResponse.getMeta() != null && guidanceResponse.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(guidanceResponse.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(guidanceResponse.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, guidanceResponse, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// identifier : token
 			if (guidanceResponse.hasIdentifier()) {
 
 				for (Identifier identifier : guidanceResponse.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
-			// patient : reference
 			// subject : reference
-			if (guidanceResponse.hasSubject() && guidanceResponse.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(guidanceResponse.getSubject().getReference(), baseUrl);
+			if (guidanceResponse.hasSubject()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, guidanceResponse.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, guidanceResponse.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, guidanceResponse.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((guidanceResponse.getSubject().hasReference() && guidanceResponse.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (guidanceResponse.getSubject().hasType() && guidanceResponse.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, guidanceResponse.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// request : token
 			if (guidanceResponse.hasRequestIdentifier()) {
-				Resourcemetadata rRequest = generateResourcemetadata(resource, chainedResource, chainedParameter+"request", guidanceResponse.getRequestIdentifier().getValue(), guidanceResponse.getRequestIdentifier().getSystem());
-				resourcemetadataList.add(rRequest);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"request", guidanceResponse.getRequestIdentifier().getValue(), guidanceResponse.getRequestIdentifier().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iGuidanceResponse != null) {
+                try {
+                	iGuidanceResponse.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

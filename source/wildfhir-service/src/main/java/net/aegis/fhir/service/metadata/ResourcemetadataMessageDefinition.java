@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -80,6 +81,8 @@ public class ResourcemetadataMessageDefinition extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iMessageDefinition = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a MessageDefinition object
@@ -97,32 +100,14 @@ public class ResourcemetadataMessageDefinition extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each MessageDefinition metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource,messageDefinition, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (messageDefinition.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", messageDefinition.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (messageDefinition.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", messageDefinition.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (messageDefinition.getMeta() != null && messageDefinition.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(messageDefinition.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(messageDefinition.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, messageDefinition, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// category : token
 			if (messageDefinition.hasCategory() && messageDefinition.getCategory() != null) {
-				Resourcemetadata rCategory = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", messageDefinition.getCategory().toCode(), messageDefinition.getCategory().getSystem());
-				resourcemetadataList.add(rCategory);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", messageDefinition.getCategory().toCode(), messageDefinition.getCategory().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// context-type-[x] : composite
@@ -134,8 +119,8 @@ public class ResourcemetadataMessageDefinition extends ResourcemetadataProxy {
 				for (UsageContext context : messageDefinition.getUseContext()) {
 
 					// context-type : token
-					Resourcemetadata rContextType = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type", context.getCode().getCode(), context.getCode().getSystem());
-					resourcemetadataList.add(rContextType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type", context.getCode().getCode(), context.getCode().getSystem());
+					resourcemetadataList.add(rMetadata);
 
 					// Start building the context-type-[x] composite
 					if (context.getCode().hasSystem()) {
@@ -145,10 +130,9 @@ public class ResourcemetadataMessageDefinition extends ResourcemetadataProxy {
 
 					if (context.hasValueCodeableConcept() && context.getValueCodeableConcept().hasCoding()) {
 						// context : token
-						Resourcemetadata rCode = null;
 						for (Coding code : context.getValueCodeableConcept().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"context", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 
 						// context-type-value : composite
@@ -158,15 +142,15 @@ public class ResourcemetadataMessageDefinition extends ResourcemetadataProxy {
 						}
 						conextTypeComposite.append("|").append(context.getValueCodeableConcept().getCodingFirstRep().getCode());
 
-						Resourcemetadata rContextTypeValue = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-value", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
-						resourcemetadataList.add(rContextTypeValue);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-value", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
+						resourcemetadataList.add(rMetadata);
 					}
 
 					if (context.hasValueQuantity()) {
 						// context-quantity : quantity
 						String quantityCode = (context.getValueQuantity().getCode() != null ? context.getValueQuantity().getCode() : context.getValueQuantity().getUnit());
-						Resourcemetadata rContextQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", context.getValueQuantity().getValue().toPlainString(), context.getValueQuantity().getSystem(), quantityCode);
-						resourcemetadataList.add(rContextQuantity);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", context.getValueQuantity().getValue().toPlainString(), context.getValueQuantity().getSystem(), quantityCode);
+						resourcemetadataList.add(rMetadata);
 
 						// context-type-quantity : composite
 						conextTypeComposite.append("$");
@@ -179,8 +163,8 @@ public class ResourcemetadataMessageDefinition extends ResourcemetadataProxy {
 						}
 						conextTypeComposite.append("|").append(quantityCode);
 
-						Resourcemetadata rContextTypeQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
-						resourcemetadataList.add(rContextTypeQuantity);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
+						resourcemetadataList.add(rMetadata);
 					}
 
 					if (context.hasValueRange()) {
@@ -195,8 +179,8 @@ public class ResourcemetadataMessageDefinition extends ResourcemetadataProxy {
 						}
 						if (rangeValue != null) {
 							quantityCode = (rangeValue.getCode() != null ? rangeValue.getCode() : rangeValue.getUnit());
-							Resourcemetadata rContextQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", rangeValue.getValue().toPlainString(), rangeValue.getSystem(), quantityCode);
-							resourcemetadataList.add(rContextQuantity);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-quantity", rangeValue.getValue().toPlainString(), rangeValue.getSystem(), quantityCode);
+							resourcemetadataList.add(rMetadata);
 
 							// context-type-quantity : composite
 							conextTypeComposite.append("$");
@@ -209,8 +193,8 @@ public class ResourcemetadataMessageDefinition extends ResourcemetadataProxy {
 							}
 							conextTypeComposite.append("|").append(quantityCode);
 
-							Resourcemetadata rContextTypeQuantity = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
-							resourcemetadataList.add(rContextTypeQuantity);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"context-type-quantity", conextTypeComposite.toString(), null, null, null, "COMPOSITE");
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -218,35 +202,33 @@ public class ResourcemetadataMessageDefinition extends ResourcemetadataProxy {
 
 			// date : date
 			if (messageDefinition.hasDate()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(messageDefinition.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(messageDefinition.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(messageDefinition.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(messageDefinition.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// description : string
 			if (messageDefinition.hasDescription()) {
-				Resourcemetadata rDescription = generateResourcemetadata(resource, chainedResource, chainedParameter+"description", messageDefinition.getDescription());
-				resourcemetadataList.add(rDescription);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"description", messageDefinition.getDescription());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// event : token
 			if (messageDefinition.hasEventUriType()) {
-				Resourcemetadata rEvent = generateResourcemetadata(resource, chainedResource, chainedParameter+"event", messageDefinition.getEventUriType().getValue());
-				resourcemetadataList.add(rEvent);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"event", messageDefinition.getEventUriType().getValue());
+				resourcemetadataList.add(rMetadata);
 			}
 			if (messageDefinition.hasEventCoding()) {
-				Resourcemetadata rEvent = generateResourcemetadata(resource, chainedResource, chainedParameter+"event", messageDefinition.getEventCoding().getCode(), messageDefinition.getEventCoding().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(messageDefinition.getEventCoding()));
-				resourcemetadataList.add(rEvent);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"event", messageDefinition.getEventCoding().getCode(), messageDefinition.getEventCoding().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(messageDefinition.getEventCoding()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// focus : token
 			if (messageDefinition.hasFocus()) {
-
 				for (MessageDefinitionFocusComponent focus : messageDefinition.getFocus()) {
 
 					if (focus.hasCode()) {
-
-						Resourcemetadata rFocus = generateResourcemetadata(resource, chainedResource, chainedParameter+"focus", focus.getCode());
-						resourcemetadataList.add(rFocus);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"focus", focus.getCode());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
@@ -255,22 +237,19 @@ public class ResourcemetadataMessageDefinition extends ResourcemetadataProxy {
 			if (messageDefinition.hasIdentifier()) {
 
 				for (Identifier identifier : messageDefinition.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// jurisdiction : token
 			if (messageDefinition.hasJurisdiction()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept jurisdiction : messageDefinition.getJurisdiction()) {
 
 					if (jurisdiction.hasCoding()) {
 						for (Coding code : jurisdiction.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"jurisdiction", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"jurisdiction", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -278,62 +257,69 @@ public class ResourcemetadataMessageDefinition extends ResourcemetadataProxy {
 
 			// name : string
 			if (messageDefinition.hasName()) {
-				Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", messageDefinition.getName());
-				resourcemetadataList.add(rName);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", messageDefinition.getName());
+				resourcemetadataList.add(rMetadata);
 			}
 
-			// parent : reference
+			// parent : reference - parent is a Canonical, no Reference.identifier
 			if (messageDefinition.hasParent()) {
-
-				Resourcemetadata rParent = null;
-				List<Resourcemetadata> rParentChain = null;
 				for (CanonicalType parent : messageDefinition.getParent()) {
 
-					rParent = generateResourcemetadata(resource, chainedResource, chainedParameter+"parent", generateFullLocalReference(parent.asStringValue(), baseUrl));
-					resourcemetadataList.add(rParent);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"parent", generateFullLocalReference(parent.asStringValue(), baseUrl));
+					resourcemetadataList.add(rMetadata);
 
 					if (chainedResource == null) {
 						// Add chained parameters for any
-						rParentChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "parent", 0, parent.asStringValue(), null);
-						resourcemetadataList.addAll(rParentChain);
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "parent", 0, parent.asStringValue(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
 
 			// publisher : string
 			if (messageDefinition.hasPublisher()) {
-				Resourcemetadata rPublisher = generateResourcemetadata(resource, chainedResource, chainedParameter+"publisher", messageDefinition.getPublisher());
-				resourcemetadataList.add(rPublisher);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"publisher", messageDefinition.getPublisher());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// status : token
 			if (messageDefinition.hasStatus() && messageDefinition.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", messageDefinition.getStatus().toCode(), messageDefinition.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", messageDefinition.getStatus().toCode(), messageDefinition.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// title : string
 			if (messageDefinition.hasTitle()) {
-				Resourcemetadata rTitle = generateResourcemetadata(resource, chainedResource, chainedParameter+"title", messageDefinition.getTitle());
-				resourcemetadataList.add(rTitle);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"title", messageDefinition.getTitle());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// url : uri
 			if (messageDefinition.hasUrl()) {
-				Resourcemetadata rUrl = generateResourcemetadata(resource, chainedResource, chainedParameter+"url", messageDefinition.getUrl());
-				resourcemetadataList.add(rUrl);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"url", messageDefinition.getUrl());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// version : string
 			if (messageDefinition.hasVersion()) {
-				Resourcemetadata rVersion = generateResourcemetadata(resource, chainedResource, chainedParameter+"version", messageDefinition.getVersion());
-				resourcemetadataList.add(rVersion);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"version", messageDefinition.getVersion());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iMessageDefinition != null) {
+                try {
+                	iMessageDefinition.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

@@ -33,9 +33,9 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -47,7 +47,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -75,6 +74,8 @@ public class ResourcemetadataMedicinalProductContraindication extends Resourceme
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iMedicinalProductContraindication = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a MedicinalProductContraindication object
@@ -92,55 +93,25 @@ public class ResourcemetadataMedicinalProductContraindication extends Resourceme
              * Create new Resourcemetadata objects for each MedicinalProductContraindication metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, medicinalProductContraindication, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (medicinalProductContraindication.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", medicinalProductContraindication.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (medicinalProductContraindication.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", medicinalProductContraindication.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (medicinalProductContraindication.getMeta() != null && medicinalProductContraindication.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(medicinalProductContraindication.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(medicinalProductContraindication.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, medicinalProductContraindication, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// disease : token
 			if (medicinalProductContraindication.hasDisease() && medicinalProductContraindication.getDisease().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : medicinalProductContraindication.getDisease().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"disease", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"disease", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// subject : reference
 			if (medicinalProductContraindication.hasSubject()) {
 
-				Resourcemetadata rSubject = null;
-				List<Resourcemetadata> rSubjectChain = null;
 				for (Reference subject : medicinalProductContraindication.getSubject()) {
-
-					if (subject.hasReference()) {
-						rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", generateFullLocalReference(subject.getReference(), baseUrl));
-						resourcemetadataList.add(rSubject);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, subject.getReference(), null);
-							resourcemetadataList.addAll(rSubjectChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, subject, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -148,6 +119,16 @@ public class ResourcemetadataMedicinalProductContraindication extends Resourceme
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iMedicinalProductContraindication != null) {
+                try {
+                	iMedicinalProductContraindication.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

@@ -36,7 +36,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -52,7 +51,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -80,6 +78,8 @@ public class ResourcemetadataInsurancePlan extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iInsurancePlan = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a InsurancePlan object
@@ -97,27 +97,9 @@ public class ResourcemetadataInsurancePlan extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each InsurancePlan metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, insurancePlan, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (insurancePlan.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", insurancePlan.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (insurancePlan.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", insurancePlan.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (insurancePlan.getMeta() != null && insurancePlan.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(insurancePlan.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(insurancePlan.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, insurancePlan, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// address : string
 			if (insurancePlan.hasContact()) {
@@ -146,8 +128,8 @@ public class ResourcemetadataInsurancePlan extends ResourcemetadataProxy {
 								sbAddress.append(" ");
 							}
 							sbAddress.append(contact.getAddress().getCity());
-							Resourcemetadata rCity = generateResourcemetadata(resource, chainedResource, chainedParameter + "address-city", contact.getAddress().getCity());
-							resourcemetadataList.add(rCity);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "address-city", contact.getAddress().getCity());
+							resourcemetadataList.add(rMetadata);
 						}
 
 						// address-state : string
@@ -156,8 +138,18 @@ public class ResourcemetadataInsurancePlan extends ResourcemetadataProxy {
 								sbAddress.append(" ");
 							}
 							sbAddress.append(contact.getAddress().getState());
-							Resourcemetadata rState = generateResourcemetadata(resource, chainedResource, chainedParameter + "address-state", contact.getAddress().getState());
-							resourcemetadataList.add(rState);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "address-state", contact.getAddress().getState());
+							resourcemetadataList.add(rMetadata);
+						}
+
+						// address-district : string
+						if (contact.getAddress().hasDistrict()) {
+							if (sbAddress.length() > 0) {
+								sbAddress.append(" ");
+							}
+							sbAddress.append(contact.getAddress().getDistrict());
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-district", contact.getAddress().getDistrict());
+							resourcemetadataList.add(rMetadata);
 						}
 
 						// address-country : string
@@ -166,8 +158,8 @@ public class ResourcemetadataInsurancePlan extends ResourcemetadataProxy {
 								sbAddress.append(" ");
 							}
 							sbAddress.append(contact.getAddress().getCountry());
-							Resourcemetadata rCountry = generateResourcemetadata(resource, chainedResource, chainedParameter + "address-country", contact.getAddress().getCountry());
-							resourcemetadataList.add(rCountry);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "address-country", contact.getAddress().getCountry());
+							resourcemetadataList.add(rMetadata);
 						}
 
 						// address-postalcode : string
@@ -176,14 +168,14 @@ public class ResourcemetadataInsurancePlan extends ResourcemetadataProxy {
 								sbAddress.append(" ");
 							}
 							sbAddress.append(contact.getAddress().getPostalCode());
-							Resourcemetadata rPostalCode = generateResourcemetadata(resource, chainedResource, chainedParameter + "address-postalcode", contact.getAddress().getPostalCode());
-							resourcemetadataList.add(rPostalCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "address-postalcode", contact.getAddress().getPostalCode());
+							resourcemetadataList.add(rMetadata);
 						}
 
 						// address-use : token
 						if (contact.getAddress().hasUse() && contact.getAddress().getUse() != null) {
-							Resourcemetadata rUse = generateResourcemetadata(resource, chainedResource, chainedParameter + "address-use", contact.getAddress().getUse().toCode(), contact.getAddress().getUse().getSystem());
-							resourcemetadataList.add(rUse);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "address-use", contact.getAddress().getUse().toCode(), contact.getAddress().getUse().getSystem());
+							resourcemetadataList.add(rMetadata);
 						}
 
 						// address : string
@@ -195,104 +187,73 @@ public class ResourcemetadataInsurancePlan extends ResourcemetadataProxy {
 						}
 
 						if (sbAddress.length() > 0) {
-							Resourcemetadata rAddress = generateResourcemetadata(resource, chainedResource, chainedParameter + "address", sbAddress.toString());
-							resourcemetadataList.add(rAddress);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "address", sbAddress.toString());
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
 			}
 
 			// administered-by : reference
-			if (insurancePlan.hasAdministeredBy() && insurancePlan.getAdministeredBy().hasReference()) {
-				Resourcemetadata rAdministeredBy = generateResourcemetadata(resource, chainedResource, chainedParameter+"administered-by", generateFullLocalReference(insurancePlan.getAdministeredBy().getReference(), baseUrl));
-				resourcemetadataList.add(rAdministeredBy);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rAdministeredByChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "administered-by", 0, insurancePlan.getAdministeredBy().getReference(), null);
-					resourcemetadataList.addAll(rAdministeredByChain);
-				}
+			if (insurancePlan.hasAdministeredBy()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "administered-by", 0, insurancePlan.getAdministeredBy(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// endpoint : reference
 			if (insurancePlan.hasEndpoint()) {
 
-				String endpointReference = null;
-				Resourcemetadata rEndpoint = null;
-				List<Resourcemetadata> rEndpointChain = null;
 				for (Reference endpoint : insurancePlan.getEndpoint()) {
-
-					if (endpoint.hasReference()) {
-						endpointReference = generateFullLocalReference(endpoint.getReference(), baseUrl);
-
-						rEndpoint = generateResourcemetadata(resource, chainedResource, chainedParameter+"endpoint", endpointReference);
-						resourcemetadataList.add(rEndpoint);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rEndpointChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "endpoint", 0, endpoint.getReference(), null);
-							resourcemetadataList.addAll(rEndpointChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "endpoint", 0, endpoint, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// identifier : token
 			if (insurancePlan.getIdentifier() != null) {
 
-				Resourcemetadata rIdentifier = null;
 				for (Identifier identifier : insurancePlan.getIdentifier()) {
-
-					rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// name : string
 			// phonetic : string
 			if (insurancePlan.hasName()) {
-				Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", insurancePlan.getName());
-				resourcemetadataList.add(rName);
-				rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"phonetic", insurancePlan.getName());
-				resourcemetadataList.add(rName);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", insurancePlan.getName());
+				resourcemetadataList.add(rMetadata);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"phonetic", insurancePlan.getName());
+				resourcemetadataList.add(rMetadata);
 			}
 			if (insurancePlan.hasAlias()) {
 
 				for (StringType alias : insurancePlan.getAlias()) {
-
-					Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", alias.getValue());
-					resourcemetadataList.add(rName);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", alias.getValue());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// owned-by : reference
-			if (insurancePlan.hasOwnedBy() && insurancePlan.getOwnedBy().hasReference()) {
-				Resourcemetadata rOwnedBy = generateResourcemetadata(resource, chainedResource, chainedParameter+"owned-by", generateFullLocalReference(insurancePlan.getOwnedBy().getReference(), baseUrl));
-				resourcemetadataList.add(rOwnedBy);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rOwnedByChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "owned-by", 0, insurancePlan.getOwnedBy().getReference(), null);
-					resourcemetadataList.addAll(rOwnedByChain);
-				}
+			if (insurancePlan.hasOwnedBy()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "owned-by", 0, insurancePlan.getOwnedBy(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// status : token
 			if (insurancePlan.hasStatus() && insurancePlan.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", insurancePlan.getStatus().toCode(), insurancePlan.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", insurancePlan.getStatus().toCode(), insurancePlan.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// type : token
 			if (insurancePlan.hasType()) {
-
-				Resourcemetadata rType = null;
 				for (CodeableConcept insuranceType : insurancePlan.getType()) {
 
 					if (insuranceType.hasCoding()) {
 						for (Coding type : insuranceType.getCoding()) {
-							rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-							resourcemetadataList.add(rType);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -303,6 +264,8 @@ public class ResourcemetadataInsurancePlan extends ResourcemetadataProxy {
 			e.printStackTrace();
 			throw e;
         } finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
             if (iInsurancePlan != null) {
                 try {
                     iInsurancePlan.close();

@@ -1390,6 +1390,7 @@ public class ResourceType {
 		globalResourceCriteria.add(new LabelKeyValueBean("When the resource version last changed", "_lastUpdated", "", "DATE", "http://hl7.org/fhir/SearchParameter/Resource-lastUpdated"));
 		globalResourceCriteria.add(new LabelKeyValueBean("Profiles this resource claims to conform to", "_profile", "", "URI", "http://hl7.org/fhir/SearchParameter/Resource-profile"));
 		globalResourceCriteria.add(new LabelKeyValueBean("Security Labels applied to this resource", "_security", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/Resource-security"));
+		globalResourceCriteria.add(new LabelKeyValueBean("Identifies where the resource comes from", "_source", "", "URI", "http://hl7.org/fhir/SearchParameter/Resource-source"));
 		globalResourceCriteria.add(new LabelKeyValueBean("Tags applied", "_tag", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/Resource-tag"));
 		globalResourceCriteria.add(new LabelKeyValueBean("Type of resource (when doing cross-resource search", "_type", "", "TOKEN"));
 		// Move all '_' parameters to global
@@ -2471,6 +2472,8 @@ public class ResourceType {
 		resourceCriteria.add(new LabelKeyValueBean("A server defined search that may match any of the string fields in the Address, including line, city, district, state, country, postalCode, and/or text", "address", "", "STRING", "http://hl7.org/fhir/SearchParameter/InsurancePlan-address"));
 		resourceCriteria.add(new LabelKeyValueBean("A city specified in an address", "address-city", "", "STRING", "http://hl7.org/fhir/SearchParameter/InsurancePlan-address-city"));
 		resourceCriteria.add(new LabelKeyValueBean("A country specified in an address", "address-country", "", "STRING", "http://hl7.org/fhir/SearchParameter/InsurancePlan-address-country"));
+		// AEGIS Extra Search Parameter address-district
+		resourceCriteria.add(new LabelKeyValueBean("A district specified in an address", "address-district", "", "STRING"));
 		resourceCriteria.add(new LabelKeyValueBean("A postal code specified in an address", "address-postalcode", "", "STRING", "http://hl7.org/fhir/SearchParameter/InsurancePlan-address-postalcode"));
 		resourceCriteria.add(new LabelKeyValueBean("A state specified in an address", "address-state", "", "STRING", "http://hl7.org/fhir/SearchParameter/InsurancePlan-address-state"));
 		resourceCriteria.add(new LabelKeyValueBean("A use code specified in an address", "address-use", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/InsurancePlan-address-use"));
@@ -2552,6 +2555,8 @@ public class ResourceType {
 		resourceCriteria.add(new LabelKeyValueBean("A (part of the) address of the location", "address", "", "STRING", "http://hl7.org/fhir/SearchParameter/Location-address"));
 		resourceCriteria.add(new LabelKeyValueBean("A city specified in an address", "address-city", "", "STRING", "http://hl7.org/fhir/SearchParameter/Location-address-city"));
 		resourceCriteria.add(new LabelKeyValueBean("A country specified in an address", "address-country", "", "STRING", "http://hl7.org/fhir/SearchParameter/Location-address-country"));
+		// AEGIS Extra Search Parameter address-district
+		resourceCriteria.add(new LabelKeyValueBean("A district specified in an address", "address-district", "", "STRING"));
 		resourceCriteria.add(new LabelKeyValueBean("A postal code specified in an address", "address-postalcode", "", "STRING", "http://hl7.org/fhir/SearchParameter/Location-address-postalcode"));
 		resourceCriteria.add(new LabelKeyValueBean("A state specified in an address", "address-state", "", "STRING", "http://hl7.org/fhir/SearchParameter/Location-address-state"));
 		resourceCriteria.add(new LabelKeyValueBean("A use code specified in an address", "address-use", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/Location-address-use"));
@@ -2961,6 +2966,8 @@ public class ResourceType {
 		resourceCriteria.add(new LabelKeyValueBean("A server defined search that may match any of the string fields in the Address, including line, city, district, state, country, postalCode, and/or text", "address", "", "STRING", "http://hl7.org/fhir/SearchParameter/Organization-address"));
 		resourceCriteria.add(new LabelKeyValueBean("A city specified in an address", "address-city", "", "STRING", "http://hl7.org/fhir/SearchParameter/Organization-address-city"));
 		resourceCriteria.add(new LabelKeyValueBean("A country specified in an address", "address-country", "", "STRING", "http://hl7.org/fhir/SearchParameter/Organization-address-country"));
+		// AEGIS Extra Search Parameter address-district
+		resourceCriteria.add(new LabelKeyValueBean("A district specified in an address", "address-district", "", "STRING"));
 		resourceCriteria.add(new LabelKeyValueBean("A postal code specified in an address", "address-postalcode", "", "STRING", "http://hl7.org/fhir/SearchParameter/Organization-address-postalcode"));
 		resourceCriteria.add(new LabelKeyValueBean("A state specified in an address", "address-state", "", "STRING", "http://hl7.org/fhir/SearchParameter/Organization-address-state"));
 		resourceCriteria.add(new LabelKeyValueBean("A use code specified in an address", "address-use", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/Organization-address-use"));
@@ -2994,6 +3001,8 @@ public class ResourceType {
 		resourceCriteria.add(new LabelKeyValueBean("A server defined search that may match any of the string fields in the Address, including line, city, district, state, country, postalCode, and/or text", "address", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address"));
 		resourceCriteria.add(new LabelKeyValueBean("A city specified in an address", "address-city", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-city"));
 		resourceCriteria.add(new LabelKeyValueBean("A country specified in an address", "address-country", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-country"));
+		// AEGIS Extra Search Parameter address-district
+		resourceCriteria.add(new LabelKeyValueBean("A district specified in an address", "address-district", "", "STRING"));
 		resourceCriteria.add(new LabelKeyValueBean("A postalCode specified in an address", "address-postalcode", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-postalcode"));
 		resourceCriteria.add(new LabelKeyValueBean("A state specified in an address", "address-state", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-state"));
 		resourceCriteria.add(new LabelKeyValueBean("A use code specified in an address", "address-use", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/individual-address-use"));
@@ -3044,6 +3053,8 @@ public class ResourceType {
 		resourceCriteria.add(new LabelKeyValueBean("A server defined search that may match any of the string fields in the Address, including line, city, district, state, country, postalCode, and/or text", "address", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address"));
 		resourceCriteria.add(new LabelKeyValueBean("A city specified in an address", "address-city", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-city"));
 		resourceCriteria.add(new LabelKeyValueBean("A country specified in an address", "address-country", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-country"));
+		// AEGIS Extra Search Parameter address-district
+		resourceCriteria.add(new LabelKeyValueBean("A district specified in an address", "address-district", "", "STRING"));
 		resourceCriteria.add(new LabelKeyValueBean("A postal code specified in an address", "address-postalcode", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-postalcode"));
 		resourceCriteria.add(new LabelKeyValueBean("A state specified in an address", "address-state", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-state"));
 		resourceCriteria.add(new LabelKeyValueBean("A use code specified in an address", "address-use", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/individual-address-use"));
@@ -3094,6 +3105,8 @@ public class ResourceType {
 		resourceCriteria.add(new LabelKeyValueBean("A server defined search that may match any of the string fields in the Address, including line, city, district, state, country, postalCode, and/or text", "address", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address"));
 		resourceCriteria.add(new LabelKeyValueBean("A city specified in an address", "address-city", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-city"));
 		resourceCriteria.add(new LabelKeyValueBean("A country specified in an address", "address-country", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-country"));
+		// AEGIS Extra Search Parameter address-district
+		resourceCriteria.add(new LabelKeyValueBean("A district specified in an address", "address-district", "", "STRING"));
 		resourceCriteria.add(new LabelKeyValueBean("A postalCode specified in an address", "address-postalcode", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-postalcode"));
 		resourceCriteria.add(new LabelKeyValueBean("A state specified in an address", "address-state", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-state"));
 		resourceCriteria.add(new LabelKeyValueBean("A use code specified in an address", "address-use", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/individual-address-use"));
@@ -3198,6 +3211,8 @@ public class ResourceType {
 		resourceCriteria.add(new LabelKeyValueBean("A server defined search that may match any of the string fields in the Address, including line, city, district, state, country, postalCode, and/or text", "address", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address"));
 		resourceCriteria.add(new LabelKeyValueBean("A city specified in an address", "address-city", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-city"));
 		resourceCriteria.add(new LabelKeyValueBean("A country specified in an address", "address-country", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-country"));
+		// AEGIS Extra Search Parameter address-district
+		resourceCriteria.add(new LabelKeyValueBean("A district specified in an address", "address-district", "", "STRING"));
 		resourceCriteria.add(new LabelKeyValueBean("A postal code specified in an address", "address-postalcode", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-postalcode"));
 		resourceCriteria.add(new LabelKeyValueBean("A state specified in an address", "address-state", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-state"));
 		resourceCriteria.add(new LabelKeyValueBean("A use code specified in an address", "address-use", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/individual-address-use"));

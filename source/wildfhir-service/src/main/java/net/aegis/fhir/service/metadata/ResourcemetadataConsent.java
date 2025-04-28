@@ -1,38 +1,35 @@
 /*
- * #%L
- * WildFHIR - wildfhir-service
- * %%
- * Copyright (C) 2024 AEGIS.net, Inc.
- * All rights reserved.
- * %%
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *  - Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *  - Neither the name of AEGIS nor the names of its contributors may be used
- *    to endorse or promote products derived from this software without specific
- *    prior written permission.
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * #L%
+Copyright (c) 2020, AEGIS.net, Inc.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following consents are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+   list of consents and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice,
+   this list of consents and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+ * Neither the name of AEGIS nor the names of its contributors may be used to
+   endorse or promote products derived from this software without specific
+   prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
  */
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -79,7 +76,8 @@ public class ResourcemetadataConsent extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iConsent = null;
-		Resourcemetadata rCode = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Consent object
@@ -97,27 +95,9 @@ public class ResourcemetadataConsent extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Consent metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, consent, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (consent.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", consent.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (consent.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", consent.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (consent.getMeta() != null && consent.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(consent.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(consent.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, consent, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			if (consent.hasProvision()) {
 
@@ -125,11 +105,11 @@ public class ResourcemetadataConsent extends ResourcemetadataProxy {
 				if (consent.getProvision().hasAction()) {
 
 					for (CodeableConcept action : consent.getProvision().getAction()) {
-
 						if (action.hasCoding()) {
+
 							for (Coding code : action.getCoding()) {
-								rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"action", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-								resourcemetadataList.add(rCode);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"action", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+								resourcemetadataList.add(rMetadata);
 							}
 						}
 					}
@@ -138,20 +118,11 @@ public class ResourcemetadataConsent extends ResourcemetadataProxy {
 				// actor : reference
 				if (consent.getProvision().hasActor()) {
 
-					String recipientReference = null;
 					for (provisionActorComponent actor : consent.getProvision().getActor()) {
 
-						if (actor.hasReference() && actor.getReference().hasReference()) {
-							recipientReference = generateFullLocalReference(actor.getReference().getReference(), baseUrl);
-
-							Resourcemetadata rActor = generateResourcemetadata(resource, chainedResource, chainedParameter+"actor", recipientReference);
-							resourcemetadataList.add(rActor);
-
-							if (chainedResource == null) {
-								// Add chained parameters
-								List<Resourcemetadata> rRecipientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "actor", 0, actor.getReference().getReference(), null);
-								resourcemetadataList.addAll(rRecipientChain);
-							}
+						if (actor.hasReference()) {
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "actor", 0, actor.getReference(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 				}
@@ -161,32 +132,25 @@ public class ResourcemetadataConsent extends ResourcemetadataProxy {
 
 					for (provisionDataComponent data : consent.getProvision().getData()) {
 
-						if (data.hasReference() && data.getReference().hasReference()) {
-							Resourcemetadata rData = generateResourcemetadata(resource, chainedResource, chainedParameter+"data", generateFullLocalReference(data.getReference().getReference(), baseUrl));
-							resourcemetadataList.add(rData);
-
-							if (chainedResource == null) {
-								// Add chained parameters for any
-								List<Resourcemetadata> rDataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "data", 0, data.getReference().getReference(), null);
-								resourcemetadataList.addAll(rDataChain);
-							}
+						if (data.hasReference()) {
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "data", 0, data.getReference(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 				}
 
 				// period : date(period)
 				if (consent.getProvision().hasPeriod()) {
-					Resourcemetadata rPeriod = generateResourcemetadata(resource, chainedResource, chainedParameter+"period", utcDateUtil.formatDate(consent.getProvision().getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(consent.getProvision().getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(consent.getProvision().getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(consent.getProvision().getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-					resourcemetadataList.add(rPeriod);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"period", utcDateUtil.formatDate(consent.getProvision().getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(consent.getProvision().getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(consent.getProvision().getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(consent.getProvision().getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+					resourcemetadataList.add(rMetadata);
 				}
 
 				// purpose : token
 				if (consent.getProvision().hasPurpose()) {
 
 					for (Coding purpose : consent.getProvision().getPurpose()) {
-
-						Resourcemetadata rPurpose = generateResourcemetadata(resource, chainedResource, chainedParameter+"purpose", purpose.getCode(), purpose.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(purpose));
-						resourcemetadataList.add(rPurpose);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"purpose", purpose.getCode(), purpose.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(purpose));
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 
@@ -194,9 +158,8 @@ public class ResourcemetadataConsent extends ResourcemetadataProxy {
 				if (consent.getProvision().hasSecurityLabel()) {
 
 					for (Coding security : consent.getProvision().getSecurityLabel()) {
-
-						Resourcemetadata rSecurity = generateResourcemetadata(resource, chainedResource, chainedParameter+"security-label", security.getCode(), security.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(security));
-						resourcemetadataList.add(rSecurity);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"security-label", security.getCode(), security.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(security));
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
@@ -205,11 +168,11 @@ public class ResourcemetadataConsent extends ResourcemetadataProxy {
 			if (consent.hasCategory()) {
 
 				for (CodeableConcept category : consent.getCategory()) {
-
 					if (category.hasCoding()) {
+
 						for (Coding code : category.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -218,105 +181,77 @@ public class ResourcemetadataConsent extends ResourcemetadataProxy {
 			// consentor : reference
 			if (consent.hasPerformer()) {
 
-				String consentorReference = null;
 				for (Reference consentor : consent.getPerformer()) {
-
-					if (consentor.hasReference()) {
-						consentorReference = generateFullLocalReference(consentor.getReference(), baseUrl);
-
-						Resourcemetadata rRecipient = generateResourcemetadata(resource, chainedResource, chainedParameter+"consentor", consentorReference);
-						resourcemetadataList.add(rRecipient);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							List<Resourcemetadata> rConsentorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "consentor", 0, consentor.getReference(), null);
-							resourcemetadataList.addAll(rConsentorChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "consentor", 0, consentor, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// date : date
 			if (consent.hasDateTime()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(consent.getDateTime(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(consent.getDateTime(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(consent.getDateTime(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(consent.getDateTime(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (consent.hasIdentifier()) {
 
 				for (Identifier identifier : consent.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// organization : reference
 			if (consent.hasOrganization()) {
 
-				Resourcemetadata rOrganization = null;
-				List<Resourcemetadata> rOrganizationChain = null;
 				for (Reference organization : consent.getOrganization()) {
-
-					if (organization.hasReference()) {
-						rOrganization = generateResourcemetadata(resource, chainedResource, chainedParameter+"organization", generateFullLocalReference(organization.getReference(), baseUrl));
-						resourcemetadataList.add(rOrganization);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rOrganizationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "organization", 0, organization.getReference(), null);
-							resourcemetadataList.addAll(rOrganizationChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "organization", 0, organization, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// patient : reference
-			if (consent.hasPatient() && consent.getPatient().hasReference()) {
-				Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", generateFullLocalReference(consent.getPatient().getReference(), baseUrl));
-				resourcemetadataList.add(rPatient);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, consent.getPatient().getReference(), null);
-					resourcemetadataList.addAll(rPatientChain);
-				}
+			if (consent.hasPatient()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, consent.getPatient(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// scope : token
 			if (consent.hasScope() && consent.getScope().hasCoding()) {
 
 				for (Coding code : consent.getScope().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"scope", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"scope", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// source-reference : reference
 			if (consent.hasSourceReference()) {
-				String sourceReference = generateFullLocalReference(consent.getSourceReference().getReference(), baseUrl);
-
-				Resourcemetadata rSource = generateResourcemetadata(resource, chainedResource, chainedParameter+"source-reference", sourceReference);
-				resourcemetadataList.add(rSource);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSourceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "source-reference", 0, consent.getSourceReference().getReference(), null);
-					resourcemetadataList.addAll(rSourceChain);
-				}
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "source-reference", 0, consent.getSourceReference(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// status : token
 			if (consent.hasStatus() && consent.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", consent.getStatus().toCode(), consent.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", consent.getStatus().toCode(), consent.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iConsent != null) {
+                try {
+                	iConsent.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

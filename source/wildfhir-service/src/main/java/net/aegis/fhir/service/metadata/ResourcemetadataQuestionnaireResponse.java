@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -74,6 +75,8 @@ public class ResourcemetadataQuestionnaireResponse extends ResourcemetadataProxy
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iQuestionnaireResponse = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a QuestionnaireResponse object
@@ -91,162 +94,103 @@ public class ResourcemetadataQuestionnaireResponse extends ResourcemetadataProxy
              * Create new Resourcemetadata objects for each QuestionnaireResponse metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, questionnaireResponse, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (questionnaireResponse.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", questionnaireResponse.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (questionnaireResponse.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", questionnaireResponse.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (questionnaireResponse.getMeta() != null && questionnaireResponse.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(questionnaireResponse.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(questionnaireResponse.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, questionnaireResponse, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// author : reference
-			if (questionnaireResponse.hasAuthor() && questionnaireResponse.getAuthor().hasReference()) {
-				Resourcemetadata rAuthor = generateResourcemetadata(resource, chainedResource, chainedParameter+"author", questionnaireResponse.getAuthor().getReference());
-				resourcemetadataList.add(rAuthor);
-
-				if (chainedResource == null) {
-					// Add chained parameters for any
-					List<Resourcemetadata> rAuthorChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "author", 0, questionnaireResponse.getAuthor().getReference(), null);
-					resourcemetadataList.addAll(rAuthorChain);
-				}
+			if (questionnaireResponse.hasAuthor()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "author", 0, questionnaireResponse.getAuthor(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// authored : datetime
 			if (questionnaireResponse.hasAuthored()) {
-				Resourcemetadata rAuthored = generateResourcemetadata(resource, chainedResource, chainedParameter+"authored", utcDateUtil.formatDate(questionnaireResponse.getAuthored(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(questionnaireResponse.getAuthored(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rAuthored);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"authored", utcDateUtil.formatDate(questionnaireResponse.getAuthored(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(questionnaireResponse.getAuthored(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// based-on : reference
 			if (questionnaireResponse.hasBasedOn()) {
 
-				List<Resourcemetadata> rBasedOnChain = null;
 				for (Reference basedOn : questionnaireResponse.getBasedOn()) {
-
-					if (basedOn.hasReference()) {
-						Resourcemetadata rBasedOn = generateResourcemetadata(resource, chainedResource, chainedParameter+"based-on", generateFullLocalReference(basedOn.getReference(), baseUrl));
-						resourcemetadataList.add(rBasedOn);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rBasedOnChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "based-on", 0, basedOn.getReference(), null);
-							resourcemetadataList.addAll(rBasedOnChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "based-on", 0, basedOn, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// encounter : reference
-			if (questionnaireResponse.hasEncounter() && questionnaireResponse.getEncounter().hasReference()) {
-				Resourcemetadata rEncounter = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", generateFullLocalReference(questionnaireResponse.getEncounter().getReference(), baseUrl));
-				resourcemetadataList.add(rEncounter);
-
-				if (chainedResource == null) {
-					// Add chained parameters for any
-					List<Resourcemetadata> rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, questionnaireResponse.getEncounter().getReference(), null);
-					resourcemetadataList.addAll(rEncounterChain);
-				}
+			if (questionnaireResponse.hasEncounter()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "encounter", 0, questionnaireResponse.getEncounter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// identifier : token
 			if (questionnaireResponse.hasIdentifier() && questionnaireResponse.getIdentifier().hasValue()) {
-				Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", questionnaireResponse.getIdentifier().getValue(), questionnaireResponse.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(questionnaireResponse.getIdentifier()));
-				resourcemetadataList.add(rIdentifier);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", questionnaireResponse.getIdentifier().getValue(), questionnaireResponse.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(questionnaireResponse.getIdentifier()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// part-of : reference
 			if (questionnaireResponse.hasPartOf()) {
 
-				List<Resourcemetadata> rPartOfChain = null;
 				for (Reference partOf : questionnaireResponse.getPartOf()) {
-
-					if (partOf.hasReference()) {
-						Resourcemetadata rPartOf = generateResourcemetadata(resource, chainedResource, chainedParameter+"part-of", generateFullLocalReference(partOf.getReference(), baseUrl));
-						resourcemetadataList.add(rPartOf);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rPartOfChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "part-of", 0, partOf.getReference(), null);
-							resourcemetadataList.addAll(rPartOfChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "part-of", 0, partOf, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
-			// questionnaire : reference
+			// questionnaire : reference - questionnaire is a Canonical, no Reference.identifier
 			if (questionnaireResponse.hasQuestionnaire()) {
-				Resourcemetadata rQuestionnaire = generateResourcemetadata(resource, chainedResource, chainedParameter+"questionnaire", generateFullLocalReference(questionnaireResponse.getQuestionnaire(), baseUrl));
-				resourcemetadataList.add(rQuestionnaire);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"questionnaire", generateFullLocalReference(questionnaireResponse.getQuestionnaire(), baseUrl));
+				resourcemetadataList.add(rMetadata);
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rQuestionnaireChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "questionnaire", 0,  questionnaireResponse.getQuestionnaire(), null);
-					resourcemetadataList.addAll(rQuestionnaireChain);
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "questionnaire", 0,  questionnaireResponse.getQuestionnaire(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
-			// patient : reference
 			// subject : reference
-			if (questionnaireResponse.hasSubject() && questionnaireResponse.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(questionnaireResponse.getSubject().getReference(), baseUrl);
+			if (questionnaireResponse.hasSubject()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, questionnaireResponse.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, questionnaireResponse.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, questionnaireResponse.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((questionnaireResponse.getSubject().hasReference() && questionnaireResponse.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (questionnaireResponse.getSubject().hasType() && questionnaireResponse.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, questionnaireResponse.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// source : reference
-			if (questionnaireResponse.hasSource() && questionnaireResponse.getSource().hasReference()) {
-				Resourcemetadata rSource = generateResourcemetadata(resource, chainedResource, chainedParameter+"source", generateFullLocalReference(questionnaireResponse.getSource().getReference(), baseUrl));
-				resourcemetadataList.add(rSource);
-
-				if (chainedResource == null) {
-					// Add chained parameters for any
-					List<Resourcemetadata> rSourceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "source", 0, questionnaireResponse.getSource().getReference(), null);
-					resourcemetadataList.addAll(rSourceChain);
-				}
+			if (questionnaireResponse.hasSource()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "source", 0, questionnaireResponse.getSource(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// status : token
 			if (questionnaireResponse.hasStatus() && questionnaireResponse.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", questionnaireResponse.getStatus().toCode(), questionnaireResponse.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", questionnaireResponse.getStatus().toCode(), questionnaireResponse.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iQuestionnaireResponse != null) {
+                try {
+                	iQuestionnaireResponse.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

@@ -33,9 +33,9 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -47,7 +47,6 @@ import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * @author richard.ettema
@@ -75,6 +74,8 @@ public class ResourcemetadataMedicinalProductUndesirableEffect extends Resourcem
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iMedicinalProductUndesirableEffect = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a MedicinalProductUndesirableEffect object
@@ -92,65 +93,34 @@ public class ResourcemetadataMedicinalProductUndesirableEffect extends Resourcem
              * Create new Resourcemetadata objects for each MedicinalProductUndesirableEffect metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, medicinalProductUndesirableEffect, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (medicinalProductUndesirableEffect.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", medicinalProductUndesirableEffect.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (medicinalProductUndesirableEffect.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", medicinalProductUndesirableEffect.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (medicinalProductUndesirableEffect.getMeta() != null && medicinalProductUndesirableEffect.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(medicinalProductUndesirableEffect.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(medicinalProductUndesirableEffect.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, medicinalProductUndesirableEffect, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// classification : token
 			if (medicinalProductUndesirableEffect.hasClassification() && medicinalProductUndesirableEffect.getClassification().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : medicinalProductUndesirableEffect.getClassification().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"classification", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"classification", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// subject : reference
 			if (medicinalProductUndesirableEffect.hasSubject()) {
 
-				Resourcemetadata rSubject = null;
-				List<Resourcemetadata> rSubjectChain = null;
 				for (Reference subject : medicinalProductUndesirableEffect.getSubject()) {
-
-					if (subject.hasReference()) {
-						rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", generateFullLocalReference(subject.getReference(), baseUrl));
-						resourcemetadataList.add(rSubject);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, subject.getReference(), null);
-							resourcemetadataList.addAll(rSubjectChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, subject, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// symptom : token
 			if (medicinalProductUndesirableEffect.hasSymptomConditionEffect() && medicinalProductUndesirableEffect.getSymptomConditionEffect().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : medicinalProductUndesirableEffect.getSymptomConditionEffect().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"symptom", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"symptom", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -158,6 +128,16 @@ public class ResourcemetadataMedicinalProductUndesirableEffect extends Resourcem
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iMedicinalProductUndesirableEffect != null) {
+                try {
+                	iMedicinalProductUndesirableEffect.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

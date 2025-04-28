@@ -33,15 +33,14 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
 
 import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.util.ServicesUtil;
-import net.aegis.fhir.service.util.UTCDateUtil;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
@@ -75,6 +74,8 @@ public class ResourcemetadataDeviceMetric extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iDeviceMetric = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a DeviceMetric object
@@ -92,75 +93,43 @@ public class ResourcemetadataDeviceMetric extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each DeviceMetric metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, deviceMetric, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (deviceMetric.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", deviceMetric.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (deviceMetric.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", deviceMetric.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (deviceMetric.getMeta() != null && deviceMetric.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(deviceMetric.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(deviceMetric.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, deviceMetric, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// category : token
 			if (deviceMetric.hasCategory() && deviceMetric.getCategory() != null) {
-				Resourcemetadata rCategory = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", deviceMetric.getCategory().toCode(), deviceMetric.getCategory().getSystem());
-				resourcemetadataList.add(rCategory);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", deviceMetric.getCategory().toCode(), deviceMetric.getCategory().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (deviceMetric.hasIdentifier()) {
 
 				for (Identifier identifier : deviceMetric.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// parent : reference
-			if (deviceMetric.hasParent() && deviceMetric.getParent().hasReference()) {
-				Resourcemetadata rParent = generateResourcemetadata(resource, chainedResource, chainedParameter+"parent", generateFullLocalReference(deviceMetric.getParent().getReference(), baseUrl));
-				resourcemetadataList.add(rParent);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rParentChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "parent", 0, deviceMetric.getParent().getReference(), null);
-					resourcemetadataList.addAll(rParentChain);
-				}
+			if (deviceMetric.hasParent()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "parent", 0, deviceMetric.getParent(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// source : reference
-			if (deviceMetric.hasSource() && deviceMetric.getSource().hasReference()) {
-				Resourcemetadata rSource = generateResourcemetadata(resource, chainedResource, chainedParameter+"source", generateFullLocalReference(deviceMetric.getSource().getReference(), baseUrl));
-				resourcemetadataList.add(rSource);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSourceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "source", 0, deviceMetric.getSource().getReference(), null);
-					resourcemetadataList.addAll(rSourceChain);
-				}
+			if (deviceMetric.hasSource()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "source", 0, deviceMetric.getSource(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// type : token
 			if (deviceMetric.hasType() && deviceMetric.getType().hasCoding()) {
 
-				Resourcemetadata rType = null;
 				for (Coding type : deviceMetric.getType().getCoding()) {
-					rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
-					resourcemetadataList.add(rType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", type.getCode(), type.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(type));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -168,6 +137,16 @@ public class ResourcemetadataDeviceMetric extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iDeviceMetric != null) {
+                try {
+                	iDeviceMetric.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

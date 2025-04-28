@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -75,6 +76,8 @@ public class ResourcemetadataMeasureReport extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iMeasureReport = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a MeasureReport object
@@ -92,54 +95,22 @@ public class ResourcemetadataMeasureReport extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each MeasureReport metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, measureReport, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (measureReport.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", measureReport.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (measureReport.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", measureReport.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (measureReport.getMeta() != null && measureReport.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(measureReport.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(measureReport.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, measureReport, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// date : date
 			if (measureReport.hasDate()) {
-				Resourcemetadata rDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(measureReport.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(measureReport.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(measureReport.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(measureReport.getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// evaluated-resource : reference
 			if (measureReport.hasEvaluatedResource()) {
 
-				String evaluatedResourceReference = null;
-				Resourcemetadata rEvaluatedResource = null;
-				List<Resourcemetadata> rEvaluatedResourceChain = null;
 				for (Reference evaluatedResource : measureReport.getEvaluatedResource()) {
-
-					if (evaluatedResource.hasReference()) {
-						evaluatedResourceReference = generateFullLocalReference(evaluatedResource.getReference(), baseUrl);
-
-						rEvaluatedResource = generateResourcemetadata(resource, chainedResource, chainedParameter+"evaluated-resource", evaluatedResourceReference);
-						resourcemetadataList.add(rEvaluatedResource);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rEvaluatedResourceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "evaluated-resource", 0, evaluatedResource.getReference(), null);
-							resourcemetadataList.addAll(rEvaluatedResourceChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "evaluated-resource", 0, evaluatedResource, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -147,78 +118,68 @@ public class ResourcemetadataMeasureReport extends ResourcemetadataProxy {
 			if (measureReport.hasIdentifier()) {
 
 				for (Identifier identifier : measureReport.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
-			// measure : reference
+			// measure : reference - measure is a Canonical, no Reference.identifier
 			if (measureReport.hasMeasure()) {
-				Resourcemetadata rMeasure = generateResourcemetadata(resource, chainedResource, chainedParameter+"measure", generateFullLocalReference(measureReport.getMeasure(), baseUrl));
-				resourcemetadataList.add(rMeasure);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"measure", generateFullLocalReference(measureReport.getMeasure(), baseUrl));
+				resourcemetadataList.add(rMetadata);
 
 				if (chainedResource == null) {
 					// Add chained parameters
-					List<Resourcemetadata> rMeasureChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "measure", 0, measureReport.getMeasure(), null);
-					resourcemetadataList.addAll(rMeasureChain);
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "measure", 0, measureReport.getMeasure(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
-			// patient : reference
 			// subject : reference
-			if (measureReport.hasSubject() && measureReport.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(measureReport.getSubject().getReference(), baseUrl);
+			if (measureReport.hasSubject()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, measureReport.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, measureReport.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, measureReport.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((measureReport.getSubject().hasReference() && measureReport.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (measureReport.getSubject().hasType() && measureReport.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, measureReport.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// period : date(period)
 			if (measureReport.hasPeriod()) {
-				Resourcemetadata rPeriod = generateResourcemetadata(resource, chainedResource, chainedParameter+"period", utcDateUtil.formatDate(measureReport.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(measureReport.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(measureReport.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(measureReport.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-				resourcemetadataList.add(rPeriod);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"period", utcDateUtil.formatDate(measureReport.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(measureReport.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(measureReport.getPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(measureReport.getPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// reporter : reference
-			if (measureReport.hasReporter() && measureReport.getReporter().hasReference()) {
-				Resourcemetadata rReporter = generateResourcemetadata(resource, chainedResource, chainedParameter+"reporter", generateFullLocalReference(measureReport.getReporter().getReference(), baseUrl));
-				resourcemetadataList.add(rReporter);
-
-				if (chainedResource == null) {
-					// Add chained parameters for any
-					List<Resourcemetadata> rReporterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "reporter", 0, measureReport.getReporter().getReference(), null);
-					resourcemetadataList.addAll(rReporterChain);
-				}
+			if (measureReport.hasReporter()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "reporter", 0, measureReport.getReporter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// status : token
 			if (measureReport.hasStatus() && measureReport.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", measureReport.getStatus().toCode(), measureReport.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", measureReport.getStatus().toCode(), measureReport.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iMeasureReport != null) {
+                try {
+                	iMeasureReport.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

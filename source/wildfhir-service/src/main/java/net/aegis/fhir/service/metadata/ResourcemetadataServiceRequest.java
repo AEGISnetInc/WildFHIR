@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -79,6 +80,8 @@ public class ResourcemetadataServiceRequest extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iServiceRequest = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a ServiceRequest object
@@ -96,65 +99,33 @@ public class ResourcemetadataServiceRequest extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each ServiceRequest metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, serviceRequest, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (serviceRequest.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", serviceRequest.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (serviceRequest.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", serviceRequest.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (serviceRequest.getMeta() != null && serviceRequest.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(serviceRequest.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(serviceRequest.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, serviceRequest, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// authored : date
 			if (serviceRequest.hasAuthoredOn()) {
-				Resourcemetadata rAuthoredOn = generateResourcemetadata(resource, chainedResource, chainedParameter+"authored", utcDateUtil.formatDate(serviceRequest.getAuthoredOn(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(serviceRequest.getAuthoredOn(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rAuthoredOn);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"authored", utcDateUtil.formatDate(serviceRequest.getAuthoredOn(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(serviceRequest.getAuthoredOn(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// based-on : reference
 			if (serviceRequest.hasBasedOn()) {
 
-				List<Resourcemetadata> rBasedOnChain = null;
-				String basedOnString = null;
 				for (Reference basedOn : serviceRequest.getBasedOn()) {
-
-					if (basedOn.hasReference()) {
-						basedOnString = generateFullLocalReference(basedOn.getReference(), baseUrl);
-						Resourcemetadata rRecipient = generateResourcemetadata(resource, chainedResource, chainedParameter+"based-on", basedOnString);
-						resourcemetadataList.add(rRecipient);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rBasedOnChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "based-on", 0, basedOn.getReference(), null);
-							resourcemetadataList.addAll(rBasedOnChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "based-on", 0, basedOn, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// body-site : token
 			if (serviceRequest.hasBodySite()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept bodySite : serviceRequest.getBodySite()) {
 
 					if (bodySite.hasCoding()) {
 						for (Coding code : bodySite.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"body-site", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"body-site", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -162,14 +133,12 @@ public class ResourcemetadataServiceRequest extends ResourcemetadataProxy {
 
 			// category : token
 			if (serviceRequest.hasCategory()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept category : serviceRequest.getCategory()) {
 
 					if (category.hasCoding()) {
 						for (Coding code : category.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -178,51 +147,40 @@ public class ResourcemetadataServiceRequest extends ResourcemetadataProxy {
 			// code : token
 			if (serviceRequest.hasCode() && serviceRequest.getCode().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : serviceRequest.getCode().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// encounter : reference
-			if (serviceRequest.hasEncounter() && serviceRequest.getEncounter().hasReference()) {
-				String encounterString = generateFullLocalReference(serviceRequest.getEncounter().getReference(), baseUrl);
-
-				Resourcemetadata rEncounter = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", encounterString);
-				resourcemetadataList.add(rEncounter);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rEncounterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, serviceRequest.getEncounter().getReference(), null);
-					resourcemetadataList.addAll(rEncounterChain);
-				}
+			if (serviceRequest.hasEncounter()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "encounter", 0, serviceRequest.getEncounter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// identifier : token
 			if (serviceRequest.hasIdentifier()) {
 
 				for (Identifier identifier : serviceRequest.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
-			// instantiates-canonical : reference
+			// instantiates-canonical : reference - instantiates is a Canonical, no Reference.identifier
 			if (serviceRequest.hasInstantiatesCanonical()) {
 
 				for (CanonicalType instantiates : serviceRequest.getInstantiatesCanonical()) {
 					String objectReference = generateFullLocalReference(instantiates.asStringValue(), baseUrl);
 
-					List<Resourcemetadata> rInstantiatesChain = null;
-					Resourcemetadata rReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-canonical", objectReference);
-					resourcemetadataList.add(rReference);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-canonical", objectReference);
+					resourcemetadataList.add(rMetadata);
 
 					if (chainedResource == null) {
 						// Add chained parameters
-						rInstantiatesChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "instantiates-canonical", 0, instantiates.asStringValue(), null);
-						resourcemetadataList.addAll(rInstantiatesChain);
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "instantiates-canonical", 0, instantiates.asStringValue(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
@@ -231,148 +189,97 @@ public class ResourcemetadataServiceRequest extends ResourcemetadataProxy {
 			if (serviceRequest.hasInstantiatesUri()) {
 
 				for (UriType instantiates : serviceRequest.getInstantiatesUri()) {
-
-					Resourcemetadata rInstantiates = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-uri", instantiates.asStringValue());
-					resourcemetadataList.add(rInstantiates);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-uri", instantiates.asStringValue());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// intent : token
 			if (serviceRequest.hasIntent() && serviceRequest.getIntent() != null) {
-				Resourcemetadata rIntent = generateResourcemetadata(resource, chainedResource, chainedParameter+"intent", serviceRequest.getIntent().toCode(), serviceRequest.getIntent().getSystem());
-				resourcemetadataList.add(rIntent);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"intent", serviceRequest.getIntent().toCode(), serviceRequest.getIntent().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// occurrence : date(period)
 			if (serviceRequest.hasOccurrenceDateTimeType()) {
-				Resourcemetadata rOccurrence = generateResourcemetadata(resource, chainedResource, chainedParameter+"occurrence", utcDateUtil.formatDate(serviceRequest.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(serviceRequest.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rOccurrence);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"occurrence", utcDateUtil.formatDate(serviceRequest.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(serviceRequest.getOccurrenceDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 			else if (serviceRequest.hasOccurrencePeriod()) {
-				Resourcemetadata rOccurrence = generateResourcemetadata(resource, chainedResource, chainedParameter+"occurrence", utcDateUtil.formatDate(serviceRequest.getOccurrencePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(serviceRequest.getOccurrencePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(serviceRequest.getOccurrencePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(serviceRequest.getOccurrencePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-				resourcemetadataList.add(rOccurrence);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"occurrence", utcDateUtil.formatDate(serviceRequest.getOccurrencePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(serviceRequest.getOccurrencePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(serviceRequest.getOccurrencePeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(serviceRequest.getOccurrencePeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// performer : reference
 			if (serviceRequest.hasPerformer()) {
 
-				Resourcemetadata rPerformer = null;
-				List<Resourcemetadata> rPerformerChain = null;
 				for (Reference performer : serviceRequest.getPerformer()) {
-
-					rPerformer = generateResourcemetadata(resource, chainedResource, chainedParameter+"performer", generateFullLocalReference(performer.getReference(), baseUrl));
-					resourcemetadataList.add(rPerformer);
-
-					if (chainedResource == null) {
-						// Add chained parameters for any
-						rPerformerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "performer", 0, performer.getReference(), null);
-						resourcemetadataList.addAll(rPerformerChain);
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "performer", 0, performer, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// performer-type : token
 			if (serviceRequest.hasPerformerType() && serviceRequest.getPerformerType().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : serviceRequest.getPerformerType().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"performer-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"performer-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// priority : token
 			if (serviceRequest.hasPriority() && serviceRequest.getPriority() != null) {
-				Resourcemetadata rPriority = generateResourcemetadata(resource, chainedResource, chainedParameter+"priority", serviceRequest.getPriority().toCode(), serviceRequest.getPriority().getSystem());
-				resourcemetadataList.add(rPriority);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"priority", serviceRequest.getPriority().toCode(), serviceRequest.getPriority().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// replaces : reference
 			if (serviceRequest.hasReplaces()) {
 
-				List<Resourcemetadata> rReplacesChain = null;
 				for (Reference replaces : serviceRequest.getReplaces()) {
-
-					if (replaces.hasReference()) {
-						Resourcemetadata rReplaces = generateResourcemetadata(resource, chainedResource, chainedParameter+"replaces", generateFullLocalReference(replaces.getReference(), baseUrl));
-						resourcemetadataList.add(rReplaces);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rReplacesChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "replaces", 0, replaces.getReference(), null);
-							resourcemetadataList.addAll(rReplacesChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "replaces", 0, replaces, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// requester : reference
-			if (serviceRequest.hasRequester() && serviceRequest.getRequester().hasReference()) {
-				Resourcemetadata rRequester = generateResourcemetadata(resource, chainedResource, chainedParameter+"requester", generateFullLocalReference(serviceRequest.getRequester().getReference(), baseUrl));
-				resourcemetadataList.add(rRequester);
-
-				if (chainedResource == null) {
-					// Add chained parameters for any
-					List<Resourcemetadata> rRequesterChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "requester", 0, serviceRequest.getRequester().getReference(), null);
-					resourcemetadataList.addAll(rRequesterChain);
-				}
+			if (serviceRequest.hasRequester()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "requester", 0, serviceRequest.getRequester(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// requisition : identifier
 			if (serviceRequest.hasRequisition()) {
-				Resourcemetadata rRequisition = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", serviceRequest.getRequisition().getValue(), serviceRequest.getRequisition().getSystem());
-				resourcemetadataList.add(rRequisition);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", serviceRequest.getRequisition().getValue(), serviceRequest.getRequisition().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// specimen : reference
 			if (serviceRequest.hasSpecimen()) {
 
-				Resourcemetadata rSpecimen = null;
-				List<Resourcemetadata> rSpecimenChain = null;
 				for (Reference specimen : serviceRequest.getSpecimen()) {
-
-					if (specimen.hasReference()) {
-						rSpecimen = generateResourcemetadata(resource, chainedResource, chainedParameter+"specimen", generateFullLocalReference(specimen.getReference(), baseUrl));
-						resourcemetadataList.add(rSpecimen);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rSpecimenChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "specimen", 0, specimen.getReference(), null);
-							resourcemetadataList.addAll(rSpecimenChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "specimen", 0, specimen, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// status : token
 			if (serviceRequest.hasStatus() && serviceRequest.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", serviceRequest.getStatus().toCode(), serviceRequest.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", serviceRequest.getStatus().toCode(), serviceRequest.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
-			// patient : reference
 			// subject : reference
-			if (serviceRequest.hasSubject() && serviceRequest.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(serviceRequest.getSubject().getReference(), baseUrl);
+			if (serviceRequest.hasSubject()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, serviceRequest.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, serviceRequest.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, serviceRequest.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((serviceRequest.getSubject().hasReference() && serviceRequest.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (serviceRequest.getSubject().hasType() && serviceRequest.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, serviceRequest.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -380,6 +287,16 @@ public class ResourcemetadataServiceRequest extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iServiceRequest != null) {
+                try {
+                	iServiceRequest.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

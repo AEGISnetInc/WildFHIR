@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -74,6 +75,8 @@ public class ResourcemetadataClaimResponse extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iClaimResponse = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a ClaimResponse object
@@ -91,129 +94,93 @@ public class ResourcemetadataClaimResponse extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each ClaimResponse metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, claimResponse, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (claimResponse.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", claimResponse.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (claimResponse.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", claimResponse.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (claimResponse.getMeta() != null && claimResponse.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(claimResponse.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(claimResponse.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, claimResponse, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// created : date
 			if (claimResponse.hasCreated()) {
-				Resourcemetadata rCreated = generateResourcemetadata(resource, chainedResource, chainedParameter+"created", utcDateUtil.formatDate(claimResponse.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(claimResponse.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rCreated);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"created", utcDateUtil.formatDate(claimResponse.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(claimResponse.getCreated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// disposition : string
 			if (claimResponse.hasDisposition()) {
-				Resourcemetadata rDisposition = generateResourcemetadata(resource, chainedResource, chainedParameter+"disposition", claimResponse.getDisposition());
-				resourcemetadataList.add(rDisposition);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"disposition", claimResponse.getDisposition());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (claimResponse.hasIdentifier()) {
 
 				for (Identifier identifier : claimResponse.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// insurer : reference
-			if (claimResponse.hasInsurer() && claimResponse.getInsurer().hasReference()) {
-
-				Resourcemetadata rInsurer = generateResourcemetadata(resource, chainedResource, chainedParameter + "insurer", generateFullLocalReference(claimResponse.getInsurer().getReference(), baseUrl));
-				resourcemetadataList.add(rInsurer);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rInsurerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "insurer", 0, claimResponse.getInsurer().getReference(), null);
-					resourcemetadataList.addAll(rInsurerChain);
-				}
+			if (claimResponse.hasInsurer()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "insurer", 0, claimResponse.getInsurer(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// outcome : token
 			if (claimResponse.hasOutcome() && claimResponse.getOutcome() != null) {
-				Resourcemetadata rOutcome = generateResourcemetadata(resource, chainedResource, chainedParameter+"outcome", claimResponse.getOutcome().toCode(), claimResponse.getOutcome().getSystem());
-				resourcemetadataList.add(rOutcome);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"outcome", claimResponse.getOutcome().toCode(), claimResponse.getOutcome().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// patient : reference
-			if (claimResponse.hasPatient() && claimResponse.getPatient().hasReference()) {
-
-				Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter + "patient", generateFullLocalReference(claimResponse.getPatient().getReference(), baseUrl));
-				resourcemetadataList.add(rPatient);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, claimResponse.getPatient().getReference(), null);
-					resourcemetadataList.addAll(rPatientChain);
-				}
+			if (claimResponse.hasPatient()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, claimResponse.getPatient(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// payment-date : date
 			if (claimResponse.hasPayment() && claimResponse.getPayment().hasDate()) {
-				Resourcemetadata rPaymentDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"payment-date", utcDateUtil.formatDate(claimResponse.getPayment().getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(claimResponse.getPayment().getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rPaymentDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"payment-date", utcDateUtil.formatDate(claimResponse.getPayment().getDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(claimResponse.getPayment().getDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// request : reference
-			if (claimResponse.hasRequest() && claimResponse.getRequest().hasReference()) {
-				Resourcemetadata rRequestReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"request", generateFullLocalReference(claimResponse.getRequest().getReference(), baseUrl));
-				resourcemetadataList.add(rRequestReference);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rRequestReferenceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "request", 0, claimResponse.getRequest().getReference(), null);
-					resourcemetadataList.addAll(rRequestReferenceChain);
-				}
+			if (claimResponse.hasRequest()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "request", 0, claimResponse.getRequest(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// requestor : reference
-			if (claimResponse.hasRequestor() && claimResponse.getRequestor().hasReference()) {
-
-				Resourcemetadata rRequestor = generateResourcemetadata(resource, chainedResource, chainedParameter + "requestor", generateFullLocalReference(claimResponse.getRequestor().getReference(), baseUrl));
-				resourcemetadataList.add(rRequestor);
-
-				if (chainedResource == null) {
-					// Add chained parameters for any
-					List<Resourcemetadata> rRequestProviderChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "requestor", 0, claimResponse.getRequestor().getReference(), null);
-					resourcemetadataList.addAll(rRequestProviderChain);
-				}
+			if (claimResponse.hasRequestor()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "requestor", 0, claimResponse.getRequestor(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// status : token
 			if (claimResponse.hasStatus() && claimResponse.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", claimResponse.getStatus().toCode(), claimResponse.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", claimResponse.getStatus().toCode(), claimResponse.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// use : token
 			if (claimResponse.hasUse() && claimResponse.getUse() != null) {
-				Resourcemetadata rUse = generateResourcemetadata(resource, chainedResource, chainedParameter+"use", claimResponse.getUse().toCode(), claimResponse.getUse().getSystem());
-				resourcemetadataList.add(rUse);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"use", claimResponse.getUse().toCode(), claimResponse.getUse().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iClaimResponse != null) {
+                try {
+                	iClaimResponse.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -74,6 +75,8 @@ public class ResourcemetadataDeviceUseStatement extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iDeviceUseStatement = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a DeviceUseStatement object
@@ -91,47 +94,22 @@ public class ResourcemetadataDeviceUseStatement extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each DeviceUseStatement metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, deviceUseStatement, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (deviceUseStatement.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", deviceUseStatement.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (deviceUseStatement.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", deviceUseStatement.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (deviceUseStatement.getMeta() != null && deviceUseStatement.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(deviceUseStatement.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(deviceUseStatement.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, deviceUseStatement, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// device : reference
-			if (deviceUseStatement.hasDevice() && deviceUseStatement.getDevice().hasReference()) {
-				Resourcemetadata rDevice = generateResourcemetadata(resource, chainedResource, chainedParameter+"device", generateFullLocalReference(deviceUseStatement.getDevice().getReference(), baseUrl));
-				resourcemetadataList.add(rDevice);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rDeviceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "device", 0, deviceUseStatement.getDevice().getReference(), null);
-					resourcemetadataList.addAll(rDeviceChain);
-				}
+			if (deviceUseStatement.hasDevice()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "device", 0, deviceUseStatement.getDevice(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// identifier : token
 			if (deviceUseStatement.hasIdentifier()) {
 
 				for (Identifier identifier : deviceUseStatement.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -141,29 +119,16 @@ public class ResourcemetadataDeviceUseStatement extends ResourcemetadataProxy {
 				resourcemetadataList.add(rRecordedOn);
 			}
 
-			// patient : reference
 			// subject : reference
-			if (deviceUseStatement.hasSubject() && deviceUseStatement.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(deviceUseStatement.getSubject().getReference(), baseUrl);
+			if (deviceUseStatement.hasSubject()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, deviceUseStatement.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, deviceUseStatement.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, deviceUseStatement.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((deviceUseStatement.getSubject().hasReference() && deviceUseStatement.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (deviceUseStatement.getSubject().hasType() && deviceUseStatement.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, deviceUseStatement.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -171,6 +136,16 @@ public class ResourcemetadataDeviceUseStatement extends ResourcemetadataProxy {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iDeviceUseStatement != null) {
+                try {
+                	iDeviceUseStatement.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

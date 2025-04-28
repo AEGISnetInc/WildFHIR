@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -82,6 +83,8 @@ public class ResourcemetadataProcedure extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iProcedure = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Procedure object
@@ -99,64 +102,34 @@ public class ResourcemetadataProcedure extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Procedure metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, procedure, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (procedure.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", procedure.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (procedure.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", procedure.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (procedure.getMeta() != null && procedure.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(procedure.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(procedure.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, procedure, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// based-on : reference
 			if (procedure.hasBasedOn()) {
 
-				List<Resourcemetadata> rBasedOnChain = null;
 				for (Reference basedOn : procedure.getBasedOn()) {
-
-					if (basedOn.hasReference()) {
-						Resourcemetadata rBasedOn = generateResourcemetadata(resource, chainedResource, chainedParameter+"based-on", generateFullLocalReference(basedOn.getReference(), baseUrl));
-						resourcemetadataList.add(rBasedOn);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rBasedOnChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "based-on", 0, basedOn.getReference(), null);
-							resourcemetadataList.addAll(rBasedOnChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "based-on", 0, basedOn, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// category : token
 			if (procedure.hasCategory() && procedure.getCategory().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : procedure.getCategory().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"category", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// code : token
 			if (procedure.hasCode() && procedure.getCode().hasCoding()) {
 
-				Resourcemetadata rCode = null;
 				for (Coding code : procedure.getCode().getCoding()) {
-					rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-					resourcemetadataList.add(rCode);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -165,53 +138,43 @@ public class ResourcemetadataProcedure extends ResourcemetadataProxy {
 			if (procedure.hasPerformed()) {
 
 				if (procedure.getPerformed() instanceof DateTimeType) {
-					Resourcemetadata rPerformedDateTimeType = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(procedure.getPerformedDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(procedure.getPerformedDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-					resourcemetadataList.add(rPerformedDateTimeType);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(procedure.getPerformedDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(procedure.getPerformedDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+					resourcemetadataList.add(rMetadata);
 				}
 				else if (procedure.getPerformed() instanceof Period) {
-					Resourcemetadata rPerformedPeriod = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(procedure.getPerformedPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(procedure.getPerformedPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(procedure.getPerformedPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(procedure.getPerformedPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
-					resourcemetadataList.add(rPerformedPeriod);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(procedure.getPerformedPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(procedure.getPerformedPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT), utcDateUtil.formatDate(procedure.getPerformedPeriod().getStart(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), utcDateUtil.formatDate(procedure.getPerformedPeriod().getEnd(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()), "PERIOD");
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// encounter : reference
-			if (procedure.hasEncounter() && procedure.getEncounter().hasReference()) {
-				String contextString = generateFullLocalReference(procedure.getEncounter().getReference(), baseUrl);
-
-				Resourcemetadata rEncounter = generateResourcemetadata(resource, chainedResource, chainedParameter+"encounter", contextString);
-				resourcemetadataList.add(rEncounter);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rEncounterChain =  this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "encounter", 0, procedure.getEncounter().getReference(), null);
-					resourcemetadataList.addAll(rEncounterChain);
-				}
+			if (procedure.hasEncounter()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "encounter", 0, procedure.getEncounter(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// identifier : token
 			if (procedure.hasIdentifier()) {
 
 				for (Identifier identifier : procedure.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
-			// instantiates-canonical : reference
+			// instantiates-canonical : reference - instantiates is a Canonical, no Reference.identifier
 			if (procedure.hasInstantiatesCanonical()) {
 
 				for (CanonicalType instantiates : procedure.getInstantiatesCanonical()) {
 					String objectReference = generateFullLocalReference(instantiates.asStringValue(), baseUrl);
 
-					List<Resourcemetadata> rInstantiatesChain = null;
-					Resourcemetadata rReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-canonical", objectReference);
-					resourcemetadataList.add(rReference);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-canonical", objectReference);
+					resourcemetadataList.add(rMetadata);
 
 					if (chainedResource == null) {
 						// Add chained parameters
-						rInstantiatesChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "instantiates-canonical", 0, instantiates.asStringValue(), null);
-						resourcemetadataList.addAll(rInstantiatesChain);
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "instantiates-canonical", 0, instantiates.asStringValue(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
@@ -220,98 +183,58 @@ public class ResourcemetadataProcedure extends ResourcemetadataProxy {
 			if (procedure.hasInstantiatesUri()) {
 
 				for (UriType instantiates : procedure.getInstantiatesUri()) {
-
-					Resourcemetadata rInstantiates = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-uri", instantiates.asStringValue());
-					resourcemetadataList.add(rInstantiates);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"instantiates-uri", instantiates.asStringValue());
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// location : reference
-			if (procedure.hasLocation() && procedure.getLocation().hasReference()) {
-				Resourcemetadata rLocation = generateResourcemetadata(resource, chainedResource, chainedParameter+"location", generateFullLocalReference(procedure.getLocation().getReference(), baseUrl));
-				resourcemetadataList.add(rLocation);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rLocationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, procedure.getLocation().getReference(), null);
-					resourcemetadataList.addAll(rLocationChain);
-				}
+			if (procedure.hasLocation()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "location", 0, procedure.getLocation(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// part-of : reference
 			if (procedure.hasPartOf()) {
 
-				List<Resourcemetadata> rPartOfChain = null;
 				for (Reference partOf : procedure.getPartOf()) {
-
-					if (partOf.hasReference()) {
-						Resourcemetadata rPartOf = generateResourcemetadata(resource, chainedResource, chainedParameter+"part-of", generateFullLocalReference(partOf.getReference(), baseUrl));
-						resourcemetadataList.add(rPartOf);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rPartOfChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "part-of", 0, partOf.getReference(), null);
-							resourcemetadataList.addAll(rPartOfChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "part-of", 0, partOf, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
-			// patient : reference
 			// subject : reference
-			if (procedure.hasSubject() && procedure.getSubject().hasReference()) {
-				String subjectReference = generateFullLocalReference(procedure.getSubject().getReference(), baseUrl);
+			if (procedure.hasSubject()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "subject", 0, procedure.getSubject(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 
-				Resourcemetadata rSubject = generateResourcemetadata(resource, chainedResource, chainedParameter+"subject", subjectReference);
-				resourcemetadataList.add(rSubject);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rSubjectChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "subject", 0, procedure.getSubject().getReference(), null);
-					resourcemetadataList.addAll(rSubjectChain);
-				}
-
-				if (subjectReference.indexOf("Patient") >= 0) {
-					Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", subjectReference);
-					resourcemetadataList.add(rPatient);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, procedure.getSubject().getReference(), null);
-						resourcemetadataList.addAll(rPatientChain);
-					}
+				// patient : reference
+				if ((procedure.getSubject().hasReference() && procedure.getSubject().getReference().indexOf("Patient") >= 0)
+						|| (procedure.getSubject().hasType() && procedure.getSubject().getType().equals("Patient"))) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, procedure.getSubject(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// performer : reference
 			if (procedure.hasPerformer()) {
-
-				List<Resourcemetadata> rPerformerChain = null;
 				for (ProcedurePerformerComponent performer : procedure.getPerformer()) {
 
-					if (performer.hasActor() && performer.getActor().hasReference()) {
-						Resourcemetadata rPerformer = generateResourcemetadata(resource, chainedResource, chainedParameter+"performer", generateFullLocalReference(performer.getActor().getReference(), baseUrl));
-						resourcemetadataList.add(rPerformer);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rPerformerChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "performer", 0, performer.getActor().getReference(), null);
-							resourcemetadataList.addAll(rPerformerChain);
-						}
+					if (performer.hasActor()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "performer", 0, performer.getActor(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
 
 			// reason-code : token
 			if (procedure.hasReasonCode()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept reasonCode : procedure.getReasonCode()) {
 
 					if (reasonCode.hasCoding()) {
 						for (Coding code : reasonCode.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"reason-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"reason-code", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -320,33 +243,32 @@ public class ResourcemetadataProcedure extends ResourcemetadataProxy {
 			// reason-reference : reference
 			if (procedure.hasReasonReference()) {
 
-				Resourcemetadata rReasonReference = null;
-				List<Resourcemetadata> rReasonReferenceChain = null;
 				for (Reference reasonReference : procedure.getReasonReference()) {
-
-					if (reasonReference.hasReference()) {
-						rReasonReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"reason-reference", generateFullLocalReference(reasonReference.getReference(), baseUrl));
-						resourcemetadataList.add(rReasonReference);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rReasonReferenceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "reason-reference", 0, reasonReference.getReference(), null);
-							resourcemetadataList.addAll(rReasonReferenceChain);
-						}
-					}
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "reason-reference", 0, reasonReference, null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
 			// status : token
 			if (procedure.hasStatus() && procedure.getStatus() != null) {
-				Resourcemetadata rStatus = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", procedure.getStatus().toCode(), procedure.getStatus().getSystem());
-				resourcemetadataList.add(rStatus);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"status", procedure.getStatus().toCode(), procedure.getStatus().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iProcedure != null) {
+                try {
+                	iProcedure.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

@@ -79,6 +79,8 @@ public class ResourcemetadataAuditEvent extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iAuditEvent = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a AuditEvent object
@@ -96,105 +98,71 @@ public class ResourcemetadataAuditEvent extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each AuditEvent metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, auditEvent, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (auditEvent.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", auditEvent.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (auditEvent.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", auditEvent.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (auditEvent.getMeta() != null && auditEvent.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(auditEvent.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(auditEvent.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, auditEvent, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// action : token
 			if (auditEvent.hasAction() && auditEvent.getAction() != null) {
-				Resourcemetadata rAction = generateResourcemetadata(resource, chainedResource, chainedParameter+"action", auditEvent.getAction().toCode(), auditEvent.getAction().getSystem());
-				resourcemetadataList.add(rAction);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"action", auditEvent.getAction().toCode(), auditEvent.getAction().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// date : datetime
 			if (auditEvent.hasRecorded()) {
-				Resourcemetadata rRecorded = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(auditEvent.getRecorded(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(auditEvent.getRecorded(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rRecorded);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"date", utcDateUtil.formatDate(auditEvent.getRecorded(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(auditEvent.getRecorded(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// outcome : token
 			if (auditEvent.hasOutcome() && auditEvent.getOutcome() != null) {
-				Resourcemetadata rOutcome = generateResourcemetadata(resource, chainedResource, chainedParameter+"outcome", auditEvent.getOutcome().toCode(), auditEvent.getOutcome().getSystem());
-				resourcemetadataList.add(rOutcome);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"outcome", auditEvent.getOutcome().toCode(), auditEvent.getOutcome().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// subtype : token
 			if (auditEvent.hasSubtype()) {
 
 				for (Coding subtype : auditEvent.getSubtype()) {
-
-					Resourcemetadata rCoding = generateResourcemetadata(resource, chainedResource, chainedParameter+"subtype", subtype.getCode(), subtype.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(subtype));
-					resourcemetadataList.add(rCoding);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"subtype", subtype.getCode(), subtype.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(subtype));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
 			// type : token
 			if (auditEvent.hasType()) {
-				Resourcemetadata rCoding = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", auditEvent.getType().getCode(), auditEvent.getType().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(auditEvent.getType()));
-				resourcemetadataList.add(rCoding);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"type", auditEvent.getType().getCode(), auditEvent.getType().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(auditEvent.getType()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// auditEvent.agent
 			if (auditEvent.hasAgent()) {
 
-				Resourcemetadata rCode = null;
 				for (AuditEventAgentComponent agent : auditEvent.getAgent()) {
 
 					// agent.network.address : token
 					if (agent.hasNetwork() && agent.getNetwork().hasAddress()) {
-						Resourcemetadata rAddress = generateResourcemetadata(resource, chainedResource, chainedParameter+"address", agent.getNetwork().getAddress());
-						resourcemetadataList.add(rAddress);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address", agent.getNetwork().getAddress());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// agent.reference : reference
-					if (agent.hasWho() && agent.getWho().hasReference()) {
-						String objectReference = generateFullLocalReference(agent.getWho().getReference(), baseUrl);
-
-						List<Resourcemetadata> rAgentChain = null;
-						Resourcemetadata rAgent = generateResourcemetadata(resource, chainedResource, chainedParameter+"agent", objectReference);
-						resourcemetadataList.add(rAgent);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rAgentChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "agent", 0, agent.getWho().getReference(), null);
-							resourcemetadataList.addAll(rAgentChain);
-						}
+					if (agent.hasWho()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "agent", 0, agent.getWho(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 
 						// (patient) agent.reference : reference
-						if (objectReference.contains("Patient")) {
-							Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", objectReference);
-							resourcemetadataList.add(rPatient);
-
-							if (chainedResource == null) {
-								// Add chained parameters
-								rAgentChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, agent.getWho().getReference(), null);
-								resourcemetadataList.addAll(rAgentChain);
-							}
+						if ((agent.getWho().hasReference() && agent.getWho().getReference().indexOf("Patient") >= 0)
+							|| (agent.getWho().hasType() && agent.getWho().getType().equals("Patient"))) {
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, agent.getWho(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 
 					// agent.name : string
 					if (agent.hasName()) {
-						Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"agent-name", agent.getName());
-						resourcemetadataList.add(rName);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"agent-name", agent.getName());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// agent.role : token
@@ -204,8 +172,8 @@ public class ResourcemetadataAuditEvent extends ResourcemetadataProxy {
 							if (role.hasCoding()) {
 
 								for (Coding code : role.getCoding()) {
-									rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"agent-role", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-									resourcemetadataList.add(rCode);
+									rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"agent-role", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+									resourcemetadataList.add(rMetadata);
 								}
 							}
 						}
@@ -213,17 +181,16 @@ public class ResourcemetadataAuditEvent extends ResourcemetadataProxy {
 
 					// agent.altid : token
 					if (agent.hasAltId()) {
-						Resourcemetadata rAltId = generateResourcemetadata(resource, chainedResource, chainedParameter+"altid", agent.getAltId());
-						resourcemetadataList.add(rAltId);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"altid", agent.getAltId());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// agent.policy : uri
 					if (agent.hasPolicy()) {
 
 						for (UriType policy : agent.getPolicy()) {
-
-							Resourcemetadata rPolicy = generateResourcemetadata(resource, chainedResource, chainedParameter+"policy", policy.getValueAsString());
-							resourcemetadataList.add(rPolicy);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"policy", policy.getValueAsString());
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -234,51 +201,35 @@ public class ResourcemetadataAuditEvent extends ResourcemetadataProxy {
 
 				for (AuditEventEntityComponent entity : auditEvent.getEntity()) {
 
-					// entity.reference : reference
-					if (entity.hasWhat() && entity.getWhat().hasReference()) {
-						String objectReference = generateFullLocalReference(entity.getWhat().getReference(), baseUrl);
+					// entity : reference
+					if (entity.hasWhat()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "agent", 0, entity.getWhat(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 
-						List<Resourcemetadata> rEntityChain = null;
-						Resourcemetadata rReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"entity", objectReference);
-						resourcemetadataList.add(rReference);
-
-						if (chainedResource == null) {
-							// Add chained parameters
-							rEntityChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "entity", 0, entity.getWhat().getReference(), null);
-							resourcemetadataList.addAll(rEntityChain);
-						}
-
-						// (patient) object.reference : reference
-						if (objectReference.contains("Patient")) {
-							Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", objectReference);
-							resourcemetadataList.add(rPatient);
-
-							if (chainedResource == null) {
-								// Add chained parameters
-								rEntityChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, entity.getWhat().getReference(), null);
-								resourcemetadataList.addAll(rEntityChain);
-							}
-						}
-						else {
+						// (patient) entity.what.reference : reference
+						if ((entity.getWhat().hasReference() && entity.getWhat().getReference().indexOf("Patient") >= 0)
+							|| (entity.getWhat().hasType() && entity.getWhat().getType().equals("Patient"))) {
+							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, entity.getWhat(), null);
+							resourcemetadataList.addAll(rMetadataChain);
 						}
 					}
 
 					// entity.name : string
 					if (entity.hasName()) {
-						Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"entity-name", entity.getName());
-						resourcemetadataList.add(rName);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"entity-name", entity.getName());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// entity.role : token
 					if (entity.hasType()) {
-						Resourcemetadata rRole = generateResourcemetadata(resource, chainedResource, chainedParameter+"entity-role", entity.getRole().getCode(), entity.getRole().getSystem());
-						resourcemetadataList.add(rRole);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"entity-role", entity.getRole().getCode(), entity.getRole().getSystem());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// entity.type : token
 					if (entity.hasType()) {
-						Resourcemetadata rType = generateResourcemetadata(resource, chainedResource, chainedParameter+"entity-type", entity.getType().getCode(), entity.getType().getSystem());
-						resourcemetadataList.add(rType);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"entity-type", entity.getType().getCode(), entity.getType().getSystem());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
@@ -288,23 +239,14 @@ public class ResourcemetadataAuditEvent extends ResourcemetadataProxy {
 
 				// source.site : token
 				if (auditEvent.getSource().hasSite()) {
-					Resourcemetadata rSite = generateResourcemetadata(resource, chainedResource, chainedParameter+"site", auditEvent.getSource().getSite());
-					resourcemetadataList.add(rSite);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"site", auditEvent.getSource().getSite());
+					resourcemetadataList.add(rMetadata);
 				}
 
 				// source.source : reference
-				if (auditEvent.getSource().hasObserver() && auditEvent.getSource().getObserver().hasReference()) {
-					String objectReference = generateFullLocalReference(auditEvent.getSource().getObserver().getReference(), baseUrl);
-
-					List<Resourcemetadata> rSourceChain = null;
-					Resourcemetadata rReference = generateResourcemetadata(resource, chainedResource, chainedParameter+"source", objectReference);
-					resourcemetadataList.add(rReference);
-
-					if (chainedResource == null) {
-						// Add chained parameters
-						rSourceChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "source", 0, auditEvent.getSource().getObserver().getReference(), null);
-						resourcemetadataList.addAll(rSourceChain);
-					}
+				if (auditEvent.getSource().hasObserver()) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "source", 0, auditEvent.getSource().getObserver(), null);
+					resourcemetadataList.addAll(rMetadataChain);
 				}
 			}
 
@@ -313,6 +255,8 @@ public class ResourcemetadataAuditEvent extends ResourcemetadataProxy {
 			e.printStackTrace();
 			throw e;
         } finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
             if (iAuditEvent != null) {
                 try {
                 	iAuditEvent.close();

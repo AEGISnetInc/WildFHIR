@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -74,6 +75,8 @@ public class ResourcemetadataTestReport extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iTestReport = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
             // Extract and convert the resource contents to a TestReport object
@@ -91,80 +94,65 @@ public class ResourcemetadataTestReport extends ResourcemetadataProxy {
              * Create new Resourcemetadata objects for each TestReport metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, testReport, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (testReport.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", testReport.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (testReport.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", testReport.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (testReport.getMeta() != null && testReport.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(testReport.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(testReport.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, testReport, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// identifier : token
 			if (testReport.hasIdentifier()) {
-				Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", testReport.getIdentifier().getValue(), testReport.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(testReport.getIdentifier()));
-				resourcemetadataList.add(rIdentifier);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", testReport.getIdentifier().getValue(), testReport.getIdentifier().getSystem(), null, ServicesUtil.INSTANCE.getTextValue(testReport.getIdentifier()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// issued : date
 			if (testReport.hasIssued()) {
-				Resourcemetadata rIssued = generateResourcemetadata(resource, chainedResource, chainedParameter+"issued", utcDateUtil.formatDate(testReport.getIssued(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(testReport.getIssued(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rIssued);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"issued", utcDateUtil.formatDate(testReport.getIssued(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(testReport.getIssued(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
-			// participant : reference
+			// participant : uri
 			if (testReport.hasParticipant()) {
-
 				for (TestReportParticipantComponent participant : testReport.getParticipant()) {
 
 					if (participant.hasUri()) {
-						Resourcemetadata rParticipant = generateResourcemetadata(resource, chainedResource, chainedParameter+"participant", participant.getUri());
-						resourcemetadataList.add(rParticipant);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"participant", participant.getUri());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// result : token
 			if (testReport.hasResult() && testReport.getResult() != null) {
-				Resourcemetadata rResult = generateResourcemetadata(resource, chainedResource, chainedParameter+"result", testReport.getResult().toCode(), testReport.getResult().getSystem());
-				resourcemetadataList.add(rResult);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"result", testReport.getResult().toCode(), testReport.getResult().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// tester : string
 			if (testReport.hasTester()) {
-				Resourcemetadata rTester = generateResourcemetadata(resource, chainedResource, chainedParameter+"tester", testReport.getTester());
-				resourcemetadataList.add(rTester);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"tester", testReport.getTester());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// testscript : reference
-			if (testReport.hasTestScript() && testReport.getTestScript().hasReference()) {
-				Resourcemetadata rTestScript = generateResourcemetadata(resource, chainedResource, chainedParameter+"testscript", generateFullLocalReference(testReport.getTestScript().getReference(), baseUrl));
-				resourcemetadataList.add(rTestScript);
-
-				if (chainedResource == null) {
-					// Add chained parameters for any
-					List<Resourcemetadata> rTestScriptChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "testscript", 0, testReport.getTestScript().getReference(), null);
-					resourcemetadataList.addAll(rTestScriptChain);
-				}
+			if (testReport.hasTestScript()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "testscript", 0, testReport.getTestScript(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		}finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iTestReport != null) {
+                try {
+                	iTestReport.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;

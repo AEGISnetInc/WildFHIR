@@ -82,6 +82,8 @@ public class ResourcemetadataRelatedPerson extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iRelatedPerson = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a RelatedPerson object
@@ -99,32 +101,14 @@ public class ResourcemetadataRelatedPerson extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each RelatedPerson metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, relatedPerson, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (relatedPerson.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", relatedPerson.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (relatedPerson.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", relatedPerson.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (relatedPerson.getMeta() != null && relatedPerson.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(relatedPerson.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(relatedPerson.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, relatedPerson, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			// active : token
 			if (relatedPerson.hasActive()) {
-				Resourcemetadata rActive = generateResourcemetadata(resource, chainedResource, chainedParameter+"active", Boolean.toString(relatedPerson.getActive()));
-				resourcemetadataList.add(rActive);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"active", Boolean.toString(relatedPerson.getActive()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// address : string - one for each address
@@ -155,8 +139,8 @@ public class ResourcemetadataRelatedPerson extends ResourcemetadataProxy {
 							sbAddress.append(" ");
 						}
 						sbAddress.append(address.getCity());
-						Resourcemetadata rCity = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-city", address.getCity());
-						resourcemetadataList.add(rCity);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-city", address.getCity());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address-state : string
@@ -165,8 +149,18 @@ public class ResourcemetadataRelatedPerson extends ResourcemetadataProxy {
 							sbAddress.append(" ");
 						}
 						sbAddress.append(address.getState());
-						Resourcemetadata rState = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-state", address.getState());
-						resourcemetadataList.add(rState);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-state", address.getState());
+						resourcemetadataList.add(rMetadata);
+					}
+
+					// address-district : string
+					if (address.hasDistrict()) {
+						if (sbAddress.length() > 0) {
+							sbAddress.append(" ");
+						}
+						sbAddress.append(address.getDistrict());
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-district", address.getDistrict());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address-country : string
@@ -175,8 +169,8 @@ public class ResourcemetadataRelatedPerson extends ResourcemetadataProxy {
 							sbAddress.append(" ");
 						}
 						sbAddress.append(address.getCountry());
-						Resourcemetadata rCountry = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-country", address.getCountry());
-						resourcemetadataList.add(rCountry);
+						rMetadata= generateResourcemetadata(resource, chainedResource, chainedParameter+"address-country", address.getCountry());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address-postalcode : string
@@ -185,14 +179,14 @@ public class ResourcemetadataRelatedPerson extends ResourcemetadataProxy {
 							sbAddress.append(" ");
 						}
 						sbAddress.append(address.getPostalCode());
-						Resourcemetadata rPostalCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-postalcode", address.getPostalCode());
-						resourcemetadataList.add(rPostalCode);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-postalcode", address.getPostalCode());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address-use : token
 					if (address.hasUse() && address.getUse() != null) {
-						Resourcemetadata rUse = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-use", address.getUse().toCode(), address.getUse().getSystem());
-						resourcemetadataList.add(rUse);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address-use", address.getUse().toCode(), address.getUse().getSystem());
+						resourcemetadataList.add(rMetadata);
 					}
 
 					// address : string
@@ -204,63 +198,58 @@ public class ResourcemetadataRelatedPerson extends ResourcemetadataProxy {
 					}
 
 					if (sbAddress.length() > 0) {
-						Resourcemetadata rAddress = generateResourcemetadata(resource, chainedResource, chainedParameter+"address", sbAddress.toString());
-						resourcemetadataList.add(rAddress);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"address", sbAddress.toString());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// birthdate : date
 			if (relatedPerson.hasBirthDate()) {
-				Resourcemetadata rBirthDate = generateResourcemetadata(resource, chainedResource, chainedParameter+"birthdate", utcDateUtil.formatDate(relatedPerson.getBirthDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(relatedPerson.getBirthDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rBirthDate);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"birthdate", utcDateUtil.formatDate(relatedPerson.getBirthDate(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(relatedPerson.getBirthDate(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// (email) telecom.system=email : token
 			// (phone) telecom.system=phone : token
 			// telecom : token
 			if (relatedPerson.hasTelecom()) {
-
 				for (ContactPoint telecom : relatedPerson.getTelecom()) {
 
 					if (telecom.hasValue()) {
-
 						String telecomSystemName = null;
 						if (telecom.hasSystem() && telecom.getSystem() != null) {
 
 							telecomSystemName = telecom.getSystem().toCode();
 
 							if (telecom.getSystem().equals(ContactPointSystem.EMAIL)) {
-
-								Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter + "email", telecom.getValue(), telecomSystemName);
-								resourcemetadataList.add(rTelecom);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "email", telecom.getValue(), telecomSystemName);
+								resourcemetadataList.add(rMetadata);
 							}
 							else if (telecom.getSystem().equals(ContactPointSystem.PHONE)) {
-
-								Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter + "phone", telecom.getValue(), telecomSystemName);
-								resourcemetadataList.add(rTelecom);
+								rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "phone", telecom.getValue(), telecomSystemName);
+								resourcemetadataList.add(rMetadata);
 							}
 						}
 
-						Resourcemetadata rTelecom = generateResourcemetadata(resource, chainedResource, chainedParameter + "telecom", telecom.getValue(), telecomSystemName);
-						resourcemetadataList.add(rTelecom);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter + "telecom", telecom.getValue(), telecomSystemName);
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// gender : token
 			if (relatedPerson.hasGender() && relatedPerson.getGender() != null) {
-				Resourcemetadata rCoding = generateResourcemetadata(resource, chainedResource, chainedParameter+"gender", relatedPerson.getGender().toCode(), relatedPerson.getGender().getSystem());
-				resourcemetadataList.add(rCoding);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"gender", relatedPerson.getGender().toCode(), relatedPerson.getGender().getSystem());
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// identifier : token
 			if (relatedPerson.hasIdentifier()) {
 
 				for (Identifier identifier : relatedPerson.getIdentifier()) {
-
-					Resourcemetadata rIdentifier = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
-					resourcemetadataList.add(rIdentifier);
+					rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"identifier", identifier.getValue(), identifier.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(identifier));
+					resourcemetadataList.add(rMetadata);
 				}
 			}
 
@@ -323,36 +312,28 @@ public class ResourcemetadataRelatedPerson extends ResourcemetadataProxy {
 						}
 					}
 					if (sb.length() > 0) {
-						Resourcemetadata rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", sb.toString());
-						resourcemetadataList.add(rName);
-						rName = generateResourcemetadata(resource, chainedResource, chainedParameter+"phonetic", sb.toString());
-						resourcemetadataList.add(rName);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"name", sb.toString());
+						resourcemetadataList.add(rMetadata);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"phonetic", sb.toString());
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// patient : reference
-			if (relatedPerson.hasPatient() && relatedPerson.getPatient().hasReference()) {
-				Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", generateFullLocalReference(relatedPerson.getPatient().getReference(), baseUrl));
-				resourcemetadataList.add(rPatient);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rPatientChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, relatedPerson.getPatient().getReference(), null);
-					resourcemetadataList.addAll(rPatientChain);
-				}
+			if (relatedPerson.hasPatient()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, relatedPerson.getPatient(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// relationship : token
 			if (relatedPerson.hasRelationship()) {
-
-				Resourcemetadata rCode = null;
 				for (CodeableConcept relationship : relatedPerson.getRelationship()) {
 
 					if (relationship.hasCoding()) {
 						for (Coding code : relationship.getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"relationship", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"relationship", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -363,6 +344,8 @@ public class ResourcemetadataRelatedPerson extends ResourcemetadataProxy {
 			e.printStackTrace();
 			throw e;
         } finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
             if (iRelatedPerson != null) {
                 try {
                 	iRelatedPerson.close();

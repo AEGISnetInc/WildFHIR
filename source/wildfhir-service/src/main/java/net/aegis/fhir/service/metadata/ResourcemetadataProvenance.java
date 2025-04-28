@@ -33,6 +33,7 @@
 package net.aegis.fhir.service.metadata;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -79,6 +80,8 @@ public class ResourcemetadataProvenance extends ResourcemetadataProxy {
 
 		List<Resourcemetadata> resourcemetadataList = new ArrayList<Resourcemetadata>();
         ByteArrayInputStream iProvenance = null;
+        Resourcemetadata rMetadata = null;
+        List<Resourcemetadata> rMetadataChain = null;
 
 		try {
 			// Extract and convert the resource contents to a Provenance object
@@ -96,44 +99,18 @@ public class ResourcemetadataProvenance extends ResourcemetadataProxy {
 			 * Create new Resourcemetadata objects for each Provenance metadata value and add to the resourcemetadataList
 			 */
 
-			// Add any passed in tags
-			List<Resourcemetadata> tagMetadataList = this.generateResourcemetadataTagList(resource, provenance, chainedParameter);
-			resourcemetadataList.addAll(tagMetadataList);
-
-			// _id : token
-			if (provenance.getId() != null) {
-				Resourcemetadata _id = generateResourcemetadata(resource, chainedResource, chainedParameter+"_id", provenance.getId());
-				resourcemetadataList.add(_id);
-			}
-
-			// _language : token
-			if (provenance.getLanguage() != null) {
-				Resourcemetadata _language = generateResourcemetadata(resource, chainedResource, chainedParameter+"_language", provenance.getLanguage());
-				resourcemetadataList.add(_language);
-			}
-
-			// _lastUpdated : date
-			if (provenance.getMeta() != null && provenance.getMeta().getLastUpdated() != null) {
-				Resourcemetadata _lastUpdated = generateResourcemetadata(resource, chainedResource, chainedParameter+"_lastUpdated", utcDateUtil.formatDate(provenance.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(provenance.getMeta().getLastUpdated(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(_lastUpdated);
-			}
+			// Add Resource common parameters
+            rMetadataChain = this.generateResourcemetadataTagList(resource, provenance, chainedParameter);
+			resourcemetadataList.addAll(rMetadataChain);
 
 			if (provenance.hasAgent()) {
 
-				Resourcemetadata rCode = null;
-				List<Resourcemetadata> rAgentChain = null;
 				for (ProvenanceAgentComponent agent : provenance.getAgent()) {
 
 					// agent : reference
-					if (agent.hasWho() && agent.getWho().hasReference()) {
-						Resourcemetadata rWho = generateResourcemetadata(resource, chainedResource, chainedParameter+"agent", generateFullLocalReference(agent.getWho().getReference(), baseUrl));
-						resourcemetadataList.add(rWho);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rAgentChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "agent", 0, agent.getWho().getReference(), null);
-							resourcemetadataList.addAll(rAgentChain);
-						}
+					if (agent.hasWho()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "agent", 0, agent.getWho(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 
 					// agent-role : token
@@ -143,8 +120,8 @@ public class ResourcemetadataProvenance extends ResourcemetadataProxy {
 
 							if (role.hasCoding()) {
 								for (Coding code : role.getCoding()) {
-									rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"agent-role", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-									resourcemetadataList.add(rCode);
+									rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"agent-role", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+									resourcemetadataList.add(rMetadata);
 								}
 							}
 						}
@@ -153,8 +130,8 @@ public class ResourcemetadataProvenance extends ResourcemetadataProxy {
 					// agent-type : token
 					if (agent.hasType() && agent.getType().hasCoding()) {
 						for (Coding code : agent.getType().getCoding()) {
-							rCode = generateResourcemetadata(resource, chainedResource, chainedParameter+"agent-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
-							resourcemetadataList.add(rCode);
+							rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"agent-type", code.getCode(), code.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(code));
+							resourcemetadataList.add(rMetadata);
 						}
 					}
 				}
@@ -162,98 +139,75 @@ public class ResourcemetadataProvenance extends ResourcemetadataProxy {
 
 			// entity : reference
 			if (provenance.hasEntity()) {
-
-				List<Resourcemetadata> rEntityChain = null;
 				for (ProvenanceEntityComponent entity : provenance.getEntity()) {
 
-					if (entity.hasWhat() && entity.getWhat().hasReference()) {
-						Resourcemetadata rEntity = generateResourcemetadata(resource, chainedResource, chainedParameter+"entity", entity.getWhat().getReference());
-						resourcemetadataList.add(rEntity);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rEntityChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "entity", 0, entity.getWhat().getReference(), null);
-							resourcemetadataList.addAll(rEntityChain);
-						}
+					if (entity.hasWhat()) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "entity", 0, entity.getWhat(), null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
 
 			// location : reference
-			if (provenance.hasLocation() && provenance.getLocation().hasReference()) {
-				Resourcemetadata rLocation = generateResourcemetadata(resource, chainedResource, chainedParameter+"location", generateFullLocalReference(provenance.getLocation().getReference(), baseUrl));
-				resourcemetadataList.add(rLocation);
-
-				if (chainedResource == null) {
-					// Add chained parameters
-					List<Resourcemetadata> rLocationChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "location", 0, provenance.getLocation().getReference(), null);
-					resourcemetadataList.addAll(rLocationChain);
-				}
+			if (provenance.hasLocation()) {
+				rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "location", 0, provenance.getLocation(), null);
+				resourcemetadataList.addAll(rMetadataChain);
 			}
 
 			// patient : reference
 			// target : reference
 			if (provenance.hasTarget()) {
 
-				String targetReference = null;
-				List<Resourcemetadata> rTargetChain = null;
 				for (Reference target : provenance.getTarget()) {
+					rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "target", 0, target, null);
+					resourcemetadataList.addAll(rMetadataChain);
 
-					if (target.hasReference()) {
-						targetReference = generateFullLocalReference(target.getReference(), baseUrl);
-
-						Resourcemetadata rTarget = generateResourcemetadata(resource, chainedResource, chainedParameter+"target", targetReference);
-						resourcemetadataList.add(rTarget);
-
-						if (chainedResource == null) {
-							// Add chained parameters for any
-							rTargetChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "target", 0, target.getReference(), null);
-							resourcemetadataList.addAll(rTargetChain);
-						}
-
-						if (target.getReference().contains("Patient")) {
-							Resourcemetadata rPatient = generateResourcemetadata(resource, chainedResource, chainedParameter+"patient", targetReference);
-							resourcemetadataList.add(rPatient);
-
-							if (chainedResource == null) {
-								// Add chained parameters
-								rTargetChain = this.generateChainedResourcemetadataAny(resource, baseUrl, resourceService, "patient", 0, target.getReference(), null);
-								resourcemetadataList.addAll(rTargetChain);
-							}
-						}
+					// patient : reference
+					if ((target.hasReference() && target.getReference().indexOf("Patient") >= 0)
+							|| (target.hasType() && target.getType().equals("Patient"))) {
+						rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, target, null);
+						resourcemetadataList.addAll(rMetadataChain);
 					}
 				}
 			}
 
 			// recorded : date
 			if (provenance.hasRecorded()) {
-				Resourcemetadata rRecorded = generateResourcemetadata(resource, chainedResource, chainedParameter+"recorded", utcDateUtil.formatDate(provenance.getRecorded(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(provenance.getRecorded(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rRecorded);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"recorded", utcDateUtil.formatDate(provenance.getRecorded(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(provenance.getRecorded(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 			// signature-type : token
 			if (provenance.hasSignature()) {
-
 				for (Signature signature : provenance.getSignature()) {
 
 					for (Coding sigtype : signature.getType()) {
-
-						Resourcemetadata rAdditiveType = generateResourcemetadata(resource, chainedResource, chainedParameter+"signature-type", sigtype.getCode(), sigtype.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(sigtype));
-						resourcemetadataList.add(rAdditiveType);
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"signature-type", sigtype.getCode(), sigtype.getSystem(), null, ServicesUtil.INSTANCE.getTextValue(sigtype));
+						resourcemetadataList.add(rMetadata);
 					}
 				}
 			}
 
 			// when : datetime
 			if (provenance.hasOccurredDateTimeType()) {
-				Resourcemetadata rWhen = generateResourcemetadata(resource, chainedResource, chainedParameter+"when", utcDateUtil.formatDate(provenance.getOccurredDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(provenance.getOccurredDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
-				resourcemetadataList.add(rWhen);
+				rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"when", utcDateUtil.formatDate(provenance.getOccurredDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT), null, utcDateUtil.formatDate(provenance.getOccurredDateTimeType().getValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault()));
+				resourcemetadataList.add(rMetadata);
 			}
 
 		} catch (Exception e) {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+	        rMetadata = null;
+	        rMetadataChain = null;
+            if (iProvenance != null) {
+                try {
+                	iProvenance.close();
+                } catch (IOException ioe) {
+                	ioe.printStackTrace();
+                }
+            }
 		}
 
 		return resourcemetadataList;
