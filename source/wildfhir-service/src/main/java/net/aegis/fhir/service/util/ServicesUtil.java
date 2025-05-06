@@ -950,27 +950,33 @@ public enum ServicesUtil {
 	}
 
 	public String getHostName() {
-		String hostname = "localhost";
+		// Get hostname from environment variable WILDFHIR_HOSTNAME (defined in docker container)
+		String hostname = System.getenv("WILDFHIR_HOSTNAME");
 
-		try {
-			InetAddress addr = InetAddress.getLocalHost();
-			hostname = addr.getCanonicalHostName();
-		}
-		catch (Exception e) {
-			// Default to localhost if any exception thrown
+		if (hostname == null || hostname.isEmpty()) {
+			// WILDFHIR_HOSTNAME environment variable not defined; default to localhost
 			hostname = "localhost";
-		}
 
-		if (hostname.equals("localhost")) {
-			// InetAddress did not resolve; try OS hostname
 			try {
-				Process p = Runtime.getRuntime().exec("hostname");
-				byte[] bytes = p.getInputStream().readAllBytes();
-				hostname = new String(bytes,"ASCII").trim();
+				InetAddress addr = InetAddress.getLocalHost();
+				hostname = addr.getCanonicalHostName();
 			}
 			catch (Exception e) {
 				// Default to localhost if any exception thrown
 				hostname = "localhost";
+			}
+
+			if (hostname.equals("localhost")) {
+				// InetAddress did not resolve; try OS hostname
+				try {
+					Process p = Runtime.getRuntime().exec("hostname");
+					byte[] bytes = p.getInputStream().readAllBytes();
+					hostname = new String(bytes,"ASCII").trim();
+				}
+				catch (Exception e) {
+					// Default to localhost if any exception thrown
+					hostname = "localhost";
+				}
 			}
 		}
 
