@@ -3456,6 +3456,12 @@ public class ResourceService {
 								 */
 							}
 							else {
+								if (key.contains(":identifier")) {
+									// reference type modifier; must treat value as token
+									isReferenceType = false;
+									isTokenType = true;
+								}
+
 								if (value != null & value.length() > 0) {
 									log.info("resourceType = '" + (resourceType == null ? "null" : resourceType) + "'; key = '" + key + "'; value = '" + value + "'");
 									// Initialize TimeZones
