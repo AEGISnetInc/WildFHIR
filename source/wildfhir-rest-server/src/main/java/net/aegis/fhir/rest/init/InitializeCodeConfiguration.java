@@ -121,7 +121,7 @@ public class InitializeCodeConfiguration extends HttpServlet {
 						code.setIntValue(0);
 					}
 					else if (StringUtils.isNumeric(envValue)) {
-						Integer intValue = Integer.getInteger(envValue);
+						Integer intValue = Integer.parseInt(envValue);
 						code.setIntValue(intValue);
 						if (intValue > 0) {
 							code.setValue("true");
@@ -149,6 +149,7 @@ public class InitializeCodeConfiguration extends HttpServlet {
 			}
 		} catch (Exception e) {
 			log.error("InitializeCodeConfiguration - " + v + " error! " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
