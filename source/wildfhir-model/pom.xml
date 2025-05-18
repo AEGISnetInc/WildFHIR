@@ -4,7 +4,7 @@
     <parent>
         <groupId>net.aegis.fhir</groupId>
         <artifactId>wildfhir</artifactId>
-        <version>0.5.2-SNAPSHOT</version>
+        <version>0.5.2</version>
     </parent>
     <artifactId>wildfhir-model</artifactId>
     <packaging>jar</packaging>
@@ -81,19 +81,19 @@
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jaxrs</artifactId>
-            <version>3.12.1.Final</version>
+            <version>3.15.1.Final</version>
             <scope>provided</scope>
         </dependency>
 	  	<dependency>
 	    	<groupId>org.jboss.resteasy</groupId>
 	      	<artifactId>resteasy-jaxb-provider</artifactId>
-	    	<version>3.12.1.Final</version>
+	    	<version>3.15.1.Final</version>
 	    	<scope>provided</scope>
 	  	</dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-multipart-provider</artifactId>
-            <version>3.12.1.Final</version>
+            <version>3.15.1.Final</version>
             <scope>provided</scope>
         </dependency>
 
@@ -120,7 +120,7 @@
         <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
-            <version>6.0.20.Final</version>
+            <version>6.2.0.Final</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
