@@ -14,11 +14,11 @@ docker network create -d bridge wildfhirce-net
 
 # -------------------------------------------------------------------------------
 # Create and run wildfhirce-mysql image
-# - From tag v0.5.1
+# - From tag v0.5.2
 # - Using the bridge network wildfhirce-net
 # - Expose port 3306 for MySQL Workbench access
 # -------------------------------------------------------------------------------
-docker run --network=wildfhirce-net -itd -p 3306:3306 --name=wildfhircemysql aegisnetinc/wildfhirce-mysql:v0.5.1
+docker run --network=wildfhirce-net -itd -p 3306:3306 --name=wildfhircemysql aegisnetinc/wildfhirce-mysql:v0.5.2
 
 # -------------------------------------------------------------------------------
 # Run wildfhircemysql container
@@ -28,12 +28,12 @@ docker start wildfhircemysql
 
 # -------------------------------------------------------------------------------
 # Create and run wildfhirce-wildfly image
-# - From tag v0.5.1
+# - From tag v0.5.2
 # - Using the bridge network wildfhirce-net
 # - Define WildFHIR environment variable file
 # - Expose ports 8080, 8443, 9990 for browser and RESTful client access
 # -------------------------------------------------------------------------------
-docker run --network=wildfhirce-net -itd -p 8080:8080 -p 8443:8443 -p 9990:9990 --env-file env.list --name=wildfhircewildfly aegisnetinc/wildfhirce-wildfly:v0.5.1
+docker run --network=wildfhirce-net -itd -p 8080:8080 -p 8443:8443 -p 9990:9990 --env-file env.list --name=wildfhircewildfly aegisnetinc/wildfhirce-wildfly:v0.5.2
 
 # -------------------------------------------------------------------------------
 # Run wildfhircewildfly container

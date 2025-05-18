@@ -1,6 +1,6 @@
 services:
   wildfhircemysql:
-    image: aegisnetinc/wildfhirce-mysql:v0.5.1
+    image: aegisnetinc/wildfhirce-mysql:v0.5.2
     container_name: wildfhircemysql
     hostname: wildfhircemysql
     ports:
@@ -9,7 +9,7 @@ services:
       - wildfhirce-mysql-data:/var/lib/mysql
 
   wildfhircewildfly:
-    image: aegisnetinc/wildfhirce-wildfly:v0.5.1
+    image: aegisnetinc/wildfhirce-wildfly:v0.5.2
     container_name: wildfhircewildfly
     hostname: wildfhircewildfly
     ports:

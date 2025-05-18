@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------------
 # Build wildfhirce-wildfly image
-# - Named tag v0.5.1
+# - Named tag v0.5.2
 # -------------------------------------------------------------------------------
-docker build -t aegisnetinc/wildfhirce-wildfly:v0.5.1 .
+docker build -t aegisnetinc/wildfhirce-wildfly:v0.5.2 .
