@@ -1,0 +1,71 @@
+##############################################################
+################## DEFAULT CACHE REGION  #####################
+# sets the default aux value for any non configured caches
+jcs.default=FHIR_PAGING_CACHE
+jcs.default.cacheattributes=org.apache.commons.jcs.engine.CompositeCacheAttributes
+jcs.default.cacheattributes.MaxObjects=5000
+jcs.default.cacheattributes.MemoryCacheName=org.apache.commons.jcs.engine.memory.lru.LRUMemoryCache
+jcs.default.cacheattributes.UseMemoryShrinker=true
+jcs.default.cacheattributes.MaxMemoryIdleTime=7200
+jcs.default.cacheattributes.ShrinkerInterval=60
+jcs.default.elementattributes=org.apache.commons.jcs.engine.ElementAttributes
+jcs.default.elementattributes.IsEternal=false
+jcs.default.elementattributes.MaxLife=14400
+jcs.default.elementattributes.IdleTime=14400
+jcs.default.elementattributes.IsSpool=true
+jcs.default.elementattributes.IsRemote=true
+jcs.default.elementattributes.IsLateral=true
+
+##############################################################
+################## CACHE REGIONS AVAILABLE ###################
+# PRE-DEFINED CACHE REGIONS
+jcs.region.fhirPagingCache=FHIR_PAGING_CACHE
+jcs.region.fhirPagingCache.cacheattributes=org.apache.commons.jcs.engine.CompositeCacheAttributes
+jcs.region.fhirPagingCache.cacheattributes.MaxObjects=1000
+jcs.region.fhirPagingCache.cacheattributes.MemoryCacheName=org.apache.commons.jcs.engine.memory.lru.LRUMemoryCache
+jcs.region.fhirPagingCache.cacheattributes.UseMemoryShrinker=false
+jcs.region.fhirPagingCache.cacheattributes.MaxMemoryIdleTime=3600
+jcs.region.fhirPagingCache.cacheattributes.ShrinkerInterval=60
+jcs.region.fhirPagingCache.cacheattributes.MaxSpoolPerRun=500
+jcs.region.fhirPagingCache.elementattributes=org.apache.commons.jcs.engine.ElementAttributes
+jcs.region.fhirPagingCache.elementattributes.IsEternal=false
+
+##############################################################
+################## AUXILIARY CACHES AVAILABLE ################
+# Disk cache used for FHIR_PAGING_CACHE
+jcs.auxiliary.FHIR_PAGING_CACHE=org.apache.commons.jcs.auxiliary.disk.indexed.IndexedDiskCacheFactory
+jcs.auxiliary.FHIR_PAGING_CACHE.attributes=org.apache.commons.jcs.auxiliary.disk.indexed.IndexedDiskCacheAttributes
+jcs.auxiliary.FHIR_PAGING_CACHE.attributes.DiskPath=C:/Temp/JCS_CACHE/FHIR_PAGING_CACHE
+jcs.auxiliary.FHIR_PAGING_CACHE.attributes.MaxPurgatorySize=10000000
+jcs.auxiliary.FHIR_PAGING_CACHE.attributes.MaxKeySize=1000000
+jcs.auxiliary.FHIR_PAGING_CACHE.attributes.MaxRecycleBinSize=5000
+jcs.auxiliary.FHIR_PAGING_CACHE.attributes.OptimizeAtRemoveCount=300000
+jcs.auxiliary.FHIR_PAGING_CACHE.attributes.ShutdownSpoolTimeLimit=60
+
+# MYSQL disk cache used for flight options
+#jcs.auxiliary.MYSQL=org.apache.commons.jcs.auxiliary.disk.jdbc.JDBCDiskCacheFactory
+#jcs.auxiliary.MYSQL.attributes=org.apache.commons.jcs.auxiliary.disk.jdbc.JDBCDiskCacheAttributes
+#jcs.auxiliary.MYSQL.attributes.userName=[LOCAL USERNAME HERE]
+#jcs.auxiliary.MYSQL.attributes.password=[LOCAL PASSWORD HERE]
+#jcs.auxiliary.MYSQL.attributes.url=jdbc:mysql://localhost:3306/fhirdtu3?autoReconnect=true
+#jcs.auxiliary.MYSQL.attributes.driverClassName=com.mysql.jdbc.Driver
+#jcs.auxiliary.MYSQL.attributes.tableName=JCS_STORE
+#jcs.auxiliary.MYSQL.attributes.testBeforeInsert=false
+#jcs.auxiliary.MYSQL.attributes.maxActive=100
+#jcs.auxiliary.MYSQL.attributes.MaxPurgatorySize=10000000
+#jcs.auxiliary.MYSQL.attributes.UseDiskShrinker=true
+#jcs.auxiliary.MYSQL.attributes.ShrinkerInterval=1800
+#jcs.auxiliary.MYSQL.attributes.allowRemoveAll=false
+#jcs.auxiliary.MYSQL.attributes.EventQueueType=POOLED
+#jcs.auxiliary.MYSQL.attributes.EventQueuePoolName=disk_cache_event_queue
+
+##############################################################
+################## OPTIONAL THREAD POOL CONFIGURATION #########
+# Disk Cache pool
+thread_pool.disk_cache_event_queue.useBoundary=true
+thread_pool.disk_cache_event_queue.boundarySize=1000
+thread_pool.disk_cache_event_queue.maximumPoolSize=50
+thread_pool.disk_cache_event_queue.minimumPoolSize=10
+thread_pool.disk_cache_event_queue.keepAliveTime=3500
+thread_pool.disk_cache_event_queue.whenBlockedPolicy=RUN
+thread_pool.disk_cache_event_queue.startUpSize=10
