@@ -1,0 +1,102 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jstl/core">
+
+	<!-- This is the view file for the FHIR (r) Validate Operation Tab under the Operations Tab -->
+
+	<p:tab title="$validate" id="validateTab">
+		<h:form id="validateForm" prependId="false" style="width:100%;border:none;">
+			<p:message for="validateForm" />
+			<p></p>
+			<p:panelGrid id="validatePanel" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
+				<h:outputText value="Resource Type: * " />
+				<p:selectOneMenu required="true" label="Select FHIR Resource Type" value="#{context.selectedResourceType}" maxlength="255" style="width:160px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select Resource Type --    " noSelectionOption="true" />
+					<f:selectItems value="#{context.supportedResourceTypes}" var="resourceType" itemLabel="#{resourceType}         " itemValue="#{resourceType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Format Type (Default JSON): * " />
+				<p:selectOneMenu required="false" label="Select Format Type" value="#{context.selectedFormatType}" maxlength="10" style="width:80px;text-align:left;padding-right:30px;">
+					<f:selectItems value="#{context.formatTypes}" var="formatType" itemLabel="#{formatType}         " itemValue="#{formatType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Select FHIR Server: * " />
+				<p:selectOneMenu required="true" label="Select FHIR Server" value="#{context.selectedServerURL}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select FHIR Server --         " noSelectionOption="true" />
+					<f:selectItems value="#{context.availableServers}" var="server" itemLabel="#{server.name.trim()}         " itemValue="#{server.basePath}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Enter Resource Id to Validate: " />
+				<h:inputText value="#{context.resourceId}" maxlength="255" size="40" />
+
+				<h:outputText value="" />
+				<p:panelGrid columns="2" border="0" cellpadding="0" cellspacing="0"
+					styleClass="borderlessGridPanel">
+					<p:commandButton value="read" icon="ui-icon-folder-open" style="text-align: right;"
+						actionListener="#{controller.searchResourceForOperation}"
+						oncomplete="PF('validateResourceTabView').select(0)"
+						update=":tabView:operationsTabView:validateForm,:tabView:operationsTabView:validateForm2">
+						<f:attribute name="operation" value="validate" />
+					</p:commandButton>
+				</p:panelGrid>
+			</p:panelGrid>
+		</h:form>
+		<br />
+		<h:form id="validateForm2" prependId="false" style="width:100%;border:none;">
+			<p:panel id="validateResultsPanel" visible="true"
+				widgetVar="validateResultsPanel" toggleable="true" closable="true"
+				toggleSpeed="500" closeSpeed="500">
+
+				<p:tabView id="validateResourceTabView" widgetVar="validateResourceTabView" dynamic="true" cache="false">
+					<p:tab title="Validate Parameters" id="validateResourceDefinitionTab">
+						<p:commandButton value="validate" icon="ui-icon-check"
+							actionListener="#{controller.fhirValidate}"
+							oncomplete="PF('validateResourceTabView').select(1)"
+							update=":tabView:operationsTabView:validateForm,:tabView:operationsTabView:validateForm2">
+						</p:commandButton>
+						<br />
+						<br />
+						<h:inputTextarea required="true" value="#{context.resourceString}" cols="80" rows="24" />
+					</p:tab>
+
+					<p:tab title="Validate Results" id="ValidateResultsTab">
+						<p:outputPanel id="validateResultsDisplayPanel">
+							<h4>Validate Results from Returned OperationOutcome</h4>
+							<p:dataTable rowIndexVar="index" var="res" value="#{context.validateOperationOutcome.issue}" rendered="#{context.validateOperationOutcome.issue.size() > 0}">
+								<p:column headerText="Severity" width="15%">
+									<h:outputText value="#{res.severity}" />
+								</p:column>
+								<p:column headerText="Code" width="15%">
+									<h:outputText value="#{res.code}" />
+								</p:column>
+								<p:column headerText="Additional Information" width="70%">
+									<p:panelGrid columns="1" border="0" cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
+										<h:outputText value="#{res.location} " redendered="#{res.location > ''}"/>
+										<h:outputText value="(details...)" title="#{res.details}" style="font-style: italic; text-decoration: underline;" 
+											redendered="#{res.details > ''}"/>
+										<h:outputText value="(diagnostics...)" title="#{res.diagnostics}" style="font-style: italic; text-decoration: underline;" 
+											redendered="#{res.diagnostics > ''}"/>
+									</p:panelGrid>
+								</p:column>
+							</p:dataTable>
+							<p:panelGrid id="validatePanel" columns="1" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel"
+								rendered="#{context.validateOperationOutcome.issue.size() eq 0}">
+								<h:outputText value="No issues reported in validate outcome." style="font-style: italic;" />
+							</p:panelGrid>
+						</p:outputPanel>
+					</p:tab>
+
+					<p:tab title="Validate Output" id="ValidateOutputTab">
+						<h:outputText id="lblValidateResults" escape="true"
+							value="#{context.responseString}"
+							styleClass="whiteSpaceClass" />
+					</p:tab>
+				</p:tabView>
+			</p:panel>
+		</h:form>
+	</p:tab>
+
+</ui:composition>

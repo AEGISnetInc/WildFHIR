@@ -71,6 +71,7 @@ import org.hl7.fhir.r4.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r4.model.Enumerations.SearchParamType;
 import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
 
+import net.aegis.fhir.model.Code;
 import net.aegis.fhir.model.Conformance;
 import net.aegis.fhir.model.LabelKeyValueBean;
 import net.aegis.fhir.model.ResourceContainer;
@@ -81,7 +82,9 @@ import net.aegis.fhir.service.ConformanceService;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.ResourcemetadataService;
 import net.aegis.fhir.service.TransactionService;
+import net.aegis.fhir.service.audit.AuditEventService;
 import net.aegis.fhir.service.narrative.FHIRNarrativeGeneratorClient;
+import net.aegis.fhir.service.provenance.ProvenanceService;
 import net.aegis.fhir.service.util.ServicesUtil;
 
 public class CapabilityStatementReload extends ResourceOperationProxy {
@@ -102,10 +105,10 @@ public class CapabilityStatementReload extends ResourceOperationProxy {
 	}
 
 	/* (non-Javadoc)
-	 * @see net.aegis.fhir.operation.ResourceOperationProxy#executeOperation(javax.ws.rs.core.UriInfo, javax.ws.rs.core.HttpHeaders, net.aegis.fhir.service.ResourceService, net.aegis.fhir.service.ResourcemetadataService, net.aegis.fhir.service.BatchService, net.aegis.fhir.service.TransactionService, net.aegis.fhir.service.CodeService, net.aegis.fhir.service.ConformanceService, java.lang.String, java.lang.String, java.lang.String, org.hl7.fhir.r4.model.Parameters, org.hl7.fhir.r4.model.Resource, java.lang.String, java.lang.String, boolean, java.lang.StringBuffer)
+	 * @see net.aegis.fhir.operation.ResourceOperationProxy#executeOperation(javax.ws.rs.core.UriInfo, javax.ws.rs.core.HttpHeaders, net.aegis.fhir.service.ResourceService, net.aegis.fhir.service.ResourcemetadataService, net.aegis.fhir.service.BatchService, net.aegis.fhir.service.TransactionService, net.aegis.fhir.service.CodeService, net.aegis.fhir.service.audit.AuditEventService, net.aegis.fhir.service.provenance.ProvenanceService, net.aegis.fhir.service.ConformanceService, java.lang.String, java.lang.String, java.lang.String, org.hl7.fhir.r4.model.Parameters, org.hl7.fhir.r4.model.Resource, java.lang.String, java.lang.String, boolean, java.lang.StringBuffer)
 	 */
 	@Override
-	public Parameters executeOperation(UriInfo context, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
+	public Parameters executeOperation(UriInfo context, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
 
         log.fine("CapabilityStatementReload.executeOperation() - [START] ");
 
@@ -120,8 +123,8 @@ public class CapabilityStatementReload extends ResourceOperationProxy {
 				String baseCapStatement = new String(baseCapStmt, UTF8_CHARSET);
 				log.fine("softwareVersion:" + softwareVersion);
 				log.fine("baseCapStatement:" + baseCapStatement);
-				String baseUrl = "";
-				if (codeService != null)	{
+				String baseUrl = "http://localhost:8080/r4";
+				if (codeService != null) {
 					baseUrl = codeService.getCodeValue("baseUrl");
 					if (baseUrl == null || baseUrl.isEmpty()) {
 						// Default base url with localhost
@@ -141,6 +144,15 @@ public class CapabilityStatementReload extends ResourceOperationProxy {
 				catch (Exception e) {
 					// Default base url with localhost
 					baseUrl = "http://localhost:8080/r4";
+				}
+
+				// Update baseUrl code value
+				if (codeService != null) {
+					Code baseUrlCode = codeService.findCodeByName("baseUrl");
+					if (baseUrlCode != null) {
+						baseUrlCode.setValue(baseUrl);
+						codeService.update(baseUrlCode);
+					}
 				}
 
 				boolean capStatementLoaded = reloadCapabilityStatement(conformanceService, softwareVersion, baseUrl, baseCapStmt);

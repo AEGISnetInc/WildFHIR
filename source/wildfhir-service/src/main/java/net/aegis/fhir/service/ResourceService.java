@@ -187,7 +187,7 @@ public class ResourceService {
 			int nextVersionId = 1;
 
 			if (resourceId == null) {
-				nextResourceIdString = UUIDUtil.getGUID();
+				nextResourceIdString = UUIDUtil.getUUID();
 				log.info("Next Resource Id String is " + nextResourceIdString);
 			}
 			else {
@@ -671,14 +671,15 @@ public class ResourceService {
 	 * @param count_
 	 * @param since_
 	 * @param page_
+	 * @param summary_
+	 * @param locationPath
 	 * @param resourceType
-	 * @param authMapPatient
 	 * @return <code>ResourceContainer</code>
 	 * @throws Exception
 	 */
-	public ResourceContainer history(String resourceId, Integer count_, Date since_, Integer page_, String locationPath, String resourceType, List<String> authMapPatient) throws Exception {
+	public ResourceContainer history(String resourceId, Integer count_, Date since_, Integer page_, String summary_, String locationPath, String resourceType) throws Exception {
 
-		log.fine("[START] ResourceService.history() - resourceId: " + resourceId + "; count_: " + count_ + "; since_: " + since_ + "; page_: " + page_ + "; locationPath: " + locationPath + "; resourceType: " + resourceType + "; authMapPatient: " + authMapPatient);
+		log.fine("[START] ResourceService.history() - resourceId: " + resourceId + "; count_: " + count_ + "; since_: " + since_ + "; page_: " + page_ + "; summary_: " + summary_ + "; locationPath: " + locationPath + "; resourceType: " + resourceType);
 
 		ResourceContainer resourceContainer = new ResourceContainer();
 		List<net.aegis.fhir.model.Resource> resources = null;
@@ -738,36 +739,6 @@ public class ResourceService {
 				List<net.aegis.fhir.model.Resource> historyResources = em.createQuery(criteria).getResultList();
 
 				log.info("ResourceService.history - historyResources.size() = " + historyResources.size());
-
-				// Check for Authorization Mapped Patient. If defined, pre-process returned history resources
-				// If resourceType not equals 'Patient' or global history, filter results to only include resource instances for authMapPatient
-				if (authMapPatient != null && !authMapPatient.isEmpty() && (resourceType == null || !resourceType.equals("Patient"))) {
-
-					int countFilter = 0;
-					String patientFilter = null;
-					List<net.aegis.fhir.model.Resource> historyFliterResources = new ArrayList<net.aegis.fhir.model.Resource>();
-					String resourceContents = null;
-
-					for (String authPatientId : authMapPatient) {
-						patientFilter = "Patient/" + authPatientId;
-						log.info("ResourceService.history - Authorization pre-process for Patient/" + authPatientId);
-
-						for (net.aegis.fhir.model.Resource r : historyResources) {
-							resourceContents = new String(r.getResourceContents());
-
-							if (resourceContents.contains(patientFilter)) {
-								countFilter++;
-								historyFliterResources.add(r);
-							}
-
-							if (countFilter >= maxCount.intValue()) {
-								break;
-							}
-						}
-					}
-
-					historyResources = historyFliterResources;
-				}
 
 				if (historyResources != null && historyResources.size() > 0) {
 					// 1 or more Resources found, build Bundle list of Element entry objects for each resource version
@@ -1031,6 +1002,7 @@ public class ResourceService {
 	 *
 	 * @param resourceType
 	 * @param resourceId
+	 * @param _summary
 	 * @return <code>ResourceContainer</code>
 	 * @throws Exception
 	 */
@@ -1047,7 +1019,8 @@ public class ResourceService {
 				OperationOutcome.OperationOutcomeIssueComponent issue = null;
 				List<OperationOutcome.OperationOutcomeIssueComponent> issues = new ArrayList<OperationOutcome.OperationOutcomeIssueComponent>();
 
-				issue = ServicesUtil.INSTANCE.getOperationOutcomeIssueComponent(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED, "Invalid read parameter _summary=count! Not supported.", null, null);
+				issue = ServicesUtil.INSTANCE.getOperationOutcomeIssueComponent(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED,
+						"Invalid read parameter _summary=count! Not supported.", null, null);
 				if (issue != null) {
 					issues.add(issue);
 				}
@@ -1179,6 +1152,89 @@ public class ResourceService {
 	}
 
 	/**
+	 * Return the List of current Resource instances for a given resource type
+	 *
+	 * @param resourceType
+	 * @return <code>List<Resource></code>
+	 * @throws Exception
+	 */
+	@SuppressWarnings("unchecked")
+	public List<net.aegis.fhir.model.Resource> readAllResourceForType(String resourceType) throws Exception {
+
+		log.fine("[START] ResourceService.readAllResourceForType");
+
+		Query resourcQuery = null;
+		List<net.aegis.fhir.model.Resource> resourceList = null;
+
+		try {
+			resourcQuery = em.createNamedQuery("findAllCurrentResourcesByType").setParameter("resourceType", resourceType);
+
+			resourceList = (List<net.aegis.fhir.model.Resource>) resourcQuery.getResultList();
+
+		} catch (Exception e) {
+			// Exception caught
+			log.severe(e.getMessage());
+			throw e;
+		}
+
+		return resourceList;
+	}
+
+	/**
+	 * Return the List of current FHIR Resource instances for a given resource type
+	 * 
+	 * WARNING - The R5 resource types SubscriptionStatus, SubscriptionTopic are
+	 * stored as R4 resources types Parameters, Basic.
+	 *
+	 * @param resourceType
+	 * @return <code>List<Resource></code>
+	 * @throws Exception
+	 */
+	public List<org.hl7.fhir.r4.model.Resource> readAllFHIRResourceForType(String resourceType) throws Exception {
+
+		log.fine("[START] ResourceService.readAllFHIRResourceForType");
+
+		List<net.aegis.fhir.model.Resource> resourceList = null;
+		List<org.hl7.fhir.r4.model.Resource> fhirResourceList = null;
+		org.hl7.fhir.r4.model.Resource fhirResource = null;
+		ByteArrayInputStream iResource = null;
+		XmlParser xmlP = null;
+
+		try {
+			resourceList = this.readAllResourceForType(resourceType);
+
+			if (resourceList != null && !resourceList.isEmpty()) {
+				xmlP = new XmlParser();
+				fhirResourceList = new ArrayList<org.hl7.fhir.r4.model.Resource>();
+
+				for (net.aegis.fhir.model.Resource resource : resourceList) {
+					// Check the resource status; if not 'DELETED' then consider it 'VALID'
+					if (resource.getStatus() != null && !resource.getStatus().equalsIgnoreCase("DELETED") &&
+							resource.getResourceContents() != null) {
+
+						// Convert XML contents to Bundle object
+						iResource = new ByteArrayInputStream(resource.getResourceContents());
+						fhirResource = (org.hl7.fhir.r4.model.Resource)xmlP.parse(iResource);
+
+						fhirResourceList.add(fhirResource);
+					}
+				}
+			}
+		} catch (Exception e) {
+			// Exception caught
+			log.severe(e.getMessage());
+			throw e;
+		} finally {
+			resourceList = null;
+			fhirResource = null;
+			iResource = null;
+			xmlP = null;
+		}
+
+		return fhirResourceList;
+	}
+
+	/**
 	 * The vread interaction performs a version specific read of the specified resource type. The interaction is performed by an HTTP
 	 * GET command.
 	 * @param resourceType type of resource we are trying to read
@@ -1186,57 +1242,102 @@ public class ResourceService {
 	 * @return <code>ResourceContainer</code>
 	 * @throws Exception
 	 */
-	public ResourceContainer vread(String resourceType, String resourceId, Integer versionId) throws Exception {
+	public ResourceContainer vread(String resourceType, String resourceId, Integer versionId, String _summary) throws Exception {
 
-		log.fine("[START] ResourceService.vread");
+		log.fine("[START] ResourceService.vread(" + resourceType + ", " + resourceId + ", " + versionId + ", " + _summary + ")");
 
 		ResourceContainer resourceContainer = new ResourceContainer();
 
 		try {
-			CriteriaBuilder cb = em.getCriteriaBuilder();
-			CriteriaQuery<net.aegis.fhir.model.Resource> criteria = cb.createQuery(net.aegis.fhir.model.Resource.class);
-			Root<net.aegis.fhir.model.Resource> resource = criteria.from(net.aegis.fhir.model.Resource.class);
+			// Check for invalid _summary=count
+			if (!StringUtils.isEmpty(_summary) && _summary.equals("count")) {
+				OperationOutcome outcome = null;
+				OperationOutcome.OperationOutcomeIssueComponent issue = null;
+				List<OperationOutcome.OperationOutcomeIssueComponent> issues = new ArrayList<OperationOutcome.OperationOutcomeIssueComponent>();
 
-			List<Predicate> predicateList = new ArrayList<Predicate>();
+				issue = ServicesUtil.INSTANCE.getOperationOutcomeIssueComponent(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED, "Invalid vread parameter _summary=count! Not supported.", null, null);
+				if (issue != null) {
+					issues.add(issue);
+				}
 
-			predicateList.add(cb.equal(resource.get("resourceId"), resourceId));
-			predicateList.add(cb.equal(resource.get("versionId"), versionId));
-			predicateList.add(cb.equal(resource.get("resourceType"), resourceType));
+				String ooResourceId = UUIDUtil.getUUID(false);
 
-			criteria.select(resource)
-				.where(cb.and(predicateList.toArray(new Predicate[predicateList.size()])))
-				.orderBy(cb.desc(resource.get("versionId")));
+				outcome = ServicesUtil.INSTANCE.getOperationOutcomeResource(issues);
 
-			List<net.aegis.fhir.model.Resource> resources = em.createQuery(criteria).getResultList();
+				outcome.setId(ooResourceId);
 
-			if (resources != null && resources.size() > 0) {
-				// Resource ID found, assign first one
-				resourceContainer.setResource(resources.get(0));
+				// Convert OperationOutcome Resource object to byte array
+				ByteArrayOutputStream oResource = new ByteArrayOutputStream();
+				XmlParser xmlP = new XmlParser();
+				xmlP.setOutputStyle(OutputStyle.PRETTY);
+				xmlP.compose(oResource, outcome);
+				byte[] resourceContents = oResource.toByteArray();
 
-				// Check the resource status; if not 'DELETED' then consider it 'VALID'
-				if (resources.get(0).getStatus() != null && resources.get(0).getStatus().equalsIgnoreCase("DELETED")) {
-					resourceContainer.setResponseStatus(Response.Status.GONE);
-				} else {
-					resourceContainer.setResponseStatus(Response.Status.OK);
-					try {
-						if (resourceType.equals("Bundle")) {
-							// Convert XML contents to Bundle object
-							ByteArrayInputStream iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourceContents());
-							XmlParser xmlP = new XmlParser();
-							xmlP.setOutputStyle(OutputStyle.PRETTY);
-							Bundle bundleObject = (Bundle)xmlP.parse(iResource);
-							// Populate resourceContainer.bundle
-							resourceContainer.setBundle(bundleObject);
+				net.aegis.fhir.model.Resource ooResource = new  net.aegis.fhir.model.Resource();
+				ooResource.setResourceContents(resourceContents);
+				ooResource.setResourceId(ooResourceId);
+				ooResource.setVersionId(1);
+				ooResource.setResourceType("OperationOutcome");
+
+				resourceContainer.setResource(ooResource);
+				resourceContainer.setResponseStatus(Response.Status.BAD_REQUEST);
+			}
+			else {
+				CriteriaBuilder cb = em.getCriteriaBuilder();
+				CriteriaQuery<net.aegis.fhir.model.Resource> criteria = cb.createQuery(net.aegis.fhir.model.Resource.class);
+				Root<net.aegis.fhir.model.Resource> resource = criteria.from(net.aegis.fhir.model.Resource.class);
+	
+				List<Predicate> predicateList = new ArrayList<Predicate>();
+	
+				predicateList.add(cb.equal(resource.get("resourceId"), resourceId));
+				predicateList.add(cb.equal(resource.get("versionId"), versionId));
+				predicateList.add(cb.equal(resource.get("resourceType"), resourceType));
+	
+				criteria.select(resource)
+					.where(cb.and(predicateList.toArray(new Predicate[predicateList.size()])))
+					.orderBy(cb.desc(resource.get("versionId")));
+	
+				List<net.aegis.fhir.model.Resource> resources = em.createQuery(criteria).getResultList();
+	
+				if (resources != null && resources.size() > 0) {
+					if (!StringUtils.isEmpty(_summary)) {
+						// Summary requested, modify copy of found resource
+						net.aegis.fhir.model.Resource foundResource = resources.get(0).copy();
+
+						SummaryUtil.INSTANCE.generateResourceSummary(foundResource, _summary);
+
+						resourceContainer.setResource(foundResource);
+					}
+					else {
+						// Resource ID found, use the first one
+						resourceContainer.setResource(resources.get(0));
+					}
+	
+					// Check the resource status; if not 'DELETED' then consider it 'VALID'
+					if (resources.get(0).getStatus() != null && resources.get(0).getStatus().equalsIgnoreCase("DELETED")) {
+						resourceContainer.setResponseStatus(Response.Status.GONE);
+					} else {
+						resourceContainer.setResponseStatus(Response.Status.OK);
+						try {
+							if (resourceType.equals("Bundle")) {
+								// Convert XML contents to Bundle object
+								ByteArrayInputStream iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourceContents());
+								XmlParser xmlP = new XmlParser();
+								xmlP.setOutputStyle(OutputStyle.PRETTY);
+								Bundle bundleObject = (Bundle)xmlP.parse(iResource);
+								// Populate resourceContainer.bundle
+								resourceContainer.setBundle(bundleObject);
+							}
+						}
+						catch (Exception e) {
+							log.severe(e.getMessage());
+							// Exception not thrown to allow operation to complete
 						}
 					}
-					catch (Exception e) {
-						log.severe(e.getMessage());
-						// Exception not thrown to allow operation to complete
-					}
+				} else {
+					// No match found
+					resourceContainer.setResponseStatus(Response.Status.NOT_FOUND);
 				}
-			} else {
-				// No match found
-				resourceContainer.setResponseStatus(Response.Status.NOT_FOUND);
 			}
 		} catch (Exception e) {
 			// Exception caught

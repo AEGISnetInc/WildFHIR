@@ -440,6 +440,12 @@ public class ResourcemetadataProxyObjectFactory {
 			if (resourceType.equalsIgnoreCase(ResourceType.Subscription.getPath())) {
 				proxy = new ResourcemetadataSubscription();
 			}
+			if (resourceType.equalsIgnoreCase("SubscriptionStatus")) {
+				proxy = new ResourcemetadataSubscriptionStatus();
+			}
+			if (resourceType.equalsIgnoreCase("SubscriptionTopic")) {
+				proxy = new ResourcemetadataSubscriptionTopic();
+			}
 			if (resourceType.equalsIgnoreCase(ResourceType.Substance.getPath())) {
 				proxy = new ResourcemetadataSubstance();
 			}

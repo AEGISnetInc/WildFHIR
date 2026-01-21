@@ -53,8 +53,17 @@ public class ProvenanceResourceProxyObjectFactory {
 			if (ProvenanceActivityTypeEnum.CREATE.getCode() == operation) {
 				proxy = new ProvenanceCreateResource();
 			}
+			if (ProvenanceActivityTypeEnum.DELETE.getCode() == operation) {
+				proxy = new ProvenanceDeleteResource();
+			}
 			if (ProvenanceActivityTypeEnum.UPDATE.getCode() == operation) {
 				proxy = new ProvenanceUpdateResource();
+			}
+			if (ProvenanceActivityTypeEnum.APPEND.getCode() == operation) {
+				proxy = new ProvenanceAppendResource();
+			}
+			if (ProvenanceActivityTypeEnum.NULLIFY.getCode() == operation) {
+				proxy = new ProvenanceNullifyResource();
 			}
 
 		}

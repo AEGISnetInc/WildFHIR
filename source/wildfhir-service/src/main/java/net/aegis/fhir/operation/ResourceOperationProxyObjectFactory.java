@@ -58,6 +58,9 @@ public class ResourceOperationProxyObjectFactory {
 		else if (operationName.equals("convert")) {
 			proxy = new ResourceConvertFormat();
 		}
+		else if (operationName.equals("fhirpath-evaluate")) {
+			proxy = new FHIRPathEvaluate();
+		}
 		else if (operationName.equals("load-examples")) {
 			proxy = new ResourceLoadExamples();
 		}
@@ -101,6 +104,11 @@ public class ResourceOperationProxyObjectFactory {
 			}
 			else if (operationName.equals("purge")) {
 				proxy = new PatientPurge();
+			}
+		}
+		else if (resourceType.equals(ResourceType.Subscription.name())) {
+			if (operationName.equals("status")) {
+				proxy = new SubscriptionStatus();
 			}
 		}
 

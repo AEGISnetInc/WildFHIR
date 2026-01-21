@@ -1,0 +1,23 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jstl/core">
+
+	<!-- This is the main file containing the definition for the tabbed view 
+    	 and includes for each of the tabs.
+   	 -->
+
+	<p:tabView id="tabView" widgetVar="tabView" cache="false">
+
+		<p:ajax event="tabChange" listener="#{controller.onTabChange}"
+			update=":tabView:adminTabView:serversForm" />
+
+		<ui:include src="/WEB-INF/views/about.xhtml" />
+		<ui:include src="/WEB-INF/views/interactions_view.xhtml" />
+		<ui:include src="/WEB-INF/views/operations_view.xhtml" />
+		<ui:include src="/WEB-INF/views/fhir_tools.xhtml" />
+		<ui:include src="/WEB-INF/views/admin_view.xhtml" />
+	</p:tabView>
+</ui:composition>

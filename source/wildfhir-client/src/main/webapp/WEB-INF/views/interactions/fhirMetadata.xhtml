@@ -1,0 +1,53 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jstl/core">
+
+	<!-- This is the view file for the FHIR (r) Metadata Tab under the FHIR Interactions Tab -->
+
+	<p:tab id="fhirMetadataTab" title="metadata" dynamic="true" cache="false">
+		<h:form id="fhirMetadataForm" prependId="false" style="width:100%;border:none;">
+			<p:message for="fhirMetadataForm" />
+			<p></p>
+			<p:panelGrid id="fhirMetadataGridPanel1" columns="1" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel" width="100%">
+				<p><h:outputText value="Get FHIR CapabilityStatement Statement" style="padding:2px;text-decoration:underline;font-weight:bold;font-size:16px;" /></p>
+			</p:panelGrid>
+
+			<p:panelGrid id="fhirMetadataGridPanel2" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel" width="100%">
+				<h:outputText value="Format Type (Default JSON): * " />
+				<p:selectOneMenu required="false" label="Select Format Type" value="#{context.selectedFormatType}" maxlength="10" style="width:80px;text-align:left;padding-right:30px;">
+					<f:selectItems value="#{context.formatTypes}" var="formatType" itemLabel="#{formatType}         " itemValue="#{formatType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Select FHIR Server: * " />
+				<p:selectOneMenu required="true" label="Select FHIR Server" value="#{context.selectedServerURL}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select FHIR Server --         " noSelectionOption="true" />
+					<f:selectItems value="#{context.availableServers}" var="server" itemLabel="#{server.name.trim()}         " itemValue="#{server.basePath}" />
+				</p:selectOneMenu>
+
+				<p:commandButton value="Show Contents" icon="ui-icon-search" actionListener="#{controller.fhirMetadata}" update=":tabView:interactionsTabView:fhirMetadataForm"/>
+				<p:commandButton value="Open New Page" icon="ui-icon-disk" actionListener="#{controller.fhirMetadataNewPage}"/>
+			</p:panelGrid>
+
+			<p:panelGrid id="fhirMetadataGridPanel3" columns="1" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel" width="100%">
+				<p><h:outputText value="CapabilityStatement not found" rendered="#{context.resourceResults.size() == 0}"/></p>
+			</p:panelGrid>
+
+			<p:outputPanel id="fhirMetadataResultsPanel" rendered="#{context.resourceResults.size() > 0}">
+				<p:panel id="fhirMetadataResourcePanel" widgetVar="fhirMetadataResourcePanel" toggleable="true" closable="true" toggleSpeed="500" closeSpeed="500" styleClass="borderlessGridPanel">
+					<p:dataTable var="metadata" rowIndexVar="position" value="#{context.resourceResults}" rendered="#{context.resourceResults.size() > 0}">
+						<p:column headerText="CapabilityStatement">
+							<h:outputText value="#{metadata.resourceXML}" styleClass="whiteSpaceClass"
+								rendered="#{context.selectedFormatType eq 'XML'}" />
+							<h:outputText value="#{metadata.resourceJSON}" styleClass="whiteSpaceClass"
+								rendered="#{context.selectedFormatType eq 'JSON'}" />
+						</p:column>
+					</p:dataTable>
+				</p:panel>
+			</p:outputPanel>
+		</h:form>
+	</p:tab>
+
+</ui:composition>

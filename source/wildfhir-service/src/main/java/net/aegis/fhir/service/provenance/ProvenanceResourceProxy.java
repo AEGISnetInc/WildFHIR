@@ -43,7 +43,9 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r4.model.AuditEvent.AuditEventAction;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Provenance;
 import org.hl7.fhir.r4.model.Provenance.ProvenanceAgentComponent;
 import org.hl7.fhir.r4.model.Provenance.ProvenanceEntityRole;
@@ -61,24 +63,25 @@ import net.aegis.fhir.service.util.UUIDUtil;
  *
  */
 public abstract class ProvenanceResourceProxy {
+
 	private Logger log = Logger.getLogger(getClass().getName());
 
-	public static String appId = AuditEventConstant.HEADER_APPLICATION_NAME;
-	public static String userId = AuditEventConstant.HEADER_USER_ID;
-	public static String userName = AuditEventConstant.HEADER_USER_NAME;
-	public static String site = AuditEventConstant.HEADER_SITE_NAME;
+	public static String appId = "FASTConsentRI";
+	public static String userId = "consent-ri-system";
+	public static String userName = "FAST Consent RI System";
+	public static String site = "consent-ri-site";
 
-	public abstract Resource generateProvenance(UriInfo context, HttpHeaders headers, String payload, String resourceType, String locationPath, String resourceId, String operation) throws Exception;
+	public abstract Resource generateProvenance(UriInfo context, HttpHeaders headers, String payload, String resourceType, String locationPath, String resourceId, Identifier identifier, String operation) throws Exception;
 
-	public abstract AuditEventAction setAction();
+	public abstract CodeableConcept getActivity();
 
-	protected void prepareBasicData(Provenance fhirResource, UriInfo context, HttpHeaders headers, String locationPath) throws Exception {
+	protected void prepareBasicData(Provenance fhirResource, UriInfo context, HttpHeaders headers, String locationPath, Identifier identifier) throws Exception {
 
 		try {
 			//URI location = response.getLocation();
 			URI location = new URI(locationPath);
 			String locationStr = "";
-			fhirResource.setId(UUIDUtil.getGUID());
+			fhirResource.setId(UUIDUtil.getUUID());
 			List<Reference> target = new ArrayList<Reference>();
 			if (location != null) {
 				locationStr = location.toString();
@@ -88,49 +91,85 @@ public abstract class ProvenanceResourceProxy {
 			Date currentDate = new Date();
 			fhirResource.setRecorded(currentDate);
 
+			fhirResource.setActivity(getActivity());
+
 			List<ProvenanceAgentComponent> agentList = new ArrayList<>();
-			//agentList.add(getAgent(headers, response));
 			agentList.add(getAgent(headers, location));
 			fhirResource.setAgent(agentList);
-			// TODO resourceType/resourceId
-			fhirResource.getEntityFirstRep().setRole(ProvenanceEntityRole.SOURCE).setWhat(new Reference(locationStr));
+
+			Reference what = new Reference(locationStr);
+			if (identifier != null) {
+				what.setIdentifier(identifier);
+			}
+			fhirResource.getEntityFirstRep().setRole(ProvenanceEntityRole.SOURCE).setWhat(what);
+
 			// Signature
-			Signature signature = new Signature();
-			signature.setWhen(currentDate);
-			signature.setWho(new Reference(locationStr));
 			List<Signature> signatureList = new ArrayList<Signature>();
+			Signature signature = new Signature();
+			signature.addType(getSignatureType());
+			signature.setWhen(currentDate);
+			signature.setWho(getWho(appId));
+			signatureList.add(signature);
 			fhirResource.setSignature(signatureList);
+
 			log.info("prepareBasicData");
 		}
 		catch (FHIRException e) {
-			log.severe(e.getMessage());
-			// e.printStackTrace();
+			e.printStackTrace();
+			throw e;
 		}
 
 	}
 
 	protected ProvenanceAgentComponent getAgent(HttpHeaders headers, URI location) throws Exception {
+
 		ProvenanceAgentComponent agent = new ProvenanceAgentComponent();
-		String userId = ServicesUtil.INSTANCE.getHttpHeader(headers, AuditEventConstant.HEADER_USER_ID);
+
 		String userName = ServicesUtil.INSTANCE.getHttpHeader(headers, AuditEventConstant.HEADER_USER_NAME);
-		if (StringUtils.isEmpty(userId)) {
-			userId = ProvenanceResourceProxy.userId;
-		}
-		agent.setUserData("userId", userId);
 		if (StringUtils.isEmpty(userName)) {
 			userName = ProvenanceResourceProxy.userName;
 		}
-		//URI location = response.getLocation();
-		String locationStr = "";
-		if (location != null) {
-			locationStr = location.toString();
-		}
+
+		CodeableConcept cc = new CodeableConcept();
+		Coding coding = new Coding();
+		coding.setSystem("http://terminology.hl7.org/CodeSystem/provenance-participant-type");
+		coding.setCode("performer");
+		cc.addCoding(coding);
+		agent.setType(cc);
+
+		cc = new CodeableConcept();
+		coding = new Coding();
+		coding.setSystem("http://dicom.nema.org/resources/ontology/DCM");
+		coding.setCode("110150");
+		coding.setDisplay("Application");
+		cc.addCoding(coding);
+
 		// who
 		Reference who = new Reference();
-		who.setDisplay(locationStr);
+		who.setDisplay(userName);
 		agent.setWho(who);
-		log.info("getAgent##" + agent.toString());
+
 		return agent;
+	}
+
+	private Coding getSignatureType() {
+		// Hard code to Author for now
+		Coding type = new Coding();
+		type.setSystem(SignatureTypeEnum.AUTHOR.getSystem());
+		type.setCode(SignatureTypeEnum.AUTHOR.getCode());
+		type.setDisplay(SignatureTypeEnum.AUTHOR.getDisplay());
+		return type;
+	}
+
+	private Reference getWho(String appId) {
+		Reference ref = new Reference();
+		ref.setReference("Organization/" + appId);
+
+		Identifier identifier = new Identifier();
+		identifier.setValue(appId);
+		ref.setIdentifier(identifier);
+
+		return ref;
 	}
 
 }

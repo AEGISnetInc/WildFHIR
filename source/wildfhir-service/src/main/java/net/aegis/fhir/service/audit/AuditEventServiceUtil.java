@@ -35,13 +35,15 @@ package net.aegis.fhir.service.audit;
 import java.io.ByteArrayOutputStream;
 
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.hl7.fhir.r4.formats.IParser.OutputStyle;
 import org.hl7.fhir.r4.formats.XmlParser;
+import org.hl7.fhir.r4.model.AuditEvent;
+import org.hl7.fhir.r4.model.Identifier;
 
 import net.aegis.fhir.model.Resource;
+import net.aegis.fhir.service.narrative.FHIRNarrativeGeneratorClient;
 
 /**
  * @author Venkat.Keesara
@@ -54,18 +56,23 @@ public enum AuditEventServiceUtil {
 	private AuditEventServiceUtil() {
 	}
 
-	public Resource generateAuditEvent(UriInfo context, HttpHeaders headers, String payload, String resourceType, Response response, String resourceId, String operation) throws Exception {
+	public Resource generateAuditEvent(UriInfo context, HttpHeaders headers, String payload, String resourceType, boolean response, String resourceId, Identifier identifier, String operation) throws Exception {
 		net.aegis.fhir.model.Resource resourceDomain = new net.aegis.fhir.model.Resource();
 		AuditEventResourceProxyObjectFactory objectFactory = new AuditEventResourceProxyObjectFactory();
 		AuditEventResourceProxy proxy = objectFactory.getAuditEventResourceProxy(resourceType, operation);
-		org.hl7.fhir.r4.model.Resource fhirModel = proxy.generateAuditEvent(context, headers, payload, resourceType, response, resourceId, operation);
+		org.hl7.fhir.r4.model.Resource fhirModel = proxy.generateAuditEvent(context, headers, payload, resourceType, response, resourceId, identifier, operation);
 
 		if (fhirModel != null) {
+			AuditEvent audit = (AuditEvent) fhirModel;
+
+			// Use RI NarrativeGenerator
+			FHIRNarrativeGeneratorClient.instance().generate(audit);
+
 			XmlParser xmlP = new XmlParser();
 			// Compose FHIR resource back to byte array
 			ByteArrayOutputStream oResource = new ByteArrayOutputStream();
 			xmlP.setOutputStyle(OutputStyle.PRETTY);
-			xmlP.compose(oResource, fhirModel, true);
+			xmlP.compose(oResource, audit, true);
 			resourceDomain.setResourceContents(oResource.toByteArray());
 			resourceDomain.setResourceType("AuditEvent");
 		}

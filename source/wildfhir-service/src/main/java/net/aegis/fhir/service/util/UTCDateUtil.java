@@ -67,8 +67,9 @@ public class UTCDateUtil {
 	public static final String DATE_FORMAT_UTC = "EEE, d MMM yyyy HH:mm:ss";
 	public static final String DATE_FORMAT_FULL = DATE_FORMAT_UTC + "z";
 	public static final String DATE_ONLY_PARAMETER_FORMAT = "yyyy-MM-dd";
-	public static final String DATE_PARAMETER_FORMAT = "yyyy-MM-dd'T'hh:mm:ssXXX";
-	public static final String DATE_PARAMETER_MILLI_FORMAT = "yyyy-MM-dd'T'hh:mm:ss.SSSXX";
+	public static final String DATETIME_ONLY_PARAMETER_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
+	public static final String DATE_PARAMETER_FORMAT = "yyyy-MM-dd'T'HH:mm:ssXXX";
+	public static final String DATE_PARAMETER_MILLI_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 	public static final String DATE_SORT_FORMAT = "yyyyMMdd";
 	public static final String DATETIME_SORT_FORMAT = "yyyyMMddHHmmss";
 

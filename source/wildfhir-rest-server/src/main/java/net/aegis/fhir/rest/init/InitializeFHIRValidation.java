@@ -1,6 +1,6 @@
 /*
  * #%L
- * WildFHIR - wildfhir-service
+ * WildFHIR - wildfhir-rest-server
  * %%
  * Copyright (C) 2024 AEGIS.net, Inc.
  * All rights reserved.

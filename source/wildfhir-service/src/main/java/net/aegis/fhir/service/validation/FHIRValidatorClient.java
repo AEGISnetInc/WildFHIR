@@ -506,8 +506,14 @@ public class FHIRValidatorClient {
 
 		try {
 			for (org.hl7.fhir.r5.model.Base baseR5 : listBaseR5) {
-				org.hl7.fhir.r4.model.Resource resourceR4 = VersionConvertorFactory_40_50.convertResource((org.hl7.fhir.r5.model.Resource)baseR5);
-				listBaseR4.add(resourceR4);
+				if (baseR5 instanceof org.hl7.fhir.r5.model.DataType) {
+					org.hl7.fhir.r4.model.Type typeR4 = VersionConvertorFactory_40_50.convertType((org.hl7.fhir.r5.model.DataType)baseR5);
+					listBaseR4.add(typeR4);
+				}
+				else if (baseR5 instanceof org.hl7.fhir.r5.model.Resource) {
+					org.hl7.fhir.r4.model.Resource resourceR4 = VersionConvertorFactory_40_50.convertResource((org.hl7.fhir.r5.model.Resource)baseR5);
+					listBaseR4.add(resourceR4);
+				}
 			}
 		}
 		catch (Exception e) {

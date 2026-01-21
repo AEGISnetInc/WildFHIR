@@ -35,7 +35,9 @@ package net.aegis.fhir.service.provenance;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriInfo;
 
-import org.hl7.fhir.r4.model.AuditEvent.AuditEventAction;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Provenance;
 import org.hl7.fhir.r4.model.Resource;
 
@@ -46,17 +48,24 @@ import org.hl7.fhir.r4.model.Resource;
 public class ProvenanceCreateResource extends ProvenanceResourceProxy {
 
 	@Override
-	public Resource generateProvenance(UriInfo context, HttpHeaders headers, String payload, String resourceType, String locationPath, String resourceId, String operation) throws Exception {
+	public Resource generateProvenance(UriInfo context, HttpHeaders headers, String payload, String resourceType, String locationPath, String resourceId, Identifier identifier, String operation) throws Exception {
 
 		Provenance fhirResource = new Provenance();
-		prepareBasicData(fhirResource, context, headers, locationPath);
+
+		prepareBasicData(fhirResource, context, headers, locationPath, identifier);
 
 		return fhirResource;
 	}
 
 	@Override
-	public AuditEventAction setAction() {
-		return AuditEventAction.C;
+	public CodeableConcept getActivity() {
+		CodeableConcept activity = new CodeableConcept();
+		Coding activityCoding = new Coding();
+		activityCoding.setSystem(ProvenanceActivityTypeEnum.CREATE.getSystem());
+		activityCoding.setCode(ProvenanceActivityTypeEnum.CREATE.getCode());
+		activityCoding.setDisplay(ProvenanceActivityTypeEnum.CREATE.getDisplay());
+		activity.addCoding(activityCoding);
+		return activity;
 	}
 
 }

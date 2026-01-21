@@ -1,6 +1,6 @@
 /*
  * #%L
- * WildFHIR - wildfhir-model
+ * WildFHIR - wildfhir-rest-server
  * %%
  * Copyright (C) 2024 AEGIS.net, Inc.
  * All rights reserved.
@@ -71,6 +71,7 @@ public class InitializeCodeConfiguration extends HttpServlet {
 		Map.entry("WILDFHIR_AUDITEVENTSERVICEENABLED", "auditEventServiceEnabled"),
 		Map.entry("WILDFHIR_PROVENANCESERVICEENABLED", "provenanceServiceEnabled"),
 		Map.entry("WILDFHIR_SUBSCRIPTIONSERVICEENABLED", "subscriptionServiceEnabled"),
+		Map.entry("WILDFHIR_SUBSCRIPTIONSERVICEINTERVAL", "subscriptionServiceInterval"),
 		Map.entry("WILDFHIR_TXCONCURRENTLIMIT", "txConcurrentLimit")
 	));
 

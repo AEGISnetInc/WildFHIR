@@ -37,10 +37,9 @@ import java.util.logging.Logger;
 import org.hl7.fhir.r4.context.SimpleWorkerContext;
 import org.hl7.fhir.r4.model.DomainResource;
 import org.hl7.fhir.r4.utils.NarrativeGenerator;
-import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
-import org.hl7.fhir.utilities.npm.NpmPackage;
 
 import net.aegis.fhir.service.util.ServicesUtil;
+import net.aegis.fhir.service.validation.FHIRValidatorClient;
 
 /**
  * Singleton class to provide access to the FHIR NarrativeGenerator.
@@ -65,10 +64,8 @@ public class FHIRNarrativeGeneratorClient {
 			/*
 			 * INSTANTIATE NARRATIVE GENENERATOR AND SET REQUIRED CONTEXTS
 			 */
-			FilesystemPackageCacheManager pcm = new FilesystemPackageCacheManager.Builder().build();
-			NpmPackage npmX = pcm.loadPackage("hl7.fhir.r4.core", "4.0.1");
-			SimpleWorkerContext contextR4 = SimpleWorkerContext.fromPackage(npmX);
-		    contextR4.setExpansionProfile(makeExpProfileR4());
+			SimpleWorkerContext contextR4 = FHIRValidatorClient.instance().getContextR4();
+			contextR4.setExpansionProfile(makeExpProfileR4());
 			narrativeGenerator = new NarrativeGenerator("", "", contextR4);
 
 			log.info(NarrativeGenerator.class.getSimpleName() + " initialization completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
@@ -103,7 +100,7 @@ public class FHIRNarrativeGeneratorClient {
 
 		log.fine("FHIRNarrativeGeneratorClient.generate() - END");
 
-		log.fine("FHIR NarrativeGenerator - generation of narrative text for resource completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
+		log.info("FHIR NarrativeGenerator - generation of narrative text for resource completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
 
 	}
 

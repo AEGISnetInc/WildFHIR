@@ -1,0 +1,76 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jstl/core">
+
+	<!-- This is the About view -->
+	<p:tab title="About" id="aboutTab" cache="false">
+		<p:panelGrid id="aboutPanel1" columns="1" border="0"
+			cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
+			<h:outputText value="#{appRes['application.name']}"
+				style="padding:0px;font-style:italic;font-weight:bold;font-size:16px;" />
+		</p:panelGrid>
+
+		<hr></hr>
+
+		<p:panelGrid id="aboutPanel2" columns="2" border="0"
+			cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
+			<h:outputText value="Version"
+				style="font-weight:bold" />
+			<h:outputText value="#{appRes['version.number']}" />
+
+			<h:outputText value="Build Number"
+				style="font-weight:bold" />
+			<h:outputText value="#{appRes['build.number']}" />
+
+			<h:outputText value="Build Timestamp"
+				style="font-weight:bold" />
+			<h:outputText value="#{appRes['build.timestamp']}" />
+		</p:panelGrid>
+
+		<hr></hr>
+
+		<p:panelGrid id="aboutPanel3" columns="1" border="0"
+			cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
+			<p><span style="padding:0px;font-size:12px;" >
+			This is the AEGIS WildFHIR Community Edition Reference Implementation Test Client web application.
+			The interfaces provide the following functionality:
+			<ul>
+			<li><b>FHIR Interactions</b> - Send valid FHIR interactions to a selected FHIR server
+				<ul>
+				<li><b>read</b> - return a FHIR resource instance by its resource id</li>
+				<li><b>vread</b> - return a FHIR resource instance by its resource id and version id</li>
+				<li><b>history</b> - return the FHIR history by global, resource type or resource instance</li>
+				<li><b>search</b> - return FHIR search results for a resource type</li>
+				<li><b>create</b> - send a FHIR resource to be created</li>
+				<li><b>update</b> - send a FHIR resource to be updated</li>
+				<li><b>patch</b> - send a JSON or XML patch and FHIR resource to be updated</li>
+				<li><b>metadata</b> - return a selected server's CapabilityStatement</li>
+				</ul>
+			</li>
+			<li><b>FHIR Operations</b> - Send FHIR extended operations to a selected FHIR server
+				<ul>
+				<li><b>$convert</b> - FHIR extended operation to convert JSON to/from XML</li>
+				<li><b>$everything</b> - FHIR everything operation</li>
+				<li><b>$validate</b> - validate FHIR resources (<i>validation is supported by the underlying HL7 FHIR Core Library and pre-loaded FHIR R4 v4.0.1 validation packages</i>)</li>
+				</ul>
+			</li>
+			<li><b>Tools</b> - WildFHIR Tools
+				<ul>
+				<li><b>FHIR Path</b> - execute FHIR Path evaluations using the AEGIS WildFHIR extended operation '$fhirpath-evaluate</li>
+				<li><b>Subscriptions</b> - manually execute the Subscription Service for the AEGIS WildFHIR Community Edition server</li>
+				</ul>
+			</li>
+			<li><b>Admin</b> - Administration functionality
+				<ul>
+				<li><b>Servers</b> - manage the list of known FHIR Servers and their base url value</li>
+				</ul>
+			</li>
+			</ul>
+			</span></p>
+		</p:panelGrid>
+	</p:tab>
+
+</ui:composition>

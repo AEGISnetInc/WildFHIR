@@ -134,7 +134,7 @@ public class TransactionService {
 			log.fine("===== TransactionService -  01 - Create and pre-populate transaction response bundle");
 			bundleResponse = new Bundle();
 
-			bundleResponse.setId(UUIDUtil.getGUID());
+			bundleResponse.setId(UUIDUtil.getUUID());
 			Meta bundleMeta = new Meta();
 			bundleMeta.setVersionId("1");
 			bundleMeta.setLastUpdated(new Date());

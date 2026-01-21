@@ -48,7 +48,7 @@ public enum AuditEventSourceTypeEnum {
 	 *
 	 * End-user display device, diagnostic device
 	 */
-	USER_DEVICE("1", "http://hl7.org/fhir/security-source-type", "End-user display device, diagnostic device."),
+	USER_DEVICE("1", "http://terminology.hl7.org/CodeSystem/security-source-type", "User Device"),
 
 	/**
 	 * Display: Data Interface
@@ -57,7 +57,7 @@ public enum AuditEventSourceTypeEnum {
 	 *
 	 * Data acquisition device or instrument
 	 */
-	DATA_INTERFACE("2", "http://hl7.org/fhir/security-source-type", "Data acquisition device or instrument."),
+	DATA_INTERFACE("2", "http://terminology.hl7.org/CodeSystem/security-source-type", "Data Interface"),
 
 	/**
 	 * Display: Web Server
@@ -66,7 +66,7 @@ public enum AuditEventSourceTypeEnum {
 	 *
 	 * Web Server process or thread
 	 */
-	WEB_SERVER("3", "http://hl7.org/fhir/security-source-type", "Web Server process or thread."),
+	WEB_SERVER("3", "http://terminology.hl7.org/CodeSystem/security-source-type", "Web Server"),
 
 	/**
 	 * Display: Application Server
@@ -75,7 +75,7 @@ public enum AuditEventSourceTypeEnum {
 	 *
 	 * Application Server process or thread
 	 */
-	APPLICATION_SERVER("4", "http://hl7.org/fhir/security-source-type", "Application Server process or thread."),
+	APPLICATION_SERVER("4", "http://terminology.hl7.org/CodeSystem/security-source-type", "Application Server"),
 
 	/**
 	 * Display: Database Server
@@ -84,7 +84,7 @@ public enum AuditEventSourceTypeEnum {
 	 *
 	 * Database Server process or thread
 	 */
-	DATABASE_SERVER("5", "http://hl7.org/fhir/security-source-type", "Database Server process or thread."),
+	DATABASE_SERVER("5", "http://terminology.hl7.org/CodeSystem/security-source-type", "Database Server"),
 
 	/**
 	 * Display: Security Server
@@ -93,7 +93,7 @@ public enum AuditEventSourceTypeEnum {
 	 *
 	 * Security server, e.g., a domain controller
 	 */
-	SECURITY_SERVER("6", "http://hl7.org/fhir/security-source-type", "Security server, e.g. a domain controller."),
+	SECURITY_SERVER("6", "http://terminology.hl7.org/CodeSystem/security-source-type", "Security Server"),
 
 	/**
 	 * Display: Network Device
@@ -102,7 +102,7 @@ public enum AuditEventSourceTypeEnum {
 	 *
 	 * ISO level 1-3 network component
 	 */
-	NETWORK_DEVICE("7", "http://hl7.org/fhir/security-source-type", "ISO level 1-3 network component."),
+	NETWORK_DEVICE("7", "http://terminology.hl7.org/CodeSystem/security-source-type", "Network Device"),
 
 	/**
 	 * Display: Network Router
@@ -111,7 +111,7 @@ public enum AuditEventSourceTypeEnum {
 	 *
 	 * ISO level 4-6 operating software
 	 */
-	NETWORK_ROUTER("8", "http://hl7.org/fhir/security-source-type", "ISO level 4-6 operating software."),
+	NETWORK_ROUTER("8", "http://terminology.hl7.org/CodeSystem/security-source-type", "Network Router"),
 
 	/**
 	 * Display: Other
@@ -120,7 +120,7 @@ public enum AuditEventSourceTypeEnum {
 	 *
 	 * other kind of device (defined by DICOM, but some other code/system can be used)
 	 */
-	OTHER("9", "http://hl7.org/fhir/security-source-type", "other kind of device (defined by DICOM, but some other code/system can be used)"),
+	OTHER("9", "http://terminology.hl7.org/CodeSystem/security-source-type", "Other"),
 
 	;
 
