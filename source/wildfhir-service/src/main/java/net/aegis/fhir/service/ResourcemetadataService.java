@@ -263,6 +263,8 @@ public class ResourcemetadataService {
 	 * Generate the list of Resourcemetadata objects to persist; one for each non-null valid resource metadata value
 	 *
 	 * @param resource
+	 * @param baseUrl
+	 * @param resourceService
 	 * @return <code>List<Resourcemetadata></code>
 	 * @throws Exception
 	 */

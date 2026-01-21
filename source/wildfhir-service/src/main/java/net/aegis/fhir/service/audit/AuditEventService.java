@@ -32,30 +32,22 @@
  */
 package net.aegis.fhir.service.audit;
 
-import java.io.ByteArrayInputStream;
-import java.util.Date;
 import java.util.logging.Logger;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
-import javax.enterprise.event.Event;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.transaction.UserTransaction;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.Response.Status;
 
-import org.hl7.fhir.r4.formats.IParser.OutputStyle;
-import org.hl7.fhir.r4.formats.XmlParser;
-import org.hl7.fhir.r4.model.Meta;
+import org.hl7.fhir.r4.model.Identifier;
 
 import net.aegis.fhir.model.Resource;
+import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.service.CodeService;
 import net.aegis.fhir.service.ResourceService;
-import net.aegis.fhir.service.util.UUIDUtil;
 
 /**
  * @author Venkat.Keesara
@@ -69,16 +61,9 @@ public class AuditEventService {
 
 	@Inject
 	CodeService codeService;
+
 	@Inject
 	ResourceService resourceService;
-
-	@PersistenceContext
-	private EntityManager em;
-
-	@javax.annotation.Resource
-	private UserTransaction userTransaction;
-	@Inject
-	private Event<net.aegis.fhir.model.Resource> resourceEventSrc;
 
 	/**
 	 * @param context
@@ -86,63 +71,43 @@ public class AuditEventService {
 	 * @param payload
 	 * @param resourceType
 	 * @param response
-	 * @param string
+	 * @param resourceId
+	 * @param operation
 	 * @throws Exception
 	 */
-	public void createAuditEvent(UriInfo context, HttpHeaders headers, String payload, String resourceType, Response response, String resourceId, String operation) {
+	public void createAuditEvent(UriInfo context, HttpHeaders headers, String payload, String resourceType, boolean response, String resourceId, Identifier identifier, String operation) throws Exception {
+
+		Resource resource = null;
+		ResourceContainer resCon = null;
+		String baseUrl = null;
 
 		try {
 			if (codeService.isSupported("auditEventServiceEnabled")) {
-				Resource resource = AuditEventServiceUtil.INSTANCE.generateAuditEvent(context, headers, payload, resourceType, response, resourceId, operation);
+				resource = AuditEventServiceUtil.INSTANCE.generateAuditEvent(context, headers, payload, resourceType, response, resourceId, identifier, operation);
 
-				String nextResourceIdString = UUIDUtil.getGUID();
-				int nextVersionId = 1;
-				Date updatedTime = new Date();
+				// Get server base url from code table configuration
+				baseUrl = codeService.getCodeValue("baseUrl");
 
-				// create a new wildfhir resource; version based on whether we came from an update or not
-				net.aegis.fhir.model.Resource newResource = new net.aegis.fhir.model.Resource();
-				newResource.setResourceId(nextResourceIdString);
-				newResource.setVersionId(Integer.valueOf(nextVersionId));
-				newResource.setResourceType(resource.getResourceType());
-				newResource.setStatus("valid");
-				newResource.setLastUser("system");
-				newResource.setLastUpdate(updatedTime);
+				resCon = resourceService.create(resource, null, baseUrl);
 
-				// Convert XML contents to Resource object and set id and meta
-				ByteArrayInputStream iResource = new ByteArrayInputStream(resource.getResourceContents());
-				XmlParser xmlP = new XmlParser();
-				xmlP.setOutputStyle(OutputStyle.PRETTY);
-				org.hl7.fhir.r4.model.Resource resourceObject = xmlP.parse(iResource);
-
-				resourceObject.setId(nextResourceIdString);
-
-				Meta resourceMeta = new Meta();
-				if (resourceObject.hasMeta()) {
-					resourceMeta = resourceObject.getMeta();
+				if (resCon.getResponseStatus().equals(Status.CREATED)) {
+					log.info("AuditEventService.createAuditEvent() - AuditEvent/" + resCon.getResource().getResourceId() + " successfully created.");
 				}
-				resourceMeta.setVersionId(Integer.toString(nextVersionId));
-				resourceMeta.setLastUpdated(updatedTime);
-				resourceObject.setMeta(resourceMeta);
-				byte[] resourceBytes = xmlP.composeBytes(resourceObject);
-
-				newResource.setResourceContents(resourceBytes);
-
-				/*
-				 * TRANSACTION BEGIN
-				 */
-				userTransaction.begin();
-				em.persist(newResource);
-				resourceEventSrc.fire(newResource);
-
-				/*
-				 * TRANSACTION COMMIT(END)
-				 */
-				userTransaction.commit();
+				else {
+					throw new Exception("Error attempting to create AuditEvent! " +
+							resCon.getResponseStatus().getStatusCode() + " " + resCon.getResponseStatus().toString() + "" + (resCon.getMessage() != null ? resCon.getMessage() : ""));
+				}
 			}
 		}
 		catch (Exception e) {
-			log.severe(e.getMessage());
-			// e.printStackTrace();
+			e.printStackTrace();
+			throw e;
+		}
+		finally {
+			// Release resources for garbage collection
+			resource = null;
+			resCon = null;
+			baseUrl = null;
 		}
 
 	}

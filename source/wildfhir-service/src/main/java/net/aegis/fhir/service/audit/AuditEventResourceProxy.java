@@ -66,47 +66,43 @@ import net.aegis.fhir.service.util.ServicesUtil;
  *
  */
 public abstract class AuditEventResourceProxy {
-	private Logger log = Logger.getLogger(getClass().getName());
-	public static String appId = AuditEventConstant.HEADER_APPLICATION_NAME;
-	public static String userId = AuditEventConstant.HEADER_USER_ID;
-	public static String userName = AuditEventConstant.HEADER_USER_NAME;
-	public static String site = AuditEventConstant.HEADER_SITE_NAME;
 
-	public abstract Resource generateAuditEvent(UriInfo context, HttpHeaders headers, String payload, String resourceType, Response response, String resourceId, String operation) throws Exception;
+	private Logger log = Logger.getLogger(getClass().getName());
+
+	public static String appId = "FASTConsentRI";
+	public static String userId = "consent-ri-system";
+	public static String userName = "FAST Consent RI System";
+	public static String site = "consent-ri-site";
+
+	public abstract Resource generateAuditEvent(UriInfo context, HttpHeaders headers, String payload, String resourceType, boolean response, String resourceId, Identifier identifier, String operation) throws Exception;
 
 	public abstract AuditEventAction setAction();
 
-	protected void prepareBasicData(AuditEvent audit, UriInfo context, HttpHeaders headers, Response response) throws Exception {
+	protected void prepareBasicData(AuditEvent audit, UriInfo context, HttpHeaders headers, boolean response) throws Exception {
 
 		try {
-			// audit.addChild("type"); // Not recommended as Oath is not implemented yet
 			audit.setType(getType(headers));
 
-			audit.addSubtype();
-			// No enum needed for SUB type . We can use this based on operation
-			/*
-			 * TypeRestfulInteraction.READ.getSystem(); TypeRestfulInteraction.READ.getDefinition();
-			 * TypeRestfulInteraction.READ.getDisplay(); TypeRestfulInteraction.READ.toCode();
-			 */
-			// audit.addChild("action");
+			// sub type set in implementation class
+
 			audit.setAction(setAction());
 
 			audit.setRecorded(new Date());
 			audit.setOutcome(getOutcome(response));
-			//audit.setOutcomeDesc(value);
+
 			audit.addChild("purposeOfEvent");
 			List<AuditEventAgentComponent> agentList = new ArrayList<>();
 			agentList.add(getAgent(headers));
 			audit.setAgent(agentList);
+
 			// context will have Source info ( who sent to us )
 			audit.setSource(getSourceElement(headers));
 
-			audit.addEntity();
 			log.info("prepareBasicData");
 		}
 		catch (FHIRException e) {
-			log.severe(e.getMessage());
-			//e.printStackTrace();
+			e.printStackTrace();
+			throw e;
 		}
 
 	}
@@ -139,37 +135,26 @@ public abstract class AuditEventResourceProxy {
 		return action;
 	}
 
-	/*
-	 * protected AuditEventAction getAction(HttpHeaders headers) throws RuntimeException {
-	 *
-	 * AuditEventAction enumValue = AuditEventAction.C ; return enumValue ;
-	 *
-	 * }
-	 */
-
 	protected Enumeration<AuditEventOutcome> getOutcomeEnum(Response response) {
 		AuditEventOutcomeEnumFactory auditEventoutcomeEnumFactory = new AuditEventOutcomeEnumFactory();
 		Enumeration<AuditEventOutcome> outcome = new Enumeration<AuditEventOutcome>(auditEventoutcomeEnumFactory);
+		outcome.setValue(AuditEventOutcome._0);
 
 		if (response != null) {
 			int status = response.getStatus();
 
-			if (Response.Status.BAD_REQUEST.getStatusCode() != status) {
-
+			if (Response.Status.BAD_REQUEST.getStatusCode() == status) {
+				outcome.setValue(AuditEventOutcome._8);
 			}
 
 		}
 		return outcome;
 	}
 
-	protected AuditEventOutcome getOutcome(Response response) {
+	protected AuditEventOutcome getOutcome(boolean response) {
 		AuditEventOutcome enumValue = AuditEventOutcome._0;
-		if (response != null) {
-			int status = response.getStatus();
-
-			if (Response.Status.BAD_REQUEST.getStatusCode() != status) {
-				enumValue = AuditEventOutcome._12;
-			}
+		if (response == false) {
+			enumValue = AuditEventOutcome._8;
 		}
 		return enumValue;
 	}

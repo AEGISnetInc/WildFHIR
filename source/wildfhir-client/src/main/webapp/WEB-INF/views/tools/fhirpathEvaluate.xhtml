@@ -1,0 +1,93 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jstl/core">
+
+	<!-- This is the view file for the FHIR (r) Validate Operation Tab under the Operations Tab -->
+
+	<p:tab title="FHIR Path" id="fhirpathEvaluateTab">
+		<h:form id="fhirpathEvaluateForm" prependId="false" style="width:100%;border:none;">
+			<p:panelGrid id="fhirpathEvaluatePanel1" columns="1" border="0" cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
+				<p:messages id="fhirpathEvaluateMessages" />
+				<h:outputText value="WildFHIR Tools - FHIR Path Evaluation"
+					style="padding:0px;font-style:italic;font-weight:bold;font-size:16px;" />
+				<h:outputText value="**Implemented as a WildFHIR server custom operation '$fhirpath-evaluate'"
+					style="padding:0px;font-style:italic;font-weight;font-size:14px;" />
+			</p:panelGrid>
+
+			<hr></hr>
+
+			<p:panelGrid id="fhirpathEvaluatePanel2" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
+				<h:outputText value="Resource Type: * " />
+				<p:selectOneMenu required="true" label="Select FHIR Resource Type" value="#{context.selectedResourceType}" maxlength="255" style="width:160px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select Resource Type --    " noSelectionOption="true" />
+					<f:selectItems value="#{context.supportedResourceTypes}" var="resourceType" itemLabel="#{resourceType}         " itemValue="#{resourceType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Format Type (Default JSON): * " />
+				<p:selectOneMenu required="false" label="Select Format Type" value="#{context.selectedFormatType}" maxlength="10" style="width:80px;text-align:left;padding-right:30px;">
+					<f:selectItems value="#{context.formatTypes}" var="formatType" itemLabel="#{formatType}         " itemValue="#{formatType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Select FHIR Server: * " />
+				<p:selectOneMenu required="true" label="Select FHIR Server" value="#{context.selectedServerURL}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select FHIR Server --         " noSelectionOption="true" />
+					<f:selectItems value="#{context.availableServers}" var="server" itemLabel="#{server.name.trim()}         " itemValue="#{server.basePath}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Enter Resource Id to Read (optional): " />
+				<h:inputText value="#{context.resourceId}" maxlength="255" size="40" />
+
+				<h:outputText value="" />
+				<p:panelGrid columns="2" border="0" cellpadding="0" cellspacing="0"
+					styleClass="borderlessGridPanel">
+					<p:commandButton value="read" icon="ui-icon-folder-open" style="text-align: right;"
+						actionListener="#{controller.searchResourceForOperation}"
+						update=":tabView:toolsTabView:fhirpathEvaluateForm,:tabView:toolsTabView:fhirpathEvaluateForm2">
+						<f:attribute name="operation" value="fhirpathEvaluate" />
+					</p:commandButton>
+				</p:panelGrid>
+			</p:panelGrid>
+		</h:form>
+		<h:form id="fhirpathEvaluateForm2" prependId="false" style="width:100%;border:none;">
+			<p:tabView id="fhirpathEvaluateTabView" widgetVar="fhirpathEvaluateTabView" dynamic="true" cache="false">
+				<p:tab title="fhirpath Evaluate Parameters" id="fhirpathEvaluateDefinitionTab">
+					<p:panelGrid id="fhirpathEvaluateResultsPanelInner1" columns="2" border="0" cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
+						<p:commandButton value="evaluate" icon="ui-icon-check"
+							actionListener="#{controller.fhirpathEvaluate}"
+							oncomplete="PF('fhirpathEvaluateTabView').select(1)"
+							update=":tabView:toolsTabView:fhirpathEvaluateForm,:tabView:toolsTabView:fhirpathEvaluateForm2">
+						</p:commandButton>
+						<h:outputText value="" />
+
+						<h:outputText value="fhirpath Evaluate Method: * " />
+						<p:selectOneMenu required="true" value="#{context.methodString}" maxlength="30" style="width:160px;text-align:left;padding-right:30px;">
+							<f:selectItem itemLabel="Evaluate         " itemValue="evaluate" />
+							<f:selectItem itemLabel="Evaluate to Boolean         " itemValue="evaluateToBoolean" />
+							<f:selectItem itemLabel="Evaluate to String         " itemValue="evaluateToString" />
+						</p:selectOneMenu>
+					</p:panelGrid>
+					<p:panelGrid id="fhirpathEvaluateResultsPanelInner2" columns="1" border="0" cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
+						<h:outputText value="fhirpath Expression: * " />
+						<h:inputTextarea required="true" value="#{context.expressionString}" cols="80" rows="3" />
+					</p:panelGrid>
+					<p:panelGrid id="fhirpathEvaluateResultsPanelInner3" columns="1" border="0" cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
+						<h:outputText value="FHIR Resource Contents to Evaluate: * " />
+						<h:inputTextarea required="true" value="#{context.resourceString}" cols="80" rows="24" />
+					</p:panelGrid>
+				</p:tab>
+
+				<p:tab title="Evaluate Results" id="fhirpathEvaluateResultsTab">
+					<h:outputText value="Custom FHIR Parameters Output with Evaluate Results" style="padding:0px;font-style:italic;font-weight:bold;font-size:12px;" />
+					<hr></hr>
+					<h:outputText id="lblFhirpathEvaluateResults" escape="true"
+						value="#{context.responseString}"
+						styleClass="whiteSpaceClass" />
+				</p:tab>
+			</p:tabView>
+		</h:form>
+	</p:tab>
+
+</ui:composition>

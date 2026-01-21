@@ -33,12 +33,15 @@
 package net.aegis.fhir.service.audit;
 
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.hl7.fhir.r4.model.AuditEvent;
+import org.hl7.fhir.r4.model.AuditEvent.AuditEventEntityComponent;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.AuditEvent.AuditEventAction;
+import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Reference;
 
 /**
  * @author Venkat.Keesara
@@ -47,10 +50,46 @@ import org.hl7.fhir.r4.model.AuditEvent.AuditEventAction;
 public class AuditEventCreateResource extends AuditEventResourceProxy {
 
 	@Override
-	public Resource generateAuditEvent(UriInfo context, HttpHeaders headers, String payload, String resourceType, Response response, String resourceId, String operation) throws Exception {
+	public Resource generateAuditEvent(UriInfo context, HttpHeaders headers, String payload, String resourceType, boolean response, String resourceId, Identifier identifier, String operation) throws Exception {
 
 		AuditEvent audit = new AuditEvent();
+
 		prepareBasicData(audit, context, headers, response);
+
+		// subType is FHIR create
+		Coding coding = new Coding();
+		coding.setSystem("http://hl7.org/fhir/restful-interaction");
+		coding.setCode("create");
+		audit.addSubtype(coding);
+
+		// entity based on resourceType and resourceId
+		AuditEventEntityComponent entity = new AuditEventEntityComponent();
+
+		Reference what = new Reference();
+		what.setReference(resourceType + "/" + resourceId);
+		if (identifier != null) {
+			what.setIdentifier(identifier);
+		}
+		entity.setWhat(what);
+
+		coding = new Coding();
+		coding.setSystem("http://hl7.org/fhir/resource-types");
+		coding.setCode(resourceType);
+		entity.setType(coding);
+
+		coding = new Coding();
+		coding.setSystem("http://terminology.hl7.org/CodeSystem/object-role");
+		coding.setCode("4");
+		entity.setRole(coding);
+
+		coding = new Coding();
+		coding.setSystem("http://terminology.hl7.org/CodeSystem/dicom-audit-lifecycle");
+		coding.setCode("1");
+		coding.setDisplay("Origination / Creation");
+		entity.setLifecycle(coding);
+
+		audit.addEntity(entity);
+
 		return audit;
 	}
 

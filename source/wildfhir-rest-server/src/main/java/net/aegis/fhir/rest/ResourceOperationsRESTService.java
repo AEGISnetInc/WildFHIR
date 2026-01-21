@@ -66,6 +66,8 @@ import net.aegis.fhir.service.ConformanceService;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.ResourcemetadataService;
 import net.aegis.fhir.service.TransactionService;
+import net.aegis.fhir.service.audit.AuditEventService;
+import net.aegis.fhir.service.provenance.ProvenanceService;
 import net.aegis.fhir.service.util.ServicesUtil;
 import net.aegis.fhir.service.util.UTCDateUtil;
 
@@ -97,10 +99,16 @@ public class ResourceOperationsRESTService {
 	private Logger log;
 
 	@Inject
+	AuditEventService auditEventService;
+
+	@Inject
 	BatchService batchService;
 
 	@Inject
     CodeService codeService;
+
+	@Inject
+    ProvenanceService provenanceService;
 
 	@Inject
     ResourceService resourceService;
@@ -359,7 +367,8 @@ public class ResourceOperationsRESTService {
 		log.fine("context.baseuri.path = " + context.getBaseUri().getPath());
 		log.fine("context.absolutePath = " + context.getAbsolutePath());
 
-		debugRequest(request, headers, null);
+		// convert input stream to String
+		String payload = debugRequest(request, headers, resourceInputStream);
 
 		Response.ResponseBuilder builder = null;
         String contentType = null;
@@ -395,16 +404,10 @@ public class ResourceOperationsRESTService {
 				Parameters inputParameters = null;
 				Resource inputResource = null;
 
-				// convert input stream to String
-				String payload = null;
-
-				if (isPost && resourceInputStream != null) {
+				if (isPost && payload != null) {
 					// POST Operations with expected Parameters payload
 					log.fine("POST Operations with expected Parameters payload");
 					isPost = true;
-
-					// convert input stream to String
-					payload = IOUtils.toString(resourceInputStream, "UTF-8");
 
 					if (payload != null && !payload.isEmpty() && payload.length() > 3) {
 						if (contentType != null && contentType.indexOf("xml") >= 0) {
@@ -464,7 +467,7 @@ public class ResourceOperationsRESTService {
 
 					String softwareVersion = ServicesUtil.INSTANCE.getSoftwareVersion();
 					log.fine("softwareVersion: " + softwareVersion);
-					Parameters outputParameters = operationProxy.executeOperation(context, headers, resourceService, resourcemetadataService, batchService, transactionService, codeService, conformanceService, softwareVersion, resourceType, resourceId, inputParameters, inputResource, payload, contentType, isPost, returnedDirective);
+					Parameters outputParameters = operationProxy.executeOperation(context, headers, resourceService, resourcemetadataService, batchService, transactionService, codeService, auditEventService, provenanceService, conformanceService, softwareVersion, resourceType, resourceId, inputParameters, inputResource, payload, contentType, isPost, returnedDirective);
 
 					String locationPath = context.getPath();
 

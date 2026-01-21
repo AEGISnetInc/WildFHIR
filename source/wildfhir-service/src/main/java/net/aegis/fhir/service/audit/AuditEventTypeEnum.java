@@ -39,7 +39,7 @@ package net.aegis.fhir.service.audit;
  */
 public enum AuditEventTypeEnum {
 
-	REST("rest", "http://hl7.org/fhir/audit-event-type", "RESTful Operation");
+	REST("rest", "http://terminology.hl7.org/CodeSystem/audit-event-type", "RESTful Operation");
 
 	private final String code;
 	private final String system;

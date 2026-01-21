@@ -1,0 +1,30 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jstl/core">
+
+	<!-- This is the view file for the Operations Tab -->
+
+	<p:tab title="Operations" id="operationsTab" cache="false">
+
+		<p:panelGrid id="operationsTabPanel1" columns="1" border="0"
+			cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
+			<h:outputText value="FHIR Operations"
+				style="padding:0px;font-style:italic;font-weight:bold;font-size:14px;" />
+		</p:panelGrid>
+
+		<p:tabView id="operationsTabView" widgetVar="operationsTabView" cache="false">
+
+			<p:ajax event="tabChange" listener="#{controller.onTabChange}"
+				update=":tabView:operationsTabView:convertFormatForm,:tabView:operationsTabView:everythingForm,:tabView:operationsTabView:validateForm,:tabView:operationsTabView:validateForm2" />
+
+			<ui:include src="/WEB-INF/views/operations/fhirConvertFormat.xhtml" />
+			<ui:include src="/WEB-INF/views/operations/fhirEverything.xhtml" />
+			<ui:include src="/WEB-INF/views/operations/fhirValidate.xhtml" />
+
+		</p:tabView>
+	</p:tab>
+
+</ui:composition>

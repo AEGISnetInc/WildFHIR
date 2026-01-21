@@ -1,0 +1,92 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jstl/core">
+
+	<!-- This is the view file for the FHIR (r) Patch Service Tab under the FHIR Interactions Tab -->
+
+	<p:tab title="patch" id="patchTab">
+		<h:form id="fhirPatchForm" prependId="false" style="width:100%;border:none;">
+			<p:panelGrid id="patchHeaderPanel" columns="1" border="0" cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
+				<h:outputText value="FHIR Operation - Patch for Partial Update (Experimental)"
+					style="padding:0px;font-style:italic;font-weight:bold;font-size:16px;" />
+			</p:panelGrid>
+
+			<p:message for="fhirPatchForm" />
+			<p></p>
+			<p:panelGrid id="patchPanel1" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
+				<h:outputText value="Resource Type: * " />
+				<p:selectOneMenu required="true" label="Select FHIR Resource Type" value="#{context.selectedResourceType}" maxlength="255" style="width:160px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select Resource Type --    " noSelectionOption="true" />
+					<f:selectItems value="#{context.supportedResourceTypes}" var="resourceType" itemLabel="#{resourceType}         " itemValue="#{resourceType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Format Type (Default JSON): * " />
+				<p:selectOneMenu required="false" label="Select Format Type" value="#{context.selectedFormatType}" maxlength="10" style="width:80px;text-align:left;padding-right:30px;">
+					<f:selectItems value="#{context.formatTypes}" var="formatType" itemLabel="#{formatType}         " itemValue="#{formatType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Select FHIR Server: * " />
+				<p:selectOneMenu required="true" label="Select FHIR Server" value="#{context.selectedServerURL}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select FHIR Server --         " noSelectionOption="true" />
+					<f:selectItems value="#{context.availableServers}" var="server" itemLabel="#{server.name.trim()}         " itemValue="#{server.basePath}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Enter Resource Id to Patch: * " />
+				<h:inputText value="#{context.resourceId}" maxlength="255"
+					required="true"
+					requiredMessage="Please enter a resource id" size="40" />
+
+				<h:outputText value="Conditional Options" style="font-weight: bold" />
+				<h:outputText value=" " />
+
+				<h:outputText value="If-Match: " />
+				<h:inputText value="#{context.ifMatch}"
+					maxlength="255" required="false"
+					requiredMessage="Please enter the known current version number for conditional updating" size="40" />
+
+				<h:outputText value="Return Content Preference: " />
+				<p:selectOneMenu value="#{context.prefer}" maxlength="30" style="width:160px;text-align:left;padding-right:30px;">
+					<f:selectItem itemLabel="Select..." itemValue="" noSelectionOption="true" />
+					<f:selectItem itemLabel="Minimal         " itemValue="return=minimal" />
+					<f:selectItem itemLabel="Representation         " itemValue="return=representation" />
+				</p:selectOneMenu>
+
+				<h:outputText value="_format: " />
+				<h:inputText value="#{context._format}"
+					maxlength="255" required="false"
+					requiredMessage="Please enter the return format type (overrides the Accepts HTTP Header)" size="40" />
+
+				<h:outputText value="" />
+				<p:commandButton value="Show Patch Template" icon="ui-icon-wrench"
+					actionListener="#{controller.patchShowTemplate}"
+					oncomplete="PF('patchResourceTabView').select(0)"
+					update=":tabView:interactionsTabView:fhirPatchForm,:tabView:interactionsTabView:fhirPatchForm2">
+				</p:commandButton>
+			</p:panelGrid>
+		</h:form>
+		<br />
+		<h:form id="fhirPatchForm2" prependId="false" style="width:100%;border:none;">
+			<p:tabView id="patchResourceTabView" widgetVar="patchResourceTabView" dynamic="true" cache="false">
+				<p:tab title="Patch Operations" id="patchResourceDefinitionTab">
+					<p:commandButton value="patch" icon="ui-icon-disk"
+						actionListener="#{controller.fhirPatch}"
+						oncomplete="PF('patchResourceTabView').select(1)"
+						update=":tabView:interactionsTabView:fhirPatchForm,:tabView:interactionsTabView:fhirPatchForm2">
+					</p:commandButton>
+					<br />
+					<br />
+					<h:inputTextarea required="true" value="#{context.resourceString}" cols="80" rows="24" />
+				</p:tab>
+
+				<p:tab title="Patch Results" id="patchResultsTab">
+					<h:outputText id="lblPatchResults" escape="true"
+						value="#{context.responseString}"
+						styleClass="whiteSpaceClass" />
+				</p:tab>
+			</p:tabView>
+		</h:form>
+	</p:tab>
+</ui:composition>

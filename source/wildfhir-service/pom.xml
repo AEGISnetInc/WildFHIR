@@ -5,14 +5,15 @@
     <parent>
         <groupId>net.aegis.fhir</groupId>
         <artifactId>wildfhir</artifactId>
-        <version>0.5.2</version>
+        <version>0.6.0-SNAPSHOT</version>
     </parent>
     <artifactId>wildfhir-service</artifactId>
+    <version>0.6.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>WildFHIR-Service</name>
+    <name>wildfhir-service</name>
     <description>AEGIS WildFHIR Service Library</description>
 
-    <url>http://wildfhir.aegis.net/r4</url>
+    <url>http://wildfhir.wildfhir.org/r4</url>
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
@@ -114,19 +115,19 @@
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jaxrs</artifactId>
-            <version>3.15.1.Final</version>
+            <version>3.15.6.Final</version>
             <scope>provided</scope>
         </dependency>
           <dependency>
             <groupId>org.jboss.resteasy</groupId>
               <artifactId>resteasy-jaxb-provider</artifactId>
-            <version>3.15.1.Final</version>
+            <version>3.15.6.Final</version>
             <scope>provided</scope>
           </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-multipart-provider</artifactId>
-            <version>3.15.1.Final</version>
+            <version>3.15.6.Final</version>
             <scope>provided</scope>
         </dependency>
 
@@ -344,12 +345,6 @@
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>org.hl7.fhir.utilities</artifactId>
             <version>${core.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.aegis.fhir</groupId>
-            <artifactId>wildfhir-model</artifactId>
-            <version>${release.version}</version>
         </dependency>
     </dependencies>
 

@@ -1,0 +1,72 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jstl/core">
+
+	<!-- This is the view file for the FHIR (r) Everything Operation Tab under the Operations Tab -->
+
+	<p:tab title="$everything" id="everythingTab">
+		<h:form id="everythingForm" prependId="false" style="width:100%;border:none;">
+			<p:message for="everythingForm" />
+			<p></p>
+			<p:panelGrid id="everythingPanel" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
+				<h:outputText value="Everything Resource Type: * " />
+				<p:selectOneMenu required="true" label="Select FHIR Resource Type" value="#{context.selectedResourceType}" maxlength="255" style="width:160px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select Everything Resource Type --    " noSelectionOption="true" />
+					<f:selectItems value="#{context.everythingResourceTypes}" var="resourceType" itemLabel="#{resourceType}         " itemValue="#{resourceType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Format Type (Default JSON): * " />
+				<p:selectOneMenu required="false" label="Select Format Type" value="#{context.selectedFormatType}" maxlength="10" style="width:80px;text-align:left;padding-right:30px;">
+					<f:selectItems value="#{context.formatTypes}" var="formatType" itemLabel="#{formatType}         " itemValue="#{formatType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Select FHIR Server: * " />
+				<p:selectOneMenu required="true" label="Select FHIR Server" value="#{context.selectedServerURL}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select FHIR Server --         " noSelectionOption="true" />
+					<f:selectItems value="#{context.availableServers}" var="server" itemLabel="#{server.name.trim()}         " itemValue="#{server.basePath}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Enter $everything Resource Id: " />
+				<h:inputText value="#{context.resourceId}" maxlength="255" size="40" />
+
+				<h:outputText value="" />
+				<p:panelGrid columns="2" border="0" cellpadding="0" cellspacing="0"
+					styleClass="borderlessGridPanel">
+					<p:commandButton value="Show Template" icon="ui-icon-wrench"
+						actionListener="#{controller.everythingShowTemplate}"
+						update=":tabView:operationsTabView:everythingForm">
+						<f:attribute name="operation" value="everything" />
+					</p:commandButton>
+				</p:panelGrid>
+			</p:panelGrid>
+			<br />
+			<p:panel id="everythingResultsPanel" visible="true"
+				widgetVar="everythingResultsPanel" toggleable="true" closable="true"
+				toggleSpeed="500" closeSpeed="500">
+
+				<p:tabView id="everythingResourceTabView" widgetVar="everythingResourceTabView" dynamic="true" cache="false">
+					<p:tab title="Everything Parameters" id="everythingResourceDefinitionTab">
+						<p:commandButton value="Get Everything" icon="ui-icon-check"
+							actionListener="#{controller.fhirEverything}"
+							oncomplete="PF('everythingResourceTabView').select(1)"
+							update=":tabView:operationsTabView:everythingForm">
+						</p:commandButton>
+						<br />
+						<br />
+						<h:inputTextarea required="false" value="#{context.resourceString}" cols="80" rows="24" />
+					</p:tab>
+
+					<p:tab title="Everything Output" id="EverythingOutputTab">
+						<h:outputText id="lblEverythingResults" escape="true"
+							value="#{context.responseString}"
+							styleClass="whiteSpaceClass" />
+					</p:tab>
+				</p:tabView>
+			</p:panel>
+		</h:form>
+	</p:tab>
+
+</ui:composition>

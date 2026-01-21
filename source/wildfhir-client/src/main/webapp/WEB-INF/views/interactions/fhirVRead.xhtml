@@ -1,0 +1,112 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jstl/core">
+
+	<!-- This is the view file for the FHIR (r) VRead Tab under the FHIR Interactions Tab -->
+
+	<p:tab title="vread" id="vreadTab">
+		<h:form id="fhirVReadForm" prependId="false" style="width:100%;border:none;">
+			<p:message for="fhirVReadForm" />
+			<p></p>
+			<p:panelGrid id="vreadPanel" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
+				<h:outputText value="Resource Type: * " />
+				<p:selectOneMenu required="true" label="Select FHIR Resource Type" value="#{context.selectedResourceType}" maxlength="255" style="width:160px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select Resource Type --    " noSelectionOption="true" />
+					<f:selectItems value="#{context.supportedResourceTypes}" var="resourceType" itemLabel="#{resourceType}         " itemValue="#{resourceType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Format Type (Default JSON): * " />
+				<p:selectOneMenu required="false" label="Select Format Type" value="#{context.selectedFormatType}" maxlength="10" style="width:80px;text-align:left;padding-right:30px;">
+					<f:selectItems value="#{context.formatTypes}" var="formatType" itemLabel="#{formatType}         " itemValue="#{formatType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Select FHIR Server: * " />
+				<p:selectOneMenu required="true" label="Select FHIR Server" value="#{context.selectedServerURL}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select FHIR Server --         " noSelectionOption="true" />
+					<f:selectItems value="#{context.availableServers}" var="server" itemLabel="#{server.name.trim()}         " itemValue="#{server.basePath}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Enter Resource id to read: * " />
+				<h:inputText value="#{context.resourceId}" maxlength="255" required="true" requiredMessage="Please enter a resource id" size="40" />
+
+				<h:outputText value="Enter Version Id to read: * " />
+				<h:inputText value="#{context.resourceVersion}" maxlength="255" required="true" requiredMessage="Please enter a version id" size="40" />
+
+				<h:outputText value="Conditional Options" style="font-weight: bold" />
+				<h:outputText value=" " />
+
+				<h:outputText value="_format: " />
+				<h:inputText value="#{context._format}"
+					maxlength="255" required="false"
+					requiredMessage="Please enter the return format type (overrides the Accept HTTP Header)" size="40" />
+
+				<h:outputText value="_summary: " />
+				<p:selectOneMenu required="false" label="Select the return summary type" value="#{context._summary}" maxlength="5" style="width:120px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select Summary --         " noSelectionOption="true" />
+					<f:selectItems value="#{context.summaryTypes}" var="summaryType" itemLabel="#{summaryType}         " itemValue="#{summaryType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value=" " />
+				<p:commandButton id="vreadSubmitButton" value="vread"
+					icon="ui-icon-folder-open" actionListener="#{controller.fhirVRead}"
+					update=":tabView:interactionsTabView:fhirVReadForm"
+					process=":tabView:interactionsTabView:fhirVReadForm">
+					<f:attribute name="searchType" value="vread" />
+				</p:commandButton>
+			</p:panelGrid>
+			<p>
+				<h:outputText value=" " />
+			</p>
+			<p:outputPanel id="vreadResultsPanel">
+				<p:dataTable rowIndexVar="index" var="res"
+					value="#{context.resourceResults}"
+					rendered="#{context.resourceResults.size() > 0}">
+					<p:column headerText="Resource ID" width="40%">
+						<h:outputText value="#{res.resourceBean.resourceId}" />
+					</p:column>
+					<p:column headerText="Version ID" width="7%">
+						<h:outputText value="#{res.resourceBean.versionId}" />
+					</p:column>
+					<p:column headerText="Last Modified Date" width="20%">
+						<h:outputText value="#{res.lastUpdated}" />
+					</p:column>
+					<p:column headerText="View Resource" width="18%">
+						<p:commandButton value="View XML"
+							onclick="PF('readResInfoDialg#{res.resourceBean.resourceId}XML').show()"
+							type="button"
+							rendered="#{context.returnedFormatType eq 'XML'}" />
+						<p:dialog id="readResInfoDialg#{res.resourceBean.resourceId}XML"
+							header="Resource XML"
+							widgetVar="readResInfoDialg#{res.resourceBean.resourceId}XML"
+							modal="true" width="450" height="400">
+							<h:outputText value="#{res.resourceXML}"
+								styleClass="whiteSpaceClass" />
+						</p:dialog>
+						<p:commandButton value="View JSON"
+							onclick="PF('readResInfoDialg#{res.resourceBean.resourceId}JSON').show()"
+							type="button"
+							rendered="#{context.returnedFormatType eq 'JSON'}" />
+						<p:dialog id="readResInfoDialg#{res.resourceBean.resourceId}JSON"
+							header="Resource JSON"
+							widgetVar="readResInfoDialg#{res.resourceBean.resourceId}JSON"
+							modal="true" width="450" height="400">
+							<h:outputText value="#{res.resourceJSON}"
+								styleClass="whiteSpaceClass" />
+						</p:dialog>
+					</p:column>
+					<p:column headerText="Actions" width="15%">
+						<p:commandButton value="delete" title="Delete"
+							actionListener="#{controller.fhirDelete(res.resourceBean.resourceId,'fhirVReadForm')}"
+							update=":tabView:interactionsTabView:fhirVReadForm" icon="ui-icon-trash">
+							<p:confirm header="Confirmation" message="Are you sure?"
+								icon="ui-icon-alert" />
+						</p:commandButton>
+					</p:column>
+				</p:dataTable>
+			</p:outputPanel>
+		</h:form>
+	</p:tab>
+</ui:composition>

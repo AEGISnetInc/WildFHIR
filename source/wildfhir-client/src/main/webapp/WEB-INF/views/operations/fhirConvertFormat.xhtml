@@ -1,0 +1,88 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jstl/core">
+
+	<!-- This is the view file for the FHIR (r) Convert Format Operation Tab under the Operations Tab -->
+
+	<p:tab title="$convert" id="convertFormatTab">
+		<h:form id="convertFormatForm" prependId="false" style="width:100%;border:none;">
+			<p:message for="convertFormatForm" />
+			<p></p>
+			<p:panelGrid id="convertFormatPanel" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
+				<h:outputText value="Convert From Format Type: * " />
+				<p:selectOneMenu required="false" label="Select FHIR Format Type" value="#{context.convertFromFormatType}" maxlength="255" style="width:160px;text-align:left;padding-right:30px;">
+					<f:selectItems value="#{context.formatTypes}" var="formatType" itemLabel="#{formatType}         " itemValue="#{formatType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Convert To Format Type: * " />
+				<p:selectOneMenu required="false" label="Select FHIR Format Type" value="#{context.convertToFormatType}" maxlength="255" style="width:160px;text-align:left;padding-right:30px;">
+					<f:selectItems value="#{context.formatTypes}" var="formatType" itemLabel="#{formatType}         " itemValue="#{formatType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Select FHIR Server: * " />
+				<p:selectOneMenu required="true" label="Select FHIR Server" value="#{context.selectedServerURL}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select FHIR Server --         " noSelectionOption="true" />
+					<f:selectItems value="#{context.availableServers}" var="server" itemLabel="#{server.name.trim()}         " itemValue="#{server.basePath}" />
+				</p:selectOneMenu>
+			</p:panelGrid>
+			<br />
+			<hr width="100%" />
+			<br />
+			<p:panel id="convertFormatResultsPanel" visible="true"
+				widgetVar="convertFormatResultsPanel" toggleable="true" closable="true"
+				toggleSpeed="500" closeSpeed="500">
+
+				<p:tabView id="convertFormatResourceTabView" widgetVar="convertFormatResourceTabView" dynamic="true" cache="false">
+					<p:tab title="Convert Format" id="convertFormatResourceDefinitionTab">
+						<p:commandButton value="convert" icon="ui-icon-wrench"
+							actionListener="#{controller.fhirConvertFormat}"
+							oncomplete="PF('convertFormatResourceTabView').select(1)"
+							update=":tabView:operationsTabView:convertFormatForm">
+						</p:commandButton>
+						<br />
+						<br />
+						<h:inputTextarea required="true" value="#{context.resourceString}" cols="80" rows="24" />
+					</p:tab>
+
+					<p:tab title="Convert Issues" id="ConvertIssuesTab">
+						<p:outputPanel id="convertIssuesDisplayPanel">
+							<h4>Convert Issues (if not successful)</h4>
+							<p:dataTable rowIndexVar="index" var="res" value="#{context.convertFormatOperationOutcome.issue}"
+								rendered="#{context.convertFormatOperationOutcome.issue.size() > 0}">
+								<p:column headerText="Severity" width="15%">
+									<h:outputText value="#{res.severity}" />
+								</p:column>
+								<p:column headerText="Code" width="15%">
+									<h:outputText value="#{res.code}" />
+								</p:column>
+								<p:column headerText="Additional Information" width="70%">
+									<p:panelGrid columns="1" border="0" cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
+										<h:outputText value="#{res.location} " redendered="#{res.location > ''}"/>
+										<h:outputText value="(details...)" title="#{res.details}" style="font-style: italic; text-decoration: underline;" 
+											redendered="#{res.details > ''}"/>
+										<h:outputText value="(diagnostics...)" title="#{res.diagnostics}" style="font-style: italic; text-decoration: underline;" 
+											redendered="#{res.diagnostics > ''}"/>
+									</p:panelGrid>
+								</p:column>
+							</p:dataTable>
+							<p:panelGrid id="convertFormatPanel" columns="1" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel"
+								rendered="#{context.convertFormatOperationOutcome.issue.size() eq 0}">
+								<h:outputText value="No issues reported in $convert-format output." style="font-style: italic;" />
+							</p:panelGrid>
+						</p:outputPanel>
+					</p:tab>
+
+					<p:tab title="Convert Output" id="ConvertOutputTab">
+						<h:outputText id="lblConvertOutput" escape="true"
+							value="#{context.responseString}"
+							styleClass="whiteSpaceClass" />
+					</p:tab>
+				</p:tabView>
+			</p:panel>
+		</h:form>
+	</p:tab>
+
+</ui:composition>

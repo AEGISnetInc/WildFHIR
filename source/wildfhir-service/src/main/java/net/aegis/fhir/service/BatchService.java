@@ -131,7 +131,7 @@ public class BatchService {
 			log.fine("===== BatchService -  01 - Create and pre-populate batch response bundle");
 			bundleResponse = new Bundle();
 
-			bundleResponse.setId(UUIDUtil.getGUID());
+			bundleResponse.setId(UUIDUtil.getUUID());
 			Meta bundleMeta = new Meta();
 			bundleMeta.setVersionId("1");
 			bundleMeta.setLastUpdated(new Date());

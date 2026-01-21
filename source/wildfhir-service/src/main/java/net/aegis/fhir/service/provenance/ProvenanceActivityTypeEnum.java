@@ -39,45 +39,44 @@ package net.aegis.fhir.service.provenance;
 public enum ProvenanceActivityTypeEnum {
 
 	/**
-	 * Display: <b>Create</b><br/>
-	 * Code Value: <b>C</b>
+	 * Display: <b>create</b><br/>
+	 * Code Value: <b>CREATE</b>
 	 *
-	 * Create a new database object, such as Placing an Order.
+	 * Fundamental operation in an Information System (IS) that results only in the act of bringing an object into existence.
 	 */
-	CREATE("CREATE", "http://hl7.org/fhir/v3/DataOperation", "Create"),
+	CREATE("CREATE", "http://terminology.hl7.org/CodeSystem/v3-DataOperation", "create"),
 
 	/**
-	 * Display: <b>Read/View/Print</b><br/>
-	 * Code Value: <b>R</b>
+	 * Display: <b>delete</b><br/>
+	 * Code Value: <b>DELETE</b>
 	 *
-	 * Display or print data, such as a Doctor Census.
+	 * Fundamental operation in an Information System (IS) that results only in the removal of information about an object from memory or storage.
 	 */
-	OPERATE("OPERATE", "http://hl7.org/fhir/v3/DataOperation", "Read/View/Print"),
+	DELETE("DELETE", "http://terminology.hl7.org/CodeSystem/v3-DataOperation", "delete"),
 
 	/**
-	 * Display: <b>Update</b><br/>
-	 * Code Value: <b>U</b>
+	 * Display: <b>update</b><br/>
+	 * Code Value: <b>UPDATE</b>
 	 *
-	 * Update data, such as Revise Patient Information.
+	 * Fundamental operation in an Information System (IS) that results only in the revision or alteration of an object.
 	 */
-	UPDATE("UPDATE", "http://hl7.org/fhir/v3/DataOperation", "Update"),
+	UPDATE("UPDATE", "http://terminology.hl7.org/CodeSystem/v3-DataOperation", "revise"),
 
 	/**
-	 * Display: <b>Delete</b><br/>
-	 * Code Value: <b>D</b>
+	 * Display: <b>append</b><br/>
+	 * Code Value: <b>APPEND</b>
 	 *
-	 * Delete items, such as a doctor master file record.
+	 * Fundamental operation in an Information System (IS) that results only in the addition of information to an object already in existence.
 	 */
-	DELETE("DELETE", "http://hl7.org/fhir/v3/DataOperation", "Delete"),
+	APPEND("APPEND", "http://terminology.hl7.org/CodeSystem/v3-DataOperation", "append"),
 
 	/**
-	 * Display: <b>Execute</b><br/>
-	 * Code Value: <b>E</b>
+	 * Display: <b>nullify</b><br/>
+	 * Code Value: <b>NULLIFY</b>
 	 *
-	 * Perform a system or application function such as log-on, program execution or use of an object's method, or
-	 * perform a query/search operation.
+	 * Change the status of an object representing an Act to "nullified", i.e., treat as though it never existed.
 	 */
-	EXECUTE("EXECUTE", "http://hl7.org/fhir/v3/DataOperation", "Execute"),
+	NULLIFY("NULLIFY", "http://terminology.hl7.org/CodeSystem/v3-DataOperation", "nullify"),
 
 	;
 

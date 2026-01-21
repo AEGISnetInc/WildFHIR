@@ -52,8 +52,17 @@ public class AuditEventResourceProxyObjectFactory {
 			if (AuditEventActionEnum.CREATE.getCode() == operation) {
 				proxy = new AuditEventCreateResource();
 			}
+			if (AuditEventActionEnum.READ_VIEW_PRINT.getCode() == operation) {
+				proxy = new AuditEventReadViewPrintResource();
+			}
 			if (AuditEventActionEnum.UPDATE.getCode() == operation) {
 				proxy = new AuditEventUpdateResource();
+			}
+			if (AuditEventActionEnum.DELETE.getCode() == operation) {
+				proxy = new AuditEventDeleteResource();
+			}
+			if (AuditEventActionEnum.EXECUTE.getCode() == operation) {
+				proxy = new AuditEventExecuteResource();
 			}
 
 		}

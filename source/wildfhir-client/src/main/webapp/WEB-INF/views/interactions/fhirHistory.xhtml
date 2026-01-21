@@ -1,0 +1,161 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:c="http://java.sun.com/jstl/core">
+
+	<!-- This is the view file for the FHIR (r) History Tab under the FHIR Interactions Tab -->
+
+	<p:tab title="history" id="historyTab">
+		<h:form id="historyForm" prependId="false" style="width:100%;border:none;">
+			<p:message for="historyForm" />
+			<p></p>
+			<p:panelGrid id="historyPanel" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
+				<h:outputText value="Resource Type: * " />
+				<p:selectOneMenu required="true" label="Select FHIR Resource Type" value="#{context.selectedResourceType}" maxlength="255" style="width:160px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select Resource Type --    " noSelectionOption="true" />
+					<f:selectItems value="#{context.supportedResourceTypes}" var="resourceType" itemLabel="#{resourceType}         " itemValue="#{resourceType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Format Type (Default JSON): * " />
+				<p:selectOneMenu required="false" label="Select Format Type" value="#{context.selectedFormatType}" maxlength="10" style="width:80px;text-align:left;padding-right:30px;">
+					<f:selectItems value="#{context.formatTypes}" var="formatType" itemLabel="#{formatType}         " itemValue="#{formatType}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Select FHIR Server: * " />
+				<p:selectOneMenu required="true" label="Select FHIR Server" value="#{context.selectedServerURL}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
+					<f:selectItem itemValue="#{null}" itemLabel="-- Select FHIR Server --         " noSelectionOption="true" />
+					<f:selectItems value="#{context.availableServers}" var="server" itemLabel="#{server.name.trim()}         " itemValue="#{server.basePath}" />
+				</p:selectOneMenu>
+
+				<h:outputText value="Enter Resource id for history: * " />
+				<h:inputText value="#{context.resourceId}" maxlength="255" required="true" requiredMessage="Please enter a resource id" size="40" />
+
+				<h:outputText value="Conditional Options" style="font-weight: bold" />
+				<h:outputText value=" " />
+
+				<h:outputText value="_format: " />
+				<h:inputText value="#{context._format}"
+					maxlength="255" required="false"
+					requiredMessage="Please enter the return format type (overrides the Accepts HTTP Header)" size="40" />
+
+				<h:outputText value="_count: " />
+				<h:inputText value="#{context._count}"
+					maxlength="10" required="false"
+					requiredMessage="Please enter the page count" size="40" />
+
+				<h:outputText value="_since: " />
+				<h:inputText value="#{context._since}"
+					maxlength="40" required="false"
+					requiredMessage="Please enter the time instance after which resource versions were created" size="40" />
+
+				<h:outputText value=" " />
+				<p:commandButton value="history" icon="ui-icon-folder-open"
+					actionListener="#{controller.fhirHistory}"
+					update=":tabView:interactionsTabView:historyForm">
+					<f:attribute name="searchType" value="vread" />
+				</p:commandButton>
+			</p:panelGrid>
+			<p>
+				<h:outputText value=" " />
+			</p>
+			<p:outputPanel id="historyResultsPanel">
+				<p:dataTable rowIndexVar="index" var="res"
+					value="#{context.resourceResults}"
+					rendered="#{context.resourceResults.size() > 0}">
+					<p:column headerText="ID" width="50%">
+						<h:outputText value="#{res.bundle.id}" />
+					</p:column>
+					<p:column headerText="Type" width="10%">
+						<h:outputText value="#{res.bundle.type}" />
+					</p:column>
+					<p:column headerText="Number of Results" width="20%">
+						<div align="center"><h:outputText value="#{res.bundle.total}" /></div>
+					</p:column>
+					<p:column headerText="View Result" width="20%">
+						<p:commandButton value="View XML"
+							onclick="PF('historyInfoDialg#{res.bundle.id}XML').show()"
+							type="button"
+							rendered="#{context.returnedFormatType eq 'XML'}" />
+						<p:dialog id="historyInfoDialg#{res.bundle.id}XML"
+							header="Result XML" widgetVar="historyInfoDialg#{res.bundle.id}XML"
+							modal="true" width="450" height="400">
+							<h:outputText value="#{res.resourceXML}"
+								styleClass="whiteSpaceClass" />
+						</p:dialog>
+						<p:commandButton value="View JSON"
+							onclick="PF('historyInfoDialg#{res.bundle.id}JSON').show()"
+							type="button"
+							rendered="#{context.returnedFormatType eq 'JSON'}" />
+						<p:dialog id="historyInfoDialg#{res.bundle.id}JSON"
+							header="Result JSON" widgetVar="historyInfoDialg#{res.bundle.id}JSON"
+							modal="true" width="450" height="400">
+							<h:outputText value="#{res.resourceJSON}"
+								styleClass="whiteSpaceClass" />
+						</p:dialog>
+					</p:column>
+				</p:dataTable>
+				<p:dataTable rowIndexVar="index" var="res"
+					value="#{context.pageReference}"
+					rendered="#{context.pageReference.size() > 0}">
+					<p:column headerText="Page" width="15%">
+						<p:commandButton value="#{res.label}" icon="ui-icon-folder-open"
+							actionListener="#{controller.fhirHistoryPage(res.value)}"
+							update=":tabView:interactionsTabView:historyForm">
+							<f:attribute name="searchType" value="vread" />
+						</p:commandButton>
+					</p:column>
+					<p:column headerText="Reference Link" width="85%">
+						<h:outputText value="#{res.value}" />
+					</p:column>
+				</p:dataTable>
+				<p:dataTable rowIndexVar="index" var="res"
+					value="#{context.resourceResults[0].bundle.entryList}"
+					rendered="#{context.resourceResults.size() > 0}">
+					<p:column headerText="Resource ID" width="40%">
+						<h:outputText
+							value="#{res.deleted ? res.deletedResourceId : res.resourceId}" />
+					</p:column>
+					<p:column headerText="Version ID" width="8%">
+						<h:outputText
+							value="#{res.deleted ? res.deletedVersionId : res.versionId}" />
+					</p:column>
+					<p:column headerText="Last Modified Date" width="25%">
+						<h:outputText
+							value="#{res.deleted ? res.deletedInstant.time : res.updated.time}">
+							<f:convertDateTime type="both" dateStyle="long" />
+						</h:outputText>
+					</p:column>
+					<p:column headerText="View Resource" width="20%">
+						<p:commandButton value="View XML"
+							onclick="PF('historyResInfoDialg#{res.uniqueId}XML').show()"
+							type="button"
+							rendered="#{not res.deleted and context.returnedFormatType eq 'XML'}" />
+						<p:dialog id="historyResInfoDialg#{res.uniqueId}XML"
+							header="Resource XML"
+							widgetVar="historyResInfoDialg#{res.uniqueId}XML" modal="true"
+							width="450" height="400">
+							<h:outputText value="#{res.entryXML}"
+								styleClass="whiteSpaceClass" />
+						</p:dialog>
+						<p:commandButton value="View JSON"
+							onclick="PF('historyResInfoDialg#{res.uniqueId}JSON').show()"
+							type="button"
+							rendered="#{not res.deleted and context.returnedFormatType eq 'JSON'}" />
+						<p:dialog id="historyResInfoDialg#{res.uniqueId}JSON"
+							header="Resource JSON"
+							widgetVar="historyResInfoDialg#{res.uniqueId}JSON" modal="true"
+							width="450" height="400">
+							<h:outputText value="#{res.entryJSON}"
+								styleClass="whiteSpaceClass" />
+						</p:dialog>
+					</p:column>
+					<p:column headerText="Deleted" width="7%">
+						<h:outputText value="#{res.deleted}" />
+					</p:column>
+				</p:dataTable>
+			</p:outputPanel>
+		</h:form>
+	</p:tab>
+</ui:composition>

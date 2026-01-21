@@ -1,0 +1,30 @@
+Manifest-Version: 1.0
+Class-Path: jta-1.1.jar javax.servlet-api-4.0.1.jar httpclient-4.5.13.ja
+ r httpcore-4.4.13.jar commons-logging-1.2.jar commons-codec-1.17.1.jar 
+ commons-io-2.17.0.jar jcip-annotations-1.0-1.jar log4j-core-2.17.0.jar 
+ log4j-api-2.17.0.jar joda-time-2.12.5.jar guava-32.0.1-jre.jar failurea
+ ccess-1.0.1.jar listenablefuture-9999.0-empty-to-avoid-conflict-with-gu
+ ava.jar jsr305-3.0.2.jar checker-qual-3.33.0.jar error_prone_annotation
+ s-2.18.0.jar j2objc-annotations-2.8.jar gson-2.10.1.jar commons-compres
+ s-1.27.1.jar commons-lang3-3.16.0.jar primefaces-10.0.0.jar all-themes-
+ 1.0.10.jar wildfhir-service-0.6.0-SNAPSHOT.jar nimbus-jose-jwt-9.37.3.j
+ ar okhttp-4.10.0.jar okio-jvm-3.0.0.jar kotlin-stdlib-jdk8-1.6.10.jar k
+ otlin-stdlib-1.6.20.jar annotations-13.0.jar kotlin-stdlib-common-1.5.3
+ 1.jar kotlin-stdlib-jdk7-1.6.10.jar logging-interceptor-4.10.0.jar comm
+ ons-jcs-core-2.0-beta-1.jar ucum-1.0.10.jar mysql-connector-j-8.2.0.jar
+  protobuf-java-3.21.9.jar commonmark-0.12.1.jar commonmark-ext-gfm-tabl
+ es-0.12.1.jar txtmark-0.13.jar zjsonpatch-0.4.11.jar jackson-databind-2
+ .10.3.jar jackson-annotations-2.10.3.jar jackson-core-2.10.3.jar common
+ s-collections4-4.2.jar xml-patch-0.3.1.jar jdom2-2.0.6.jar org.hl7.fhir
+ .r5-6.5.21.jar org.hl7.fhir.utilities-6.5.21.jar hapi-fhir-base-6.4.1.j
+ ar jackson-datatype-jsr310-2.14.1.jar commons-text-1.10.0.jar slf4j-api
+ -2.0.3.jar jcl-over-slf4j-2.0.3.jar icu4j-72.1.jar commons-net-3.9.0.ja
+ r plantuml-mit-1.2023.9.jar org.hl7.fhir.r4-6.5.21.jar org.hl7.fhir.con
+ vertors-6.5.21.jar org.hl7.fhir.dstu2-6.5.21.jar org.hl7.fhir.dstu2016m
+ ay-6.5.21.jar xpp3-1.1.6.jar jakarta-regexp-1.4.jar org.hl7.fhir.dstu3-
+ 6.5.21.jar org.hl7.fhir.r4b-6.5.21.jar sqlite-jdbc-3.49.1.0.jar Saxon-H
+ E-11.6.jar xmlresolver-5.2.1.jar httpclient5-5.1.3.jar httpcore5-5.1.3.
+ jar httpcore5-h2-5.1.3.jar xmlresolver-5.2.1-data.jar org.hl7.fhir.vali
+ dation-6.5.21.jar thymeleaf-3.1.2.RELEASE.jar ognl-3.3.4.jar javassist-
+ 3.29.0-GA.jar attoparser-2.0.7.RELEASE.jar unbescape-1.1.6.RELEASE.jar
+

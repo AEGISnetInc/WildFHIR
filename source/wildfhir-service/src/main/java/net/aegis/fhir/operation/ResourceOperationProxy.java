@@ -41,6 +41,8 @@ import net.aegis.fhir.service.ConformanceService;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.ResourcemetadataService;
 import net.aegis.fhir.service.TransactionService;
+import net.aegis.fhir.service.audit.AuditEventService;
+import net.aegis.fhir.service.provenance.ProvenanceService;
 
 import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.Resource;
@@ -61,6 +63,8 @@ public abstract class ResourceOperationProxy {
 	 * @param batchService
 	 * @param transactionService
 	 * @param codeService
+	 * @param auditEventService
+	 * @param provenanceService
 	 * @param conformanceService
 	 * @param softwareVersion
 	 * @param resourceType
@@ -74,6 +78,6 @@ public abstract class ResourceOperationProxy {
 	 * @return <code>Parameters</code>
 	 * @throws Exception
 	 */
-	public abstract Parameters executeOperation(UriInfo context, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception;
+	public abstract Parameters executeOperation(UriInfo context, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception;
 
 }
