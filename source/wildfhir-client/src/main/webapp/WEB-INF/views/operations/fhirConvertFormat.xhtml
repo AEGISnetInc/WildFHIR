@@ -11,9 +11,9 @@
 		<h:form id="convertFormatForm" prependId="false" style="width:100%;border:none;">
 			<p:message for="convertFormatForm" />
 			<p></p>
-			<p:panelGrid id="convertFormatPanel" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
+			<p:panelGrid id="convertFormatPanel" layout="tabular" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
 				<h:outputText value="Convert From Format Type: * " />
-				<p:selectOneMenu required="false" label="Select FHIR Format Type" value="#{context.convertFromFormatType}" maxlength="255" style="width:160px;text-align:left;padding-right:30px;">
+				<p:selectOneMenu required="false" label="Select FHIR Format Type" value="#{context.convertFromFormatType}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
 					<f:selectItems value="#{context.formatTypes}" var="formatType" itemLabel="#{formatType}         " itemValue="#{formatType}" />
 				</p:selectOneMenu>
 

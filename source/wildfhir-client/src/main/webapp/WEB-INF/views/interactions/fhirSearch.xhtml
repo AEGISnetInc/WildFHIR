@@ -11,9 +11,9 @@
 		<h:form id="fhirSearchForm" prependId="false" style="width:100%;border:none;">
 			<p:message for="fhirSearchForm" />
 			<p></p>
-			<p:panelGrid id="searchPanel" columns="2" border="0" cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
+			<p:panelGrid id="searchPanel" layout="tabular" columns="2" border="0" cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
 				<h:outputText value="Resource Type: * " />
-				<p:selectOneMenu required="true" label="Select FHIR Resource Type" value="#{context.selectedResourceType}" maxlength="255" style="width:160px;text-align:left;padding-right:30px;">
+				<p:selectOneMenu required="true" label="Select FHIR Resource Type" value="#{context.selectedResourceType}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
 					<f:selectItem itemValue="#{null}" itemLabel="-- Select Resource Type --    " noSelectionOption="true" />
 					<f:selectItems value="#{context.supportedResourceTypes}" var="resourceType" itemLabel="#{resourceType}         " itemValue="#{resourceType}" />
 				</p:selectOneMenu>
@@ -64,7 +64,7 @@
 				<p:tabView id="searchCriteriaTabView" widgetVar="searchCriteriaTabView" dynamic="true" cache="false">
 
 					<p:tab title="Criteria" id="searchCriteriaTab">
-						<p:panelGrid id="searchPanelCriteria" columns="2" border="0" cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
+						<p:panelGrid id="searchPanelCriteria" layout="tabular" columns="2" border="0" cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
 							<p:commandButton value="search" icon="ui-icon-search"
 								actionListener="#{controller.fhirSearch}"
 								oncomplete="PF('searchCriteriaTabView').select(1)"

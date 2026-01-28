@@ -32,6 +32,8 @@
  */
 package net.aegis.fhir.service.util;
 
+import java.util.Map;
+
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 
@@ -44,9 +46,17 @@ public class WebClientHelper {
 	 * Returns a new ResteasyClient which disables host verification
 	 */
 	public static ResteasyClient createClientWihtoutHostVerification() {
-		ResteasyClientBuilder clientBuilder = new ResteasyClientBuilder();
-		clientBuilder.disableTrustManager();
-		clientBuilder.hostnameVerifier((s, sslSession) -> true);
-		return clientBuilder.build();
+		ResteasyClient client = (ResteasyClient) ResteasyClientBuilder.newBuilder()
+			.hostnameVerifier((s, sslSession) -> true)
+			.build();
+		return client;
+	}
+
+	public static ResteasyClient createClientWihtoutHostVerification(Map<String, String> headers) {
+		ResteasyClient client = (ResteasyClient) ResteasyClientBuilder.newBuilder()
+			.register(new RequestHeaderFilter(headers))
+			.hostnameVerifier((s, sslSession) -> true)
+			.build();
+		return client;
 	}
 }

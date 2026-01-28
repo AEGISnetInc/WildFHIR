@@ -19,9 +19,9 @@
 
 			<hr></hr>
 
-			<p:panelGrid id="fhirpathEvaluatePanel2" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
+			<p:panelGrid id="fhirpathEvaluatePanel2" layout="tabular" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
 				<h:outputText value="Resource Type: * " />
-				<p:selectOneMenu required="true" label="Select FHIR Resource Type" value="#{context.selectedResourceType}" maxlength="255" style="width:160px;text-align:left;padding-right:30px;">
+				<p:selectOneMenu required="true" label="Select FHIR Resource Type" value="#{context.selectedResourceType}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
 					<f:selectItem itemValue="#{null}" itemLabel="-- Select Resource Type --    " noSelectionOption="true" />
 					<f:selectItems value="#{context.supportedResourceTypes}" var="resourceType" itemLabel="#{resourceType}         " itemValue="#{resourceType}" />
 				</p:selectOneMenu>
@@ -41,20 +41,17 @@
 				<h:inputText value="#{context.resourceId}" maxlength="255" size="40" />
 
 				<h:outputText value="" />
-				<p:panelGrid columns="2" border="0" cellpadding="0" cellspacing="0"
-					styleClass="borderlessGridPanel">
-					<p:commandButton value="read" icon="ui-icon-folder-open" style="text-align: right;"
-						actionListener="#{controller.searchResourceForOperation}"
-						update=":tabView:toolsTabView:fhirpathEvaluateForm,:tabView:toolsTabView:fhirpathEvaluateForm2">
-						<f:attribute name="operation" value="fhirpathEvaluate" />
-					</p:commandButton>
-				</p:panelGrid>
+				<p:commandButton value="read" icon="ui-icon-folder-open" style="text-align: right;"
+					actionListener="#{controller.searchResourceForOperation}"
+					update=":tabView:toolsTabView:fhirpathEvaluateForm,:tabView:toolsTabView:fhirpathEvaluateForm2">
+					<f:attribute name="operation" value="fhirpathEvaluate" />
+				</p:commandButton>
 			</p:panelGrid>
 		</h:form>
 		<h:form id="fhirpathEvaluateForm2" prependId="false" style="width:100%;border:none;">
 			<p:tabView id="fhirpathEvaluateTabView" widgetVar="fhirpathEvaluateTabView" dynamic="true" cache="false">
 				<p:tab title="fhirpath Evaluate Parameters" id="fhirpathEvaluateDefinitionTab">
-					<p:panelGrid id="fhirpathEvaluateResultsPanelInner1" columns="2" border="0" cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
+					<p:panelGrid id="fhirpathEvaluateResultsPanelInner1" layout="tabular" columns="2" border="0" cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
 						<p:commandButton value="evaluate" icon="ui-icon-check"
 							actionListener="#{controller.fhirpathEvaluate}"
 							oncomplete="PF('fhirpathEvaluateTabView').select(1)"

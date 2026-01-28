@@ -50,23 +50,23 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Logger;
 
-import javax.annotation.Resource;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionManagement;
-import javax.ejb.TransactionManagementType;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-import javax.transaction.Status;
-import javax.transaction.UserTransaction;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
+import jakarta.annotation.Resource;
+import jakarta.ejb.Stateless;
+import jakarta.ejb.TransactionManagement;
+import jakarta.ejb.TransactionManagementType;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.transaction.Status;
+import jakarta.transaction.UserTransaction;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
@@ -1182,7 +1182,7 @@ public class ResourceService {
 
 	/**
 	 * Return the List of current FHIR Resource instances for a given resource type
-	 * 
+	 *
 	 * WARNING - The R5 resource types SubscriptionStatus, SubscriptionTopic are
 	 * stored as R4 resources types Parameters, Basic.
 	 *
@@ -1286,19 +1286,19 @@ public class ResourceService {
 				CriteriaBuilder cb = em.getCriteriaBuilder();
 				CriteriaQuery<net.aegis.fhir.model.Resource> criteria = cb.createQuery(net.aegis.fhir.model.Resource.class);
 				Root<net.aegis.fhir.model.Resource> resource = criteria.from(net.aegis.fhir.model.Resource.class);
-	
+
 				List<Predicate> predicateList = new ArrayList<Predicate>();
-	
+
 				predicateList.add(cb.equal(resource.get("resourceId"), resourceId));
 				predicateList.add(cb.equal(resource.get("versionId"), versionId));
 				predicateList.add(cb.equal(resource.get("resourceType"), resourceType));
-	
+
 				criteria.select(resource)
 					.where(cb.and(predicateList.toArray(new Predicate[predicateList.size()])))
 					.orderBy(cb.desc(resource.get("versionId")));
-	
+
 				List<net.aegis.fhir.model.Resource> resources = em.createQuery(criteria).getResultList();
-	
+
 				if (resources != null && resources.size() > 0) {
 					if (!StringUtils.isEmpty(_summary)) {
 						// Summary requested, modify copy of found resource
@@ -1312,7 +1312,7 @@ public class ResourceService {
 						// Resource ID found, use the first one
 						resourceContainer.setResource(resources.get(0));
 					}
-	
+
 					// Check the resource status; if not 'DELETED' then consider it 'VALID'
 					if (resources.get(0).getStatus() != null && resources.get(0).getStatus().equalsIgnoreCase("DELETED")) {
 						resourceContainer.setResponseStatus(Response.Status.GONE);
@@ -2613,7 +2613,7 @@ public class ResourceService {
 			/*
 			 * 1. Process _include parameters against _includedId
 			 * 2. Process _includeIterate parameters against _includedId
-			 * 
+			 *
 			 * Recursive call to the method is not needed. The _includeId
 			 * list will increase with additional included resources which
 			 * will be processed via the traditional for loop logic.
@@ -2623,7 +2623,7 @@ public class ResourceService {
 			String[] includedIdParts = includedId.split("/");
 
 			int includedIdPartsLength = includedIdParts.length;
-			
+
 			// This shouldn't be an issue but, it's always good to double-check
 			if (includedIdPartsLength > 1) {
 				String includedIdResourceType = includedIdParts[includedIdPartsLength - 2];

@@ -32,8 +32,8 @@
  */
 package net.aegis.fhir.rest.init;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

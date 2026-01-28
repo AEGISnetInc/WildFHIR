@@ -32,7 +32,7 @@
  */
 package net.aegis.fhir.model;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 import org.hl7.fhir.r4.model.Bundle;
 

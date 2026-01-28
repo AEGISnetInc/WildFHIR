@@ -178,7 +178,7 @@ public enum JsonPatchUtil {
 		    JsonToken jsonToken = parser.nextToken();
 
 		    if(JsonToken.FIELD_NAME.equals(jsonToken)){
-		        fieldName = parser.getCurrentName();
+		        fieldName = parser.currentName();
 
 		        jsonToken = parser.nextToken();
 

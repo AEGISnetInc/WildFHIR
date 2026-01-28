@@ -34,7 +34,7 @@ package net.aegis.fhir.service.subscription.r5.topic;
 
 import java.util.logging.Logger;
 
-import javax.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.MultivaluedMap;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;

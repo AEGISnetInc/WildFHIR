@@ -18,12 +18,12 @@ package net.aegis.fhir.service.util;
 
 import java.util.logging.Logger;
 
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.InjectionPoint;
-import javax.faces.context.FacesContext;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+//import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.enterprise.inject.spi.InjectionPoint;
+//import jakarta.faces.context.FacesContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 /**
  * This class uses CDI to alias Java EE resources, such as the persistence context, to CDI beans
@@ -48,10 +48,11 @@ public class Resources {
         return Logger.getLogger(injectionPoint.getMember().getDeclaringClass().getName());
     }
 
-    @Produces
-    @RequestScoped
-    public FacesContext produceFacesContext() {
-        return FacesContext.getCurrentInstance();
-    }
+    // No longer needed; implemented in com.sun.faces.cdi.FacesContextProducer
+//    @Produces
+//    @RequestScoped
+//    public FacesContext produceFacesContext() {
+//        return FacesContext.getCurrentInstance();
+//    }
 
 }

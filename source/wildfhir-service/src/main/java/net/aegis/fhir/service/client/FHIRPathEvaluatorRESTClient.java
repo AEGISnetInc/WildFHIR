@@ -37,10 +37,10 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.logging.Logger;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
 
 import org.hl7.fhir.r4.formats.IParser.OutputStyle;
 import org.hl7.fhir.r4.formats.JsonParser;

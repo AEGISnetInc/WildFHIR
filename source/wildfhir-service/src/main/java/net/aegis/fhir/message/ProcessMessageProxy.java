@@ -32,7 +32,7 @@
  */
 package net.aegis.fhir.message;
 
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;

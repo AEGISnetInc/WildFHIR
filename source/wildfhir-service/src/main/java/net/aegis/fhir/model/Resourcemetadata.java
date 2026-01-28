@@ -33,7 +33,7 @@
 package net.aegis.fhir.model;
 
 import java.io.Serializable;
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 /**
  * The persistent class for the resourcemetadata database table.

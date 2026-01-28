@@ -49,14 +49,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import javax.faces.application.FacesMessage;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ManagedProperty;
-import javax.faces.bean.SessionScoped;
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
-import javax.inject.Inject;
-import javax.ws.rs.core.Response;
+import jakarta.faces.annotation.ManagedProperty;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.event.ActionEvent;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.ws.rs.core.Response;
 
 import org.hl7.fhir.r4.formats.IParser.OutputStyle;
 import org.hl7.fhir.r4.formats.JsonParser;
@@ -91,7 +91,7 @@ import net.aegis.fhir.service.util.UTCDateUtil;
  * @author richard.ettema
  *
  */
-@ManagedBean(name = "controller", eager = true)
+@Named("controller")
 @SessionScoped
 public class ApplicationController implements Serializable {
 
@@ -100,9 +100,10 @@ public class ApplicationController implements Serializable {
 	private Logger log = Logger.getLogger("ApplicationController");
 
 	@Inject
-	UTCDateUtil utcDateUtil;
+	transient UTCDateUtil utcDateUtil;
 
-	@ManagedProperty(value = "#{context}")
+	@Inject
+	@ManagedProperty("#{context}")
 	private ApplicationContext context;
 
 	public ApplicationController() {
@@ -2076,7 +2077,7 @@ public class ApplicationController implements Serializable {
 
 	/**
 	 * Start the Subscription Service using the passed in since date
-	 * 
+	 *
 	 * @param event
 	 */
 	public void processSubscriptions(ActionEvent event) {

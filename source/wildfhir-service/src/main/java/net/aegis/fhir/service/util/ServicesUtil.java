@@ -36,6 +36,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.ProcessBuilder;
 import java.net.InetAddress;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -47,12 +48,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 
 import net.aegis.fhir.model.Constants;
 import net.aegis.fhir.model.ResourceType;
@@ -1066,7 +1067,10 @@ public enum ServicesUtil {
 			if (hostname.equals("localhost")) {
 				// InetAddress did not resolve; try OS hostname
 				try {
-					Process p = Runtime.getRuntime().exec("hostname");
+					ProcessBuilder builder = new ProcessBuilder("hostname");
+					builder.inheritIO();
+					Process p = builder.start();
+					p.waitFor();
 					byte[] bytes = p.getInputStream().readAllBytes();
 					hostname = new String(bytes,"ASCII").trim();
 				}

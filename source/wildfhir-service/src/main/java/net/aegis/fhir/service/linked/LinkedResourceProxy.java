@@ -35,7 +35,7 @@ package net.aegis.fhir.service.linked;
 import java.io.ByteArrayInputStream;
 import java.util.List;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.service.ResourceService;

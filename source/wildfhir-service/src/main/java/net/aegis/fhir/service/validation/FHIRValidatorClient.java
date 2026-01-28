@@ -50,6 +50,7 @@ import org.hl7.fhir.r5.renderers.RendererFactory;
 import org.hl7.fhir.r5.renderers.utils.RenderingContext;
 import org.hl7.fhir.r5.renderers.utils.ResourceWrapper;
 import org.hl7.fhir.r5.utils.validation.IValidationPolicyAdvisor;
+import org.hl7.fhir.r5.utils.validation.constants.BestPracticeWarningLevel;
 import org.hl7.fhir.r5.utils.validation.constants.ReferenceValidationPolicy;
 import org.hl7.fhir.utilities.FhirPublication;
 import org.hl7.fhir.utilities.npm.FilesystemPackageCacheManager;
@@ -57,6 +58,7 @@ import org.hl7.fhir.utilities.validation.ValidationMessage;
 import org.hl7.fhir.validation.ValidationEngine;
 import org.hl7.fhir.validation.ValidationEngine.ValidationEngineBuilder;
 import org.hl7.fhir.validation.instance.advisor.BasePolicyAdvisorForFullValidation;
+import org.hl7.fhir.validation.service.model.InstanceValidatorParameters;
 
 import net.aegis.fhir.service.util.ServicesUtil;
 
@@ -93,10 +95,18 @@ public class FHIRValidatorClient {
 
 			long start = System.currentTimeMillis();
 
-			ValidationEngineBuilder builder = new ValidationEngine.ValidationEngineBuilder();
+			InstanceValidatorParameters defaultInstanceValidatorParameters = new InstanceValidatorParameters();
+			// Set validation check for valid restful resource references
+			defaultInstanceValidatorParameters.setAssumeValidRestReferences(true);
+			// Allow example paths
+			defaultInstanceValidatorParameters.setAllowExampleUrls(true);
+			// Suppress best practice warnings
+			defaultInstanceValidatorParameters.setBestPracticeLevel(BestPracticeWarningLevel.Hint);
+
+			ValidationEngineBuilder builder = new ValidationEngine.ValidationEngineBuilder().withDefaultInstanceValidatorParameters(defaultInstanceValidatorParameters);
 			engine = builder.fromSource("hl7.fhir.r4.core");
 
-			IValidationPolicyAdvisor policyAdvisor = new BasePolicyAdvisorForFullValidation(ReferenceValidationPolicy.IGNORE);
+			IValidationPolicyAdvisor policyAdvisor = new BasePolicyAdvisorForFullValidation(ReferenceValidationPolicy.IGNORE, null);
 			engine.setPolicyAdvisor(policyAdvisor);
 
 			// Check for additional packages via environment variable
@@ -104,15 +114,6 @@ public class FHIRValidatorClient {
 			if (fhirPackages != null && !fhirPackages.isEmpty()) {
 				loadPackages(fhirPackages);
 			}
-
-			// Set anyExtensionsAllowed equal to true to relax error rule on unknown extensions
-			engine.setAnyExtensionsAllowed(true);
-
-			// Set assume valid REST references
-			engine.setAssumeValidRestReferences(true);
-
-			// Set allow example paths
-			engine.setAllowExampleUrls(true);
 
 			engine.connectToTSServer("http://tx.fhir.org/r4", null, FhirPublication.R4, false);
 

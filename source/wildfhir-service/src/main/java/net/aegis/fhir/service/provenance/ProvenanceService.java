@@ -34,13 +34,13 @@ package net.aegis.fhir.service.provenance;
 
 import java.util.logging.Logger;
 
-import javax.ejb.Stateless;
-import javax.ejb.TransactionManagement;
-import javax.ejb.TransactionManagementType;
-import javax.inject.Inject;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.core.Response.Status;
+import jakarta.ejb.Stateless;
+import jakarta.ejb.TransactionManagement;
+import jakarta.ejb.TransactionManagementType;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.hl7.fhir.r4.model.Identifier;
 

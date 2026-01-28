@@ -12,7 +12,7 @@
 	<p:tabView id="tabView" widgetVar="tabView" cache="false">
 
 		<p:ajax event="tabChange" listener="#{controller.onTabChange}"
-			update=":tabView:adminTabView:serversForm" />
+			update=":tabView:adminTabView:serversForm,:tabView:interactionsTabView:fhirReadForm,:tabView:operationsTabView:convertFormatForm,:tabView:toolsTabView:fhirpathEvaluateForm" />
 
 		<ui:include src="/WEB-INF/views/about.xhtml" />
 		<ui:include src="/WEB-INF/views/interactions_view.xhtml" />
