@@ -32,8 +32,8 @@
  */
 package net.aegis.fhir.rest.init;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
 
 import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.model.DomainResource;

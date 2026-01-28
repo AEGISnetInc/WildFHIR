@@ -11,9 +11,9 @@
 		<h:form id="fhirCreateForm" prependId="false" style="width:100%;border:none;">
 			<p:message for="fhirCreateForm" />
 			<p></p>
-			<p:panelGrid id="createPanel" columns="2" border="0" cellpadding="3" cellspacing="10" styleClass="borderlessGridPanel">
+			<p:panelGrid id="createPanel" layout="tabular" columns="2" border="0" cellpadding="3" cellspacing="10" styleClass="borderlessGridPanel">
 				<h:outputText value="Resource Type: * " />
-				<p:selectOneMenu required="true" label="Select FHIR Resource Type" value="#{context.selectedResourceType}" maxlength="255" style="width:160px;text-align:left;padding-right:30px;">
+				<p:selectOneMenu required="true" label="Select FHIR Resource Type" value="#{context.selectedResourceType}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
 					<f:selectItem itemValue="#{null}" itemLabel="-- Select Resource Type --    " noSelectionOption="true" />
 					<f:selectItems value="#{context.supportedResourceTypes}" var="resourceType" itemLabel="#{resourceType}         " itemValue="#{resourceType}" />
 				</p:selectOneMenu>
@@ -28,28 +28,16 @@
 					<f:selectItem itemValue="#{null}" itemLabel="-- Select FHIR Server --         " noSelectionOption="true" />
 					<f:selectItems value="#{context.availableServers}" var="server" itemLabel="#{server.name.trim()}         " itemValue="#{server.basePath}" />
 				</p:selectOneMenu>
-
-				<h:outputText value="" />
-				<p:panelGrid columns="2" border="0" cellpadding="0" cellspacing="0"
-					styleClass="borderlessGridPanel">
-					<p:commandButton value="show" icon="ui-icon-plus"
-						onclick="PF('createResourcePanel').show()">
-					</p:commandButton>
-					<p:commandButton value="hide" icon="ui-icon-minus"
-						onclick="PF('createResourcePanel').close()">
-					</p:commandButton>
-				</p:panelGrid>
-
 			</p:panelGrid>
 		</h:form>
 		<p>
 			<h:outputText value=" " />
 		</p>
 		<h:form id="fhirCreateForm2" prependId="false" style="width:100%;border:none;" enctype="multipart/form-data" acceptcharset="UTF-8">
-			<p:panel id="createResourcePanel" visible="false" widgetVar="createResourcePanel" toggleable="true" closable="true" toggleSpeed="500" closeSpeed="500">
+			<p:panel id="createResourcePanel" widgetVar="createResourcePanel" dynamic="true" cache="false">
 				<p:tabView id="createResourceTabView" widgetVar="createResourceTabView" dynamic="true" cache="false">
 					<p:tab title="Resource Definition" id="createResourceDefinitionTab">
-						<p:panelGrid id="createPanel2" columns="2" border="0" cellpadding="3" cellspacing="10" styleClass="borderlessGridPanel">
+						<p:panelGrid id="createPanel2" layout="tabular" columns="2" border="0" cellpadding="3" cellspacing="10" styleClass="borderlessGridPanel">
 							<h:outputText value="Conditional Options" style="font-weight: bold" />
 							<h:outputText value=" " />
 

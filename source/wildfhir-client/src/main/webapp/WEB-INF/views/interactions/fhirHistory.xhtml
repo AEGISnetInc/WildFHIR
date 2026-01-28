@@ -11,9 +11,9 @@
 		<h:form id="historyForm" prependId="false" style="width:100%;border:none;">
 			<p:message for="historyForm" />
 			<p></p>
-			<p:panelGrid id="historyPanel" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
+			<p:panelGrid id="historyPanel" layout="tabular" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
 				<h:outputText value="Resource Type: * " />
-				<p:selectOneMenu required="true" label="Select FHIR Resource Type" value="#{context.selectedResourceType}" maxlength="255" style="width:160px;text-align:left;padding-right:30px;">
+				<p:selectOneMenu required="true" label="Select FHIR Resource Type" value="#{context.selectedResourceType}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
 					<f:selectItem itemValue="#{null}" itemLabel="-- Select Resource Type --    " noSelectionOption="true" />
 					<f:selectItems value="#{context.supportedResourceTypes}" var="resourceType" itemLabel="#{resourceType}         " itemValue="#{resourceType}" />
 				</p:selectOneMenu>

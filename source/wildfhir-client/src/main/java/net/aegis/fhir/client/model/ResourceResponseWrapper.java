@@ -3,7 +3,7 @@ package net.aegis.fhir.client.model;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.JsonParser;

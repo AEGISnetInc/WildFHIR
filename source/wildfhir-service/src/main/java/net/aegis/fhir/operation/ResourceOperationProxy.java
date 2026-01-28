@@ -32,8 +32,8 @@
  */
 package net.aegis.fhir.operation;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.UriInfo;
 
 import net.aegis.fhir.service.BatchService;
 import net.aegis.fhir.service.CodeService;

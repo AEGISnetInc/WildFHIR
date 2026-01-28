@@ -15,7 +15,7 @@
 				<p><h:outputText value="Get FHIR CapabilityStatement Statement" style="padding:2px;text-decoration:underline;font-weight:bold;font-size:16px;" /></p>
 			</p:panelGrid>
 
-			<p:panelGrid id="fhirMetadataGridPanel2" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel" width="100%">
+			<p:panelGrid id="fhirMetadataGridPanel2" layout="tabular" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel" width="100%">
 				<h:outputText value="Format Type (Default JSON): * " />
 				<p:selectOneMenu required="false" label="Select Format Type" value="#{context.selectedFormatType}" maxlength="10" style="width:80px;text-align:left;padding-right:30px;">
 					<f:selectItems value="#{context.formatTypes}" var="formatType" itemLabel="#{formatType}         " itemValue="#{formatType}" />

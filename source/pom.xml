@@ -20,15 +20,116 @@
     <properties>
         <release.version>0.6.0-SNAPSHOT</release.version>
 
-        <core.version>6.5.21</core.version>
+        <core.version>6.7.10</core.version>
 
         <!-- Explicitly declare encodings to avoid warning messages on build and to ensure consistent build -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
         <!-- maven-compiler-plugin -->
-        <version.compiler.plugin>3.10.1</version.compiler.plugin>
-        <maven.compiler.target>11</maven.compiler.target>
-        <maven.compiler.source>11</maven.compiler.source>
+        <version.compiler.plugin>3.11.0</version.compiler.plugin>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+
+        <!-- other plugin versions -->
+        <version.resources.plugin>3.3.1</version.resources.plugin>
+        <version.surefire.plugin>3.1.2</version.surefire.plugin>
+        <version.war.plugin>3.4.0</version.war.plugin>
+
+        <!-- Wildfly/JBoss plugin versions -->
+        <!-- the version for the Server -->
+        <version.server>37.0.1.Final</version.server>
+        <!-- the versions for BOMs, Packs and Plugins -->
+        <version.bom.ee>${version.server}</version.bom.ee>
+
+        <slf4j.api.version>2.0.3</slf4j.api.version>
     </properties>
+
+    <modules>
+        <module>wildfhir-service</module>
+        <module>wildfhir-rest-server</module>
+        <module>wildfhir-client</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- importing the ee-with-tools BOM adds specs and other useful artifacts as managed dependencies -->
+            <dependency>
+                <groupId>org.wildfly.bom</groupId>
+                <artifactId>wildfly-ee-with-tools</artifactId>
+                <version>${version.bom.ee}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.api.version}</version>
+            </dependency>
+
+            <!-- Import the JAX-RS API, we use provided scope as the API is included in JBoss WildFly -->
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-jaxrs</artifactId>
+                <version>6.2.12.Final</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-jaxb-provider</artifactId>
+                <version>6.2.12.Final</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.resteasy</groupId>
+                <artifactId>resteasy-multipart-provider</artifactId>
+                <version>6.2.12.Final</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>2.20.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpcore</artifactId>
+                <version>4.4.16</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.api.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/log4j/log4j -->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>[1.2.4,)</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.17.0</version>
+        </dependency>
+
+        <!-- force use of commons-io 2.17.0 used in hapi-fhir-base; otherwise picks up 2.1 from resteasy-jaxrs dependency which causes errors due to missing IOUtils.toString() method -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.17.0</version>
+        </dependency>
+    </dependencies>
 
     <repositories>
         <repository>
@@ -47,17 +148,11 @@
             </snapshots>
         </repository>
         <repository>
-            <id>github-releases</id>
+            <id>github</id>
             <url>https://maven.pkg.github.com/hapifhir/org.hl7.fhir.core/</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
         </repository>
     </repositories>
-
-    <modules>
-        <module>wildfhir-service</module>
-        <module>wildfhir-rest-server</module>
-        <module>wildfhir-client</module>
-    </modules>
 </project>

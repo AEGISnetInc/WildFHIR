@@ -39,10 +39,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -204,7 +204,7 @@ public class SubscriptionServiceR5 {
 						case RESTHOOK:
 							/*
 							 * If returnedDetails not empty topic processing either did not find any updated resources or failed, record outcome in result
-							 * 
+							 *
 							 * Else, post subscriptionBundle to subscription end point
 							 */
 							boolean okToPost = false;
@@ -291,7 +291,7 @@ public class SubscriptionServiceR5 {
 
 	/**
 	 * Update Subscription status and result outcome (path) based on current result and post response
-	 * 
+	 *
 	 * @param subscription
 	 * @param response
 	 * @param result

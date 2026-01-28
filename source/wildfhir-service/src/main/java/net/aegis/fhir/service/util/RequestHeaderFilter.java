@@ -1,8 +1,8 @@
 /*
  * #%L
- * WildFHIR - wildfhir-client
+ * WildFHIR - wildfhir-service
  * %%
- * Copyright (C) 2025 AEGIS.net, Inc.
+ * Copyright (C) 2024 AEGIS.net, Inc.
  * All rights reserved.
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,18 +30,24 @@
  * limitations under the License.
  * #L%
  */
-package net.aegis.fhir.client.util;
+package net.aegis.fhir.service.util;
 
-/**
- * @author richard.ettema
- *
- */
-public class WildfhirClientException extends Exception {
+import jakarta.ws.rs.client.ClientRequestContext;
+import jakarta.ws.rs.client.ClientRequestFilter;
 
-	private static final long serialVersionUID = 3398599558918347285L;
+import java.io.IOException;
+import java.util.Map;
 
-	public WildfhirClientException(String message) {
-		super(message);
-	}
+public class RequestHeaderFilter implements ClientRequestFilter {
 
+    private final Map<String, String> headers;
+
+    public RequestHeaderFilter(Map<String, String> headers) {
+        this.headers = headers;
+    }
+
+    @Override
+    public void filter(ClientRequestContext requestContext) throws IOException {
+        headers.forEach(requestContext.getHeaders()::add);
+    }
 }

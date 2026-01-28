@@ -41,10 +41,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import javax.annotation.PostConstruct;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.SessionScoped;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import org.hl7.fhir.r4.model.OperationOutcome;
 
@@ -71,7 +71,7 @@ import net.aegis.fhir.service.subscription.r5.SubscriptionServiceR5;
  * @author richard.ettema
  *
  */
-@ManagedBean(name = "context", eager = true)
+@Named("context")
 @SessionScoped
 public class ApplicationContext implements Serializable {
 
