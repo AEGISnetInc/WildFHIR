@@ -66,10 +66,10 @@ public abstract class ProvenanceResourceProxy {
 
 	private Logger log = Logger.getLogger(getClass().getName());
 
-	public static String appId = "FASTConsentRI";
-	public static String userId = "consent-ri-system";
-	public static String userName = "FAST Consent RI System";
-	public static String site = "consent-ri-site";
+	public static String appId = "WildFHIRCE";
+	public static String userId = "wildfhirce-system";
+	public static String userName = "WildFHIR System";
+	public static String site = "wildfhirce-site";
 
 	public abstract Resource generateProvenance(UriInfo context, HttpHeaders headers, String payload, String resourceType, String locationPath, String resourceId, Identifier identifier, String operation) throws Exception;
 
