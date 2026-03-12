@@ -20,7 +20,7 @@
     <properties>
         <release.version>0.6.0-SNAPSHOT</release.version>
 
-        <core.version>6.7.10</core.version>
+        <core.version>6.8.2</core.version>
 
         <!-- Explicitly declare encodings to avoid warning messages on build and to ensure consistent build -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -37,7 +37,7 @@
 
         <!-- Wildfly/JBoss plugin versions -->
         <!-- the version for the Server -->
-        <version.server>37.0.1.Final</version.server>
+        <version.server>38.0.1.Final</version.server>
         <!-- the versions for BOMs, Packs and Plugins -->
         <version.bom.ee>${version.server}</version.bom.ee>
 
