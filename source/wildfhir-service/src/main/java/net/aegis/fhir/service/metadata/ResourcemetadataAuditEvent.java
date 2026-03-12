@@ -212,14 +212,6 @@ public class ResourcemetadataAuditEvent extends ResourcemetadataProxy {
 							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "patient", 0, entity.getWhat(), null);
 							resourcemetadataList.addAll(rMetadataChain);
 						}
-
-						// FAST Consent IG
-						// (consent) entity.what.reference : reference
-						if ((entity.getWhat().hasReference() && entity.getWhat().getReference().indexOf("Consent") >= 0)
-							|| (entity.getWhat().hasType() && entity.getWhat().getType().equals("Consent"))) {
-							rMetadataChain = this.generateChainedResourcemetadataAny(resource, chainedResource, baseUrl, resourceService, chainedParameter, "consent", 0, entity.getWhat(), null);
-							resourcemetadataList.addAll(rMetadataChain);
-						}
 					}
 
 					// entity.name : string

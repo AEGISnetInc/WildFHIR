@@ -74,12 +74,15 @@ import net.aegis.fhir.service.util.UTCDateUtil;
 import net.aegis.fhir.service.util.UUIDUtil;
 
 /**
+ * WildFHIR CE Subscription Topic for default processing based on the
+ * FHIR R5 Subscription Backport to R4 Implementation Guide
+ * 
  * @author richard.ettema
  *
  */
-public class FASTConsentSubscriptionTopic extends SubscriptionTopicProxy {
+public class WildfhirCESubscriptionTopic extends SubscriptionTopicProxy {
 
-	private Logger log = Logger.getLogger("FASTConsentSubscriptionTopic");
+	private Logger log = Logger.getLogger("WildfhirCESubscriptionTopic");
 
 	private UTCDateUtil utcDateUtil = new UTCDateUtil();
 
@@ -93,7 +96,7 @@ public class FASTConsentSubscriptionTopic extends SubscriptionTopicProxy {
 			Subscription subscription, Date since, StringBuffer returnedDetails)
 			throws Exception {
 
-		log.info("[START] FASTConsentSubscriptionTopic.processTopic()");
+		log.info("[START] WildfhirCESubscriptionTopic.processTopic()");
 
 		Bundle subscriptionBundle = null;
 		BundleEntryComponent subscriptionEntry = null;

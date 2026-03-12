@@ -1589,8 +1589,6 @@ public class ResourceType {
 		resourceCriteria.add(new LabelKeyValueBean("The identity of source detecting the event", "source", "", "REFERENCE", "http://hl7.org/fhir/SearchParameter/AuditEvent-source"));
 		resourceCriteria.add(new LabelKeyValueBean("More specific type/id for the event", "subtype", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/AuditEvent-subtype"));
 		resourceCriteria.add(new LabelKeyValueBean("Type/identifier of event", "type", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/AuditEvent-type"));
-		// FAST Consent IG
-		resourceCriteria.add(new LabelKeyValueBean("The Record Disclosure AuditEvent consent reference which is defined by the AuditEvent entity", "consent", "", "REFERENCE", "http://hl7.org/fhir/us/consent-management/SearchParameter/fast-auditevent-consent"));
 		resourceTypeCriteria.put("AuditEvent", resourceCriteria);
 
 		resourceCriteria = new ArrayList<LabelKeyValueBean>();
@@ -1952,12 +1950,6 @@ public class ResourceType {
 		resourceCriteria.add(new LabelKeyValueBean("Security Labels that define affected resources", "security-label", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/Consent-security-label"));
 		resourceCriteria.add(new LabelKeyValueBean("Search by reference to a Consent, DocumentReference, Contract  or QuestionnaireResponse", "source-reference", "", "REFERENCE", "http://hl7.org/fhir/SearchParameter/Consent-source-reference"));
 		resourceCriteria.add(new LabelKeyValueBean("draft | proposed | active | rejected | inactive | entered-in-error", "status", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/Consent-status"));
-		// FAST Consent IG
-		resourceCriteria.add(new LabelKeyValueBean("The Consent organization identifier which is defined either within one or more of the extensions grantee, manager, controller or the provision.actor.role.reference", "organizationId", "", "TOKEN", "http://hl7.org/fhir/us/consent-management/SearchParameter/fast-consent-organizationId"));
-		resourceCriteria.add(new LabelKeyValueBean("The Consent patient identifier which is defined either within the patient.identifier element or in one or more patient.extension additionalIdentifier", "patientId", "", "TOKEN", "http://hl7.org/fhir/us/consent-management/SearchParameter/fast-consent-patientId"));
-		resourceCriteria.add(new LabelKeyValueBean("The Consent controller reference which is defined by the Consent extension controller", "controller", "", "REFERENCE", "http://hl7.org/fhir/us/consent-management/SearchParameter/fast-consent-controller", null));
-		resourceCriteria.add(new LabelKeyValueBean("The Consent grantee reference which is defined by the Consent extension grantee", "grantee", "", "REFERENCE", "http://hl7.org/fhir/us/consent-management/SearchParameter/fast-consent-grantee", null));
-		resourceCriteria.add(new LabelKeyValueBean("The Consent manager reference which is defined by the Consent extension manager", "manager", "", "REFERENCE", "http://hl7.org/fhir/us/consent-management/SearchParameter/fast-consent-manager", null));
 		resourceTypeCriteria.put("Consent", resourceCriteria);
 
 		resourceCriteria = new ArrayList<LabelKeyValueBean>();
