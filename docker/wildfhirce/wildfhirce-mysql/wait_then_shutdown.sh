@@ -6,4 +6,3 @@ done
 rm -f /tmp/server_can_shutdown.txt
 mysqladmin shutdown
 sleep 15
-

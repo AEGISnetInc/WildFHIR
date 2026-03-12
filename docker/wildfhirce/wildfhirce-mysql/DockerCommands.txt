@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------------
 # Build wildfhirce-mysql image
-# - Named tag v0.5.2
+# - Named tag v0.6.0
 # -------------------------------------------------------------------------------
-docker build -t aegisnetinc/wildfhirce-mysql:v0.5.2 .
+docker build -t aegisnetinc/wildfhirce-mysql:v0.6.0 .

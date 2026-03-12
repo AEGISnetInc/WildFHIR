@@ -46,6 +46,25 @@ CREATE UNIQUE INDEX id_UNIQUE ON wildfhirr4.conformance (id ASC);
 
 
 -- -----------------------------------------------------
+-- Table wildfhirr4.serverdirectory
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS wildfhirr4.serverdirectory (
+  id INT(11) NOT NULL AUTO_INCREMENT,
+  name VARCHAR(255) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL,
+  description VARCHAR(255) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL DEFAULT NULL,
+  basePath VARCHAR(2000) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL,
+  lastUser VARCHAR(45) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL DEFAULT NULL,
+  lastUpdate DATETIME NULL DEFAULT NULL,
+  PRIMARY KEY (id))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci
+COMMENT = 'Simple FHIR server directory list';
+
+CREATE UNIQUE INDEX id_UNIQUE ON wildfhirr4.serverdirectory (id ASC);
+
+
+-- -----------------------------------------------------
 -- Table wildfhirr4.resource
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS wildfhirr4.resource (
@@ -122,6 +141,28 @@ CREATE INDEX idx_resourcemetadata_textValue ON wildfhirr4.resourcemetadata (text
 CREATE INDEX idx_resourcemetadata_paramValueU ON wildfhirr4.resourcemetadata (paramValueU ASC);
 
 CREATE INDEX idx_resourcemetadata_textValueU ON wildfhirr4.resourcemetadata (textValueU ASC);
+
+
+-- -----------------------------------------------------
+-- Table wildfhirr4.subscriptionactivity
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS wildfhirr4.subscriptionactivity (
+  id INT(11) NOT NULL AUTO_INCREMENT,
+  subscriptionId VARCHAR(255) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL,
+  recorded DATETIME NOT NULL,
+  type VARCHAR(45) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL,
+  status VARCHAR(45) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL,
+  description VARCHAR(1000) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL,
+  PRIMARY KEY (id))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci
+COMMENT = 'Stores record of subscription activity';
+
+CREATE UNIQUE INDEX id_UNIQUE ON wildfhirr4.subscriptionactivity (id ASC);
+
+CREATE INDEX idx_resourceId_status ON wildfhirr4.subscriptionactivity (subscriptionId ASC, status ASC);
+
 
 -- grant privileges to wildfhiruser
 GRANT ALL ON wildfhirr4.* to wildfhiruser;
