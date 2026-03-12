@@ -1,30 +1,21 @@
 # syntax=docker/dockerfile:1
 
-# Use latest jboss/base-jdk:11 image as the base
-FROM jboss/base-jdk:11
+# Use lquay.io/wildfly/wildfly:38.0.1.Final-jdk21 image as the base
+FROM quay.io/wildfly/wildfly:38.0.1.Final-jdk21
 
-# Set the WILDFLY_VERSION env variables
-ENV WILDFLY_VERSION=20.0.1.Final
-ENV WILDFLY_SHA1=95366b4a0c8f2e6e74e3e4000a98371046c83eeb
+# Set the JBOSS_HOME env variable
 ENV JBOSS_HOME=/opt/jboss/wildfly
+
 # FHIR packages comma separated list of packagename#version
-ENV FHIR_PACKAGES=hl7.fhir.us.core#6.1.0
-
-USER root
-
-# Add the WildFly distribution to /opt, and make wildfly the owner of the extracted tar content
-# Make sure the distribution is available from a well-known place
-RUN cd $HOME \
-    && curl -O https://download.jboss.org/wildfly/$WILDFLY_VERSION/wildfly-$WILDFLY_VERSION.tar.gz \
-    && sha1sum wildfly-$WILDFLY_VERSION.tar.gz | grep $WILDFLY_SHA1 \
-    && tar xf wildfly-$WILDFLY_VERSION.tar.gz \
-    && mv $HOME/wildfly-$WILDFLY_VERSION $JBOSS_HOME \
-    && rm wildfly-$WILDFLY_VERSION.tar.gz \
-    && chown -R jboss:0 ${JBOSS_HOME} \
-    && chmod -R g+rw ${JBOSS_HOME}
+ENV FHIR_PACKAGES=hl7.fhir.r4.core#4.0.1
 
 # Ensure signals are forwarded to the JVM process correctly for graceful shutdown
 ENV LAUNCH_JBOSS_IN_BACKGROUND=true
+
+USER root
+
+# Create FHIR package cache folder
+RUN cd /opt/jboss && mkdir .fhir && chown jboss .fhir && chmod 777 .fhir
 
 USER jboss
 
@@ -39,7 +30,8 @@ COPY ./standalone.conf $JBOSS_HOME/bin
 # Copy standalone configuration with datasource connection to wildfhirce-mysql and https access using a self-signed certificate
 COPY ./standalone.xml $JBOSS_HOME/standalone/configuration
 
-# Copy WildFHIR CE Server Application for FHIR R4 to Wildfly standalone deployments
+# Copy WildFHIR CE Applications for FHIR R4 to Wildfly standalone deployments
+COPY ./wildfhir-client.war $JBOSS_HOME/standalone/deployments
 COPY ./wildfhir-rest-server.war $JBOSS_HOME/standalone/deployments
 
 # Expose the ports we're interested in
