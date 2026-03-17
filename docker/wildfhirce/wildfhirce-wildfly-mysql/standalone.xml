@@ -499,8 +499,8 @@
             <byte-buffer-pool name="default"/>
             <buffer-cache name="default"/>
             <server name="default-server">
-                <http-listener name="default" socket-binding="http" max-post-size="104857600" allow-unescaped-characters-in-url="true" redirect-socket="https" enable-http2="true"/>
-                <https-listener name="https" socket-binding="https" max-post-size="104857600" allow-unescaped-characters-in-url="true" ssl-context="applicationSSC" enable-http2="true"/>
+                <http-listener name="default" socket-binding="http" max-post-size="104857600" redirect-socket="https" enable-http2="true"/>
+                <https-listener name="https" socket-binding="https" max-post-size="104857600" ssl-context="applicationSSC" enable-http2="true"/>
                 <host name="default-host" alias="localhost">
                     <location name="/" handler="welcome-content"/>
                     <http-invoker http-authentication-factory="application-http-authentication"/>
