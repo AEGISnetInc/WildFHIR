@@ -225,7 +225,7 @@ public class ApplicationController implements Serializable {
 										+ " successfully created."));
 					}
 					catch (Exception e) {
-						log.fine(e.getMessage());
+						log.severe(e.getMessage());
 						FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:createForm",
 								new FacesMessage(FacesMessage.SEVERITY_ERROR, "Resource parsing failed! Please check the client logs.", "Resource parsing failed! Please check the client logs."));
 						e.printStackTrace();
@@ -245,7 +245,7 @@ public class ApplicationController implements Serializable {
 						FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:createForm", new FacesMessage(FacesMessage.SEVERITY_INFO, "Response " + response.getStatus() + " - Failed to create new Resource entry.", "Response " + response.getStatus() + " - Failed to create new Resource entry."));
 					}
 					catch (Exception e) {
-						log.fine(e.getMessage());
+						log.severe(e.getMessage());
 						FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:createForm",
 								new FacesMessage(FacesMessage.SEVERITY_ERROR, "Resource parsing failed! Please check the client logs.", "Resource parsing failed! Please check the client logs."));
 						e.printStackTrace();
@@ -255,7 +255,7 @@ public class ApplicationController implements Serializable {
 
 		}
 		catch (Exception e) {
-			log.fine(e.getMessage());
+			log.severe(e.getMessage());
 			FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:createForm", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error creating resource! Please check the client logs.", "Error reading resource! Please check the client logs."));
 			e.printStackTrace();
 		}
@@ -309,7 +309,7 @@ public class ApplicationController implements Serializable {
 						context.getResourceResults().add((new ResourceResponseWrapper(resourceResponse)));
 					}
 					catch (Exception e) {
-						log.fine(e.getMessage());
+						log.severe(e.getMessage());
 						FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirReadForm",
 								new FacesMessage(FacesMessage.SEVERITY_ERROR, "Resource parsing failed! Please check the client logs.", "Resource parsing failed! Please check the client logs."));
 						e.printStackTrace();
@@ -327,7 +327,7 @@ public class ApplicationController implements Serializable {
 			}
 		}
 		catch (Exception e) {
-			log.fine(e.getMessage());
+			log.severe(e.getMessage());
 			FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirReadForm", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error reading resource! Please check the client logs.", "Error reading resource! Please check the client logs."));
 			e.printStackTrace();
 		}
@@ -378,7 +378,7 @@ public class ApplicationController implements Serializable {
 						context.getResourceResults().add((new ResourceResponseWrapper(resourceResponse)));
 					}
 					catch (Exception e) {
-						log.fine(e.getMessage());
+						log.severe(e.getMessage());
 						FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirVReadForm",
 								new FacesMessage(FacesMessage.SEVERITY_ERROR, "Resource parsing failed! Please check the client logs.", "Resource parsing failed! Please check the client logs."));
 						e.printStackTrace();
@@ -396,7 +396,7 @@ public class ApplicationController implements Serializable {
 			}
 		}
 		catch (Exception e) {
-			log.fine(e.getMessage());
+			log.severe(e.getMessage());
 			FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirVReadForm", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error reading resource! Please check the client logs.", "Error reading resource! Please check the client logs."));
 			e.printStackTrace();
 		}
@@ -1226,12 +1226,12 @@ public class ApplicationController implements Serializable {
 			}
 		}
 		catch (NumberFormatException e) {
-			log.fine(e.getMessage());
+			log.severe(e.getMessage());
 			FacesContext.getCurrentInstance().addMessage(formId, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Number format error deleting resource! Please check the client logs.", "Error reading resource! Please check the client logs."));
 			e.printStackTrace();
 		}
 		catch (Exception e) {
-			log.fine(e.getMessage());
+			log.severe(e.getMessage());
 			FacesContext.getCurrentInstance().addMessage(formId, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error deleting resource! Please check the client logs.", "Error reading resource! Please check the client logs."));
 			e.printStackTrace();
 		}
@@ -1420,7 +1420,7 @@ public class ApplicationController implements Serializable {
 			}
 		}
 		catch (Exception e) {
-			log.fine(e.getMessage());
+			log.severe(e.getMessage());
 			FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirMetadataForm",
 					new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error executing metadata request! " + e.getMessage(), ""));
 			e.printStackTrace();
