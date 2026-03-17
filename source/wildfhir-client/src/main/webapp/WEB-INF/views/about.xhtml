@@ -7,15 +7,7 @@
 
 	<!-- This is the About view -->
 	<p:tab title="About" id="aboutTab" cache="false">
-		<p:panelGrid id="aboutPanel1" columns="1" border="0"
-			cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
-			<h:outputText value="#{appRes['application.name']}"
-				style="padding:0px;font-style:italic;font-weight:bold;font-size:16px;" />
-		</p:panelGrid>
-
-		<hr></hr>
-
-		<p:panelGrid id="aboutPanel2" columns="2" border="0"
+		<p:panelGrid id="aboutPanel1" columns="2" border="0"
 			cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
 			<h:outputText value="Version"
 				style="font-weight:bold" />
@@ -28,11 +20,15 @@
 			<h:outputText value="Build Timestamp"
 				style="font-weight:bold" />
 			<h:outputText value="#{appRes['build.timestamp']}" />
+
+			<h:outputText value="FHIR Packages"
+				style="font-weight:bold" />
+			<h:outputText value="#{context.fhirPackages}" />
 		</p:panelGrid>
 
 		<hr></hr>
 
-		<p:panelGrid id="aboutPanel3" columns="1" border="0"
+		<p:panelGrid id="aboutPanel2" columns="1" border="0"
 			cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
 			<p><span style="padding:0px;font-size:12px;" >
 			This is the AEGIS WildFHIR Community Edition Reference Implementation Test Client web application.
