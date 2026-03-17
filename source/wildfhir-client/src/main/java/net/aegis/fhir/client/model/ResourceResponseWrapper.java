@@ -178,6 +178,11 @@ public class ResourceResponseWrapper {
 				this.setResrc(false);
 				this.setParams(false);
 			}
+			finally {
+				if (response != null) {
+					response.close();
+				}
+			}
 		}
 	}
 
