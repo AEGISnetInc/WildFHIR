@@ -723,4 +723,19 @@ public class ApplicationContext implements Serializable {
 		this.validateOperationOutcome = new OperationOutcomeWrapper(validateOperationOutcome);
 	}
 
+	public String getFhirPackages() {
+		String packages;
+
+		try {
+			packages = System.getenv("FHIR_PACKAGES");
+			if (packages == null) {
+				packages = "not defined";
+			}
+		}
+		catch (Exception e) {
+			packages = "not found";
+		}
+
+		return packages;
+	}
 }
