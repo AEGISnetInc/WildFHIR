@@ -305,7 +305,7 @@ public class CodeConfiguration extends ResourceOperationProxy {
 
 		try {
 			if (context != null) {
-				log.info("Checking for url parameters...");
+				log.fine("Checking for url parameters...");
 
 				/*
 				 * Extract the individual expected parameters

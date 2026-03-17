@@ -851,7 +851,7 @@ public class CompositionDocument extends ResourceOperationProxy {
 
 			List<net.aegis.fhir.model.Resource> resources = resourceService.searchQuery(searchParams, null, null, "Bundle", false, null, null, null, validParams, invalidParams);
 
-			log.info("CompositionDocument - existing document resources.size() = " + resources.size());
+			log.fine("CompositionDocument - existing document resources.size() = " + resources.size());
 
 			if (resources != null && resources.size() == 1) {
 				// Existing Composition document bundle found, return it
@@ -909,7 +909,7 @@ public class CompositionDocument extends ResourceOperationProxy {
 
 		try {
 			if (context != null) {
-				log.info("Checking for document parameters...");
+				log.fine("Checking for document parameters...");
 
 				/*
 				 * Extract the individual expected parameters

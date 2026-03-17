@@ -96,7 +96,7 @@ public class WildfhirCESubscriptionTopic extends SubscriptionTopicProxy {
 			Subscription subscription, Date since, StringBuffer returnedDetails)
 			throws Exception {
 
-		log.info("[START] WildfhirCESubscriptionTopic.processTopic()");
+		log.fine("[START] WildfhirCESubscriptionTopic.processTopic()");
 
 		Bundle subscriptionBundle = null;
 		BundleEntryComponent subscriptionEntry = null;

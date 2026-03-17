@@ -327,7 +327,7 @@ public class ResourcemetadataService {
 			sbQuery.append(" where rm.paramType = 'tag'");
 			sbQuery.append(" order by rm.paramName, rm.paramValue");
 
-			log.info("Native Query: " + sbQuery.toString());
+			log.fine("Native Query: " + sbQuery.toString());
 
 			resourcemetadataQuery = em.createNativeQuery(sbQuery.toString(), Resourcemetadata.class);
 
@@ -375,7 +375,7 @@ public class ResourcemetadataService {
 			sbQuery.append(" and rm.paramType = 'tag'");
 			sbQuery.append(" order by rm.paramName, rm.paramValue");
 
-			log.info("Native Query: " + sbQuery.toString());
+			log.fine("Native Query: " + sbQuery.toString());
 
 			resourcemetadataQuery = em.createNativeQuery(sbQuery.toString(), Resourcemetadata.class);
 

@@ -73,7 +73,7 @@ public class BatchTransactionConcurrencyService {
     		concurrentNumber = 0;
     	}
 
-    	log.info("BatchTransactionConcurrencyService.decrement() - concurrent number is now " + concurrentNumber);
+    	log.fine("BatchTransactionConcurrencyService.decrement() - concurrent number is now " + concurrentNumber);
 
     	return concurrentNumber;
     }
@@ -87,7 +87,7 @@ public class BatchTransactionConcurrencyService {
     public Integer increment() {
     	concurrentNumber++;
 
-    	log.info("BatchTransactionConcurrencyService.increment() - concurrent number is now " + concurrentNumber);
+    	log.fine("BatchTransactionConcurrencyService.increment() - concurrent number is now " + concurrentNumber);
 
     	return concurrentNumber;
     }

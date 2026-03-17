@@ -98,7 +98,7 @@ public abstract class AuditEventResourceProxy {
 			// context will have Source info ( who sent to us )
 			audit.setSource(getSourceElement(headers));
 
-			log.info("prepareBasicData");
+			log.fine("prepareBasicData");
 		}
 		catch (FHIRException e) {
 			e.printStackTrace();

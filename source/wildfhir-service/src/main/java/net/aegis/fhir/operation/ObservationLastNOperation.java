@@ -201,7 +201,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 		if (countString != null) {
 			try {
 				countInteger = Integer.valueOf(countString);
-				log.info("search count = " + countString);
+				log.fine("search count = " + countString);
 			}
 			catch (Exception e) {
 				log.severe("Exception parsing _count parameter to Integer! " + e.getMessage());
@@ -224,7 +224,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 		// Execute search query with lastn parameters
 		List<Resource> resources = resourceService.searchQuery(lastnParams, null, authPatientParams, "Observation", false, _include, _includeIterate, _revinclude, validParams, invalidParams);
 
-		log.info("ObservationLastNOperation - resources.size() = " + resources.size());
+		log.fine("ObservationLastNOperation - resources.size() = " + resources.size());
 
 		String queryString = context.getRequestUri().getQuery();
 		List<NameValuePair> orderedParams = URLEncodedUtils.parse(queryString, Charset.forName("UTF-8"));
@@ -1294,7 +1294,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 
 		try {
 			if (context != null) {
-				log.info("Checking for search parameters...");
+				log.fine("Checking for search parameters...");
 
 				/*
 				 * Extract the individual expected parameters

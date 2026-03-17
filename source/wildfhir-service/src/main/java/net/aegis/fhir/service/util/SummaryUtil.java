@@ -85,7 +85,7 @@ public enum SummaryUtil {
 				// Check for valid proxy
 				if (proxy != null) {
 
-					log.info("Generating _summary=" + _summary + " for resource type " + resource.getResourceType());
+					log.fine("Generating _summary=" + _summary + " for resource type " + resource.getResourceType());
 
 					// Convert resource based on _summary type
 					if (_summary.equals("true")) {

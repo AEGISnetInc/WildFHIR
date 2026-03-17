@@ -611,7 +611,7 @@ public class BatchService {
 	 * @return
 	 */
 	private boolean processVariableReferences(Resource resource, Map<String,String> postFullUrlMap, String contentType, StringBuilder newResourceString) throws Exception {
-		log.info("===== BatchService - processVariableReferences(resource) - START");
+		log.fine("===== BatchService - processVariableReferences(resource) - START");
 		boolean result = true;
 		String missingKey = "??";
 
@@ -623,22 +623,22 @@ public class BatchService {
 
 		// Check id and reference elements for map key; if found, replace with map value if defined
 		for (Entry<String, String> e : postFullUrlMap.entrySet()) {
-			log.info("     ----- process map value [" + e.getValue() + "] for key [" + e.getKey() + "]");
+			log.fine("     ----- process map value [" + e.getValue() + "] for key [" + e.getKey() + "]");
 			for (Element childToUpdate : childrenToUpdate) {
-				log.info("           ----- process child element [" + childToUpdate.getName() + "]");
+				log.fine("           ----- process child element [" + childToUpdate.getName() + "]");
 				if (childToUpdate.hasValue()) {
 					String childValue = childToUpdate.getValue();
-					log.info("           ----- process child value [" + childValue + "]");
+					log.fine("           ----- process child value [" + childValue + "]");
 					if (childValue.contains(e.getKey())) {
 
 						if (e.getValue() != null && !e.getValue().isEmpty()) {
-							log.info("     ----- BatchService - processVariableReferences - found map value [" + e.getValue() + "] for key [" + e.getKey() + "]");
+							log.fine("     ----- BatchService - processVariableReferences - found map value [" + e.getValue() + "] for key [" + e.getKey() + "]");
 							childValue = childValue.replace(e.getKey(), e.getValue());
 							childToUpdate.setValue(childValue);
-							log.info(childValue);
+							log.fine(childValue);
 						}
 						else {
-							log.info("     ----- BatchService - processVariableReferences - DID NOT FIND map value for key [" + e.getKey() + "]");
+							log.fine("     ----- BatchService - processVariableReferences - DID NOT FIND map value for key [" + e.getKey() + "]");
 							result = false;
 							missingKey = e.getKey();
 							break;

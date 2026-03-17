@@ -130,7 +130,7 @@ public class SubscriptionServiceR4 {
 //					.append("&_lastUpdated=lt")
 //					.append(utcDateUtil.formatDate(until, UTCDateUtil.DATE_PARAMETER_FORMAT));
 
-			log.info("sbSinceParams [" + sbSinceParams.toString() + "]");
+			log.fine("sbSinceParams [" + sbSinceParams.toString() + "]");
 
 			// Convert search parameter string into queryParams map
 			List<NameValuePair> params = URLEncodedUtils.parse("status=active", Charset.defaultCharset());
@@ -154,7 +154,7 @@ public class SubscriptionServiceR4 {
 
 					subscription = (Subscription)subscriptionEntry.getResource();
 
-					log.info("Processing Subscription [" + subscription.getId() + "] with criteria [" + subscription.getCriteria() + "] for channel type [" + subscription.getChannel().getType().name() + "]");
+					log.fine("Processing Subscription [" + subscription.getId() + "] with criteria [" + subscription.getCriteria() + "] for channel type [" + subscription.getChannel().getType().name() + "]");
 
 					// Initialize result bean
 					result = new LabelKeyValueBean(subscription.getId(), subscription.getChannel().getType().name(), subscription.getCriteria(), "", "processing");
@@ -163,15 +163,15 @@ public class SubscriptionServiceR4 {
 					switch (subscription.getChannel().getType()) {
 					case EMAIL:
 						result.setPath("not supported");
-						log.info("Email channel type not currently supported.");
+						log.fine("Email channel type not currently supported.");
 						break;
 					case MESSAGE:
 						result.setPath("not supported");
-						log.info("FHIR messaging channel type not currently supported.");
+						log.fine("FHIR messaging channel type not currently supported.");
 						break;
 					case NULL:
 						result.setPath("not supported");
-						log.info("NULL channel type not currently supported.");
+						log.fine("NULL channel type not currently supported.");
 						break;
 					case RESTHOOK:
 						// Perform search using criteria adding _lastUpdated=gt:since and _lastUpdated=lt:newSince parameters
@@ -187,7 +187,7 @@ public class SubscriptionServiceR4 {
 							sbParams = new StringBuilder(sbSinceParams);
 						}
 						params = URLEncodedUtils.parse(sbParams.toString(), Charset.defaultCharset());
-						log.info("params [" + params.toString() + "]");
+						log.fine("params [" + params.toString() + "]");
 
 						queryParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
 
@@ -203,7 +203,7 @@ public class SubscriptionServiceR4 {
 							// For each matched entry
 							for (BundleEntryComponent matchEntry : rcMatches.getBundle().getEntry()) {
 
-								log.info("-- Processing Matched Resource [" + matchEntry.getResource().getResourceType().name() + "/" + matchEntry.getResource().getId() + "] using payload mime type [" + subscription.getChannel().getPayload() + "]");
+								log.fine("-- Processing Matched Resource [" + matchEntry.getResource().getResourceType().name() + "/" + matchEntry.getResource().getId() + "] using payload mime type [" + subscription.getChannel().getPayload() + "]");
 
 								response = null;
 
@@ -235,21 +235,21 @@ public class SubscriptionServiceR4 {
 						}
 						else {
 							result.setType("0 matches");
-							log.info("-- No matches found.");
+							log.fine("-- No matches found.");
 						}
 						result.setPath("complete");
 						break;
 					case SMS:
 						result.setPath("not supported");
-						log.info("SMS channel type not currently supported.");
+						log.fine("SMS channel type not currently supported.");
 						break;
 					case WEBSOCKET:
 						result.setPath("not supported");
-						log.info("Websocket channel type not currently supported.");
+						log.fine("Websocket channel type not currently supported.");
 						break;
 					default:
 						result.setPath("unknown");
-						log.info("Unknown channel type!");
+						log.fine("Unknown channel type!");
 						break;
 
 					}
@@ -259,7 +259,7 @@ public class SubscriptionServiceR4 {
 				}
 			}
 			else {
-				log.info("SubscriptionServiceR4.processSubscriptions() - No active subscriptions found.");
+				log.fine("SubscriptionServiceR4.processSubscriptions() - No active subscriptions found.");
 			}
 
 		} catch (Exception e) {

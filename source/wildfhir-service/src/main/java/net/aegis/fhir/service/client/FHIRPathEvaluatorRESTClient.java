@@ -85,6 +85,7 @@ public class FHIRPathEvaluatorRESTClient implements Serializable {
 
 		log.fine("[START] FHIRPathEvaluatorRESTClient.evaluate() - contentType: " + contentType);
 
+		ResteasyClient client = null;
 		Response operationResponse = null;
 
 		ByteArrayOutputStream oResponse = new ByteArrayOutputStream();
@@ -105,8 +106,7 @@ public class FHIRPathEvaluatorRESTClient implements Serializable {
 			// Build Operation web target reference
 			StringBuilder sbOperation = new StringBuilder(buildURL(baseUrl, "$fhirpath-evaluate"));
 
-			ResteasyClient client = WebClientHelper.createClientWihtoutHostVerification();
-			//ResteasyClient client = new ResteasyClientBuilder().build();
+			client = WebClientHelper.createClientWihtoutHostVerification();
 			ResteasyWebTarget webTarget = client.target(sbOperation.toString());
 
 			Builder targetBuilder = webTarget.request();
@@ -121,7 +121,7 @@ public class FHIRPathEvaluatorRESTClient implements Serializable {
 			// Add any additional headers
 			targetBuilder = addHeaders(targetBuilder, headers);
 
-			log.info("evaluate operation uri: " + webTarget.getUri());
+			log.fine("evaluate operation uri: " + webTarget.getUri());
 
 			if (inputParameters != null) {
 				if (contentType != null && contentType.toLowerCase().indexOf("json") >= 0) {
@@ -167,6 +167,10 @@ public class FHIRPathEvaluatorRESTClient implements Serializable {
 			// Exception caught
 			e.printStackTrace();
 			throw e;
+		} finally {
+			if (client != null) {
+				client.close();
+			}
 		}
 
 		return operationResponse;
@@ -219,7 +223,7 @@ public class FHIRPathEvaluatorRESTClient implements Serializable {
 				if (separator > -1) {
 					headerName = header.substring(0, separator).trim();
 					headerValue = header.substring(separator + 1).trim();
-					log.info("  ++ Adding Header - " + headerName + ":" + headerValue);
+					log.fine("  ++ Adding Header - " + headerName + ":" + headerValue);
 
 					targetBuilder = targetBuilder.header(headerName, headerValue);
 				}
@@ -245,17 +249,17 @@ public class FHIRPathEvaluatorRESTClient implements Serializable {
 		if (response != null) {
 			if (response.getHeaders() != null) {
 
-				log.info("----- HTTP HEADERS (RESPONSE) -----");
+				log.fine("----- HTTP HEADERS (RESPONSE) -----");
 
 				for (String key : response.getHeaders().keySet()) {
-					log.info("header(" + key + ") is " + response.getHeaders().get(key).toString());
+					log.fine("header(" + key + ") is " + response.getHeaders().get(key).toString());
 				}
 			}
 
-			log.info("----- RESPONSE STATUS -----");
-			log.info(Integer.toString(response.getStatus()));
+			log.fine("----- RESPONSE STATUS -----");
+			log.fine(Integer.toString(response.getStatus()));
 
-			log.info("----- PAYLOAD ----- [snipped; use fine logging]");
+			log.fine("----- PAYLOAD ----- [snipped; use fine logging]");
 			String entity = null;
 			if (response.getStatus() == Response.Status.NOT_MODIFIED.getStatusCode()) {
 				entity = Response.Status.NOT_MODIFIED.getReasonPhrase();
@@ -270,7 +274,7 @@ public class FHIRPathEvaluatorRESTClient implements Serializable {
 
 		}
 		else {
-			log.info("Response is NULL.");
+			log.fine("Response is NULL.");
 		}
 	}
 

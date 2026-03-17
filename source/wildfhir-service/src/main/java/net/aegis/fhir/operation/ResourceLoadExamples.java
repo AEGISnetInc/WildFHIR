@@ -156,7 +156,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 	 */
 	private Parameters processDirectory(UriInfo context, HttpHeaders headers, String contentType, StringType dirpath, StringType baseurl) {
 
-		log.info("Process directory of resources");
+		log.fine("Process directory of resources");
 
 		Parameters out = new Parameters();
 		ParametersParameterComponent parameter = new ParametersParameterComponent();
@@ -202,7 +202,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 	 */
 	private void processResourceFileImport(UriInfo context, HttpHeaders headers, String contentType, String format, File file, String baseurl) {
 
-		log.info("Process as resource: " + file.getName());
+		log.fine("Process as resource: " + file.getName());
 
 		try {
 			byte fileContent[] = FileUtils.readFileToByteArray(file);
@@ -280,7 +280,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 					bundleResourceId = file.getName();
 				}
 
-				log.info(" --> Importing resources for Bundle [" + bundleResourceId + "]...");
+				log.fine(" --> Importing resources for Bundle [" + bundleResourceId + "]...");
 
 				Bundle bundleResource = (Bundle)exampleResource;
 				Resource entryResource = null;
@@ -309,7 +309,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 
 					resourceService.update(entryResourceId, updateResource, baseurl);
 
-					log.info(" --> Import of resource [" + entryResourceId + "] complete.");
+					log.fine(" --> Import of resource [" + entryResourceId + "] complete.");
 					resourcesImported++;
 				}
 
@@ -327,7 +327,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 					bundleResourceId = file.getName();
 				}
 
-				log.info(" --> Process resources for Batch Bundle [" + bundleResourceId + "]...");
+				log.fine(" --> Process resources for Batch Bundle [" + bundleResourceId + "]...");
 
 				Bundle bundleResource = (Bundle)exampleResource;
 
@@ -361,7 +361,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 					bundleResourceId = file.getName();
 				}
 
-				log.info(" --> Process resources for Transaction Bundle [" + bundleResourceId + "]...");
+				log.fine(" --> Process resources for Transaction Bundle [" + bundleResourceId + "]...");
 
 				Bundle bundleResource = (Bundle)exampleResource;
 
@@ -384,7 +384,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 				log.warning(" --> Transaction Bundle [" + bundleResourceId + "] complete.");
 			}
 			else {
-				log.info(" --> Import of resource file [" + file.getName() + "] skipped.");
+				log.fine(" --> Import of resource file [" + file.getName() + "] skipped.");
 				resourcesSkipped++;
 			}
 		}
@@ -410,7 +410,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 
 		try {
 			if (context != null) {
-				log.info("Checking for search parameters...");
+				log.fine("Checking for search parameters...");
 
 				/*
 				 * Extract the individual expected parameters

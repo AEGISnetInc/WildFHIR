@@ -78,7 +78,7 @@ public class SubscriptionStatus extends ResourceOperationProxy {
 	@Override
 	public Parameters executeOperation(UriInfo context, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
 
-		log.info("[START] SubscriptionStatus.executeOperation()");
+		log.fine("[START] SubscriptionStatus.executeOperation()");
 
 		Parameters out = null;
 		Bundle subscriptionSearchSet = null;

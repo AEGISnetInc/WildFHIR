@@ -237,7 +237,7 @@ public class PatientEverything extends ResourceOperationProxy {
 		/*
 		 * Add the Patient for minimum response
 		 */
-		log.info("Adding Patient");
+		log.fine("Adding Patient");
 
 		everythingKey = patient.getId();
 		everythingResources.put(everythingKey, patient);
@@ -253,7 +253,7 @@ public class PatientEverything extends ResourceOperationProxy {
 		// GeneralPractitioner
 		if (patient.hasGeneralPractitioner()) {
 
-			log.info("Processing Patient General Practitioners");
+			log.fine("Processing Patient General Practitioners");
 
 			for (Reference generalPractitionerReference : patient.getGeneralPractitioner()) {
 				String generalPractitionerRef = generalPractitionerReference.getReference();
@@ -267,16 +267,16 @@ public class PatientEverything extends ResourceOperationProxy {
 
 				if (!resourceType.isEmpty()) {
 
-					log.info("Processing resource type " + resourceType);
-					log.info("Processing resource id " + generalPractitionerResourceId);
+					log.fine("Processing resource type " + resourceType);
+					log.fine("Processing resource id " + generalPractitionerResourceId);
 
 					resourceContainer = resourceService.read(resourceType, generalPractitionerResourceId, null);
 
-					log.info("Resource read status " + resourceContainer.getResponseStatus().name());
+					log.fine("Resource read status " + resourceContainer.getResponseStatus().name());
 
 					if (resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
 
-						log.info("Adding resource type " + resourceType + " to everything resources");
+						log.fine("Adding resource type " + resourceType + " to everything resources");
 
 						// Convert XML contents to Resource object
 						iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourceContents());
@@ -293,7 +293,7 @@ public class PatientEverything extends ResourceOperationProxy {
 		resourceType = "";
 		if (patient.hasManagingOrganization()) {
 
-			log.info("Processing Patient Managing Organization");
+			log.fine("Processing Patient Managing Organization");
 
 			String managingOrgRef = patient.getManagingOrganization().getReference();
 			String managingOrgResourceId = ServicesUtil.INSTANCE.extractResourceIdFromURL(managingOrgRef);
@@ -303,16 +303,16 @@ public class PatientEverything extends ResourceOperationProxy {
 
 			if (!resourceType.isEmpty()) {
 
-				log.info("Processing resource type " + resourceType);
-				log.info("Processing resource id " + managingOrgResourceId);
+				log.fine("Processing resource type " + resourceType);
+				log.fine("Processing resource id " + managingOrgResourceId);
 
 				resourceContainer = resourceService.read(resourceType, managingOrgResourceId, null);
 
-				log.info("Resource read status " + resourceContainer.getResponseStatus().name());
+				log.fine("Resource read status " + resourceContainer.getResponseStatus().name());
 
 				if (resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
 
-					log.info("Adding resource type " + resourceType + " to everything resources");
+					log.fine("Adding resource type " + resourceType + " to everything resources");
 
 					// Convert XML contents to Resource object
 					iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourceContents());
@@ -329,15 +329,15 @@ public class PatientEverything extends ResourceOperationProxy {
 		 */
 		String startDateCriteria = null;
 		if (startDate != null) {
-			log.info("startDate = " + startDate.getValueAsString());
+			log.fine("startDate = " + startDate.getValueAsString());
 			startDateCriteria = "ge" + startDate.getValueAsString();
-			log.info("startDateCriteria = " + startDateCriteria);
+			log.fine("startDateCriteria = " + startDateCriteria);
 		}
 		String endDateCriteria = null;
 		if (endDate != null) {
-			log.info("endDate = " + endDate.getValueAsString());
+			log.fine("endDate = " + endDate.getValueAsString());
 			endDateCriteria = "le" + endDate.getValueAsString();
-			log.info("endDateCriteria = " + endDateCriteria);
+			log.fine("endDateCriteria = " + endDateCriteria);
 		}
 
 		/*
@@ -356,7 +356,7 @@ public class PatientEverything extends ResourceOperationProxy {
 			// Exclude: AuditEvent, Provenance
 			if (!lkvb.getKey().equals("AuditEvent") && !lkvb.getKey().equals("Provenance")) {
 
-				log.info("Processing resource type " + lkvb.getKey());
+				log.fine("Processing resource type " + lkvb.getKey());
 
 				// Set patient criteria
 				queryParams = new MultivaluedHashMap<String, String>();
@@ -399,7 +399,7 @@ public class PatientEverything extends ResourceOperationProxy {
 						// Test for existing resource in everythingResources
 						if (!everythingResources.containsKey(everythingKey)) {
 
-							log.info("[1]Adding resource type " + resourceObject.getResourceType().getPath() + "; resource id " + everythingKey);
+							log.fine("[1]Adding resource type " + resourceObject.getResourceType().getPath() + "; resource id " + everythingKey);
 
 							everythingResources.put(everythingKey, resourceObject);
 
@@ -408,7 +408,7 @@ public class PatientEverything extends ResourceOperationProxy {
 
 							if (linkedProxy != null) {
 
-								log.info("[2]Found Linked Resource Proxy " + linkedProxy.getClass().getName());
+								log.fine("[2]Found Linked Resource Proxy " + linkedProxy.getClass().getName());
 
 								List<org.hl7.fhir.r4.model.Resource> linkedResources = linkedProxy.getLinkedResources(resourceService, resourceObject);
 
@@ -418,7 +418,7 @@ public class PatientEverything extends ResourceOperationProxy {
 
 										everythingKey = linkedResource.getId();
 
-										log.info("[2]Adding linked resource type " + linkedResource.getResourceType().getPath() + "; resource id " + everythingKey);
+										log.fine("[2]Adding linked resource type " + linkedResource.getResourceType().getPath() + "; resource id " + everythingKey);
 
 										// Test for existing resource in everythingResources
 										if (!everythingResources.containsKey(everythingKey)) {
@@ -428,26 +428,26 @@ public class PatientEverything extends ResourceOperationProxy {
 								}
 								else {
 
-									log.info("[2]No Linked Resources found");
+									log.fine("[2]No Linked Resources found");
 
 								}
 							}
 							else {
 
-								log.info("[2]Linked Resource Proxy NOT FOUND");
+								log.fine("[2]Linked Resource Proxy NOT FOUND");
 
 							}
 						}
 						else {
 
-							log.info("[1]Already in map - resource type " + resourceObject.getResourceType().getPath() + "; resource id " + everythingKey);
+							log.fine("[1]Already in map - resource type " + resourceObject.getResourceType().getPath() + "; resource id " + everythingKey);
 
 						}
 					}
 				}
 			}
 			else {
-				log.info("Skipping resource type " + lkvb.getKey());
+				log.fine("Skipping resource type " + lkvb.getKey());
 			}
 		}
 
@@ -505,7 +505,7 @@ public class PatientEverything extends ResourceOperationProxy {
 
 		try {
 			if (context != null) {
-				log.info("Checking for search parameters...");
+				log.fine("Checking for search parameters...");
 
 				/*
 				 * Extract the individual expected parameters
