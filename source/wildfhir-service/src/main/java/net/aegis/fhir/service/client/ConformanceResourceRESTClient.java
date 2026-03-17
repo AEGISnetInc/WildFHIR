@@ -109,6 +109,10 @@ public class ConformanceResourceRESTClient implements Serializable {
 
 			conformanceResponse = targetBuilder.get();
 
+			if (conformanceResponse.hasEntity()) {
+				conformanceResponse.bufferEntity();
+			}
+
 			// Expensive - only use for debugging
 			// log.info("Conformance object returned: " +
 			// conformanceResponse.readEntity(String.class));
