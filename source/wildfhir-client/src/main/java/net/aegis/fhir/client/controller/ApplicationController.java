@@ -52,10 +52,12 @@ import java.util.logging.Logger;
 import jakarta.faces.annotation.ManagedProperty;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.event.ActionEvent;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.core.Response;
 
 import org.hl7.fhir.r4.formats.IParser.OutputStyle;
@@ -143,7 +145,7 @@ public class ApplicationController implements Serializable {
 		log.fine("[START] ApplicationController.fhirCeate()");
 
 		try {
-			log.info("BasePath for FHIR create: " + context.getSelectedServerURL());
+			log.fine("BasePath for FHIR create: " + context.getSelectedServerURL());
 
 			context.setCurrentView("create");
 
@@ -223,7 +225,7 @@ public class ApplicationController implements Serializable {
 										+ " successfully created."));
 					}
 					catch (Exception e) {
-						log.info(e.getMessage());
+						log.fine(e.getMessage());
 						FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:createForm",
 								new FacesMessage(FacesMessage.SEVERITY_ERROR, "Resource parsing failed! Please check the client logs.", "Resource parsing failed! Please check the client logs."));
 						e.printStackTrace();
@@ -243,7 +245,7 @@ public class ApplicationController implements Serializable {
 						FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:createForm", new FacesMessage(FacesMessage.SEVERITY_INFO, "Response " + response.getStatus() + " - Failed to create new Resource entry.", "Response " + response.getStatus() + " - Failed to create new Resource entry."));
 					}
 					catch (Exception e) {
-						log.info(e.getMessage());
+						log.fine(e.getMessage());
 						FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:createForm",
 								new FacesMessage(FacesMessage.SEVERITY_ERROR, "Resource parsing failed! Please check the client logs.", "Resource parsing failed! Please check the client logs."));
 						e.printStackTrace();
@@ -253,7 +255,7 @@ public class ApplicationController implements Serializable {
 
 		}
 		catch (Exception e) {
-			log.info(e.getMessage());
+			log.fine(e.getMessage());
 			FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:createForm", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error creating resource! Please check the client logs.", "Error reading resource! Please check the client logs."));
 			e.printStackTrace();
 		}
@@ -272,7 +274,7 @@ public class ApplicationController implements Serializable {
 		log.fine("[START] ApplicationController.fhirRead()");
 
 		try {
-			log.info("BasePath for FHIR read: " + context.getSelectedServerURL());
+			log.fine("BasePath for FHIR read: " + context.getSelectedServerURL());
 			context.setResourceResults(null);
 			String resourceId = context.getResourceId();
 			String ifModifiedSince = context.getIfModifiedSince();
@@ -307,7 +309,7 @@ public class ApplicationController implements Serializable {
 						context.getResourceResults().add((new ResourceResponseWrapper(resourceResponse)));
 					}
 					catch (Exception e) {
-						log.info(e.getMessage());
+						log.fine(e.getMessage());
 						FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirReadForm",
 								new FacesMessage(FacesMessage.SEVERITY_ERROR, "Resource parsing failed! Please check the client logs.", "Resource parsing failed! Please check the client logs."));
 						e.printStackTrace();
@@ -315,17 +317,17 @@ public class ApplicationController implements Serializable {
 
 				}
 				else if (resourceResponse.getStatus() == (Response.Status.NOT_MODIFIED.getStatusCode())) {
-					log.info(Integer.toString(resourceResponse.getStatus()));
+					log.fine(Integer.toString(resourceResponse.getStatus()));
 					FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirReadForm", new FacesMessage(FacesMessage.SEVERITY_INFO, "RESOURCE " + resourceId + " NOT MODIFIED", "RESOURCE " + resourceId + " NOT MODIFIED"));
 				}
 				else {
-					log.info(Integer.toString(resourceResponse.getStatus()));
+					log.fine(Integer.toString(resourceResponse.getStatus()));
 					FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirReadForm", new FacesMessage(FacesMessage.SEVERITY_INFO, "Response " + resourceResponse.getStatus() + " - No Resource found matching ID " + resourceId, "Response " + resourceResponse.getStatus() + " - No Resource found matching ID " + resourceId));
 				}
 			}
 		}
 		catch (Exception e) {
-			log.info(e.getMessage());
+			log.fine(e.getMessage());
 			FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirReadForm", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error reading resource! Please check the client logs.", "Error reading resource! Please check the client logs."));
 			e.printStackTrace();
 		}
@@ -342,7 +344,7 @@ public class ApplicationController implements Serializable {
 		log.fine("[START] ApplicationController.fhirVRead()");
 
 		try {
-			log.info("BasePath for FHIR vread: " + context.getSelectedServerURL());
+			log.fine("BasePath for FHIR vread: " + context.getSelectedServerURL());
 			context.setResourceResults(null);
 			String resourceId = context.getResourceId();
 			String versionId = context.getResourceVersion();
@@ -376,7 +378,7 @@ public class ApplicationController implements Serializable {
 						context.getResourceResults().add((new ResourceResponseWrapper(resourceResponse)));
 					}
 					catch (Exception e) {
-						log.info(e.getMessage());
+						log.fine(e.getMessage());
 						FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirVReadForm",
 								new FacesMessage(FacesMessage.SEVERITY_ERROR, "Resource parsing failed! Please check the client logs.", "Resource parsing failed! Please check the client logs."));
 						e.printStackTrace();
@@ -384,17 +386,17 @@ public class ApplicationController implements Serializable {
 
 				}
 				else if (resourceResponse.getStatus() == (Response.Status.NOT_MODIFIED.getStatusCode())) {
-					log.info(Integer.toString(resourceResponse.getStatus()));
+					log.fine(Integer.toString(resourceResponse.getStatus()));
 					FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirVReadForm", new FacesMessage(FacesMessage.SEVERITY_INFO, "RESOURCE " + resourceId + " NOT MODIFIED", "RESOURCE " + resourceId + " NOT MODIFIED"));
 				}
 				else {
-					log.info(Integer.toString(resourceResponse.getStatus()));
+					log.fine(Integer.toString(resourceResponse.getStatus()));
 					FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirVReadForm", new FacesMessage(FacesMessage.SEVERITY_INFO, "Response " + resourceResponse.getStatus() + " - No Resource found matching ID " + resourceId, "Response " + resourceResponse.getStatus() + " - No Resource found matching ID " + resourceId));
 				}
 			}
 		}
 		catch (Exception e) {
-			log.info(e.getMessage());
+			log.fine(e.getMessage());
 			FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirVReadForm", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error reading resource! Please check the client logs.", "Error reading resource! Please check the client logs."));
 			e.printStackTrace();
 		}
@@ -410,7 +412,7 @@ public class ApplicationController implements Serializable {
 	 */
 	public void fhirHistory(ActionEvent event) {
 		log.fine("[START] ApplicationController.fhirHistory()");
-		log.info("BasePath for FHIR history: " + context.getSelectedServerURL());
+		log.fine("BasePath for FHIR history: " + context.getSelectedServerURL());
 
 		String formatType = context.getSelectedFormatType();
 
@@ -421,7 +423,7 @@ public class ApplicationController implements Serializable {
 		if (!StringUtils.isNullOrEmpty(_since)) {
 			try {
 				utcDateUtil.parseXMLDate(_since);
-				log.info("fhirHistory _since = " + _since);
+				log.fine("fhirHistory _since = " + _since);
 			}
 			catch (Exception e) {
 				log.severe("Exception parsing _since parameter to UTC Date! " + e.getMessage());
@@ -537,7 +539,7 @@ public class ApplicationController implements Serializable {
 	 */
 	public void fhirHistoryPage(String historyPageUrl) {
 		log.fine("[START] ApplicationController.fhirHistoryPage()");
-		log.info("BasePath for FHIR delete: " + context.getSelectedServerURL());
+		log.fine("BasePath for FHIR delete: " + context.getSelectedServerURL());
 
 		String formatType = context.getSelectedFormatType();
 
@@ -647,14 +649,14 @@ public class ApplicationController implements Serializable {
 	 */
 	public void fhirSearch(ActionEvent event) {
 		log.fine("[START] ApplicationController.fhirSearch()");
-		log.info("BasePath for FHIR search: " + context.getSelectedServerURL());
-		log.info("Search Criteria: ");
+		log.fine("BasePath for FHIR search: " + context.getSelectedServerURL());
+		log.fine("Search Criteria: ");
 
 		Map<String, String> criteriaToSend = new HashMap<String, String>();
 
 		for (LabelKeyValueBean lkvb : context.getResourceCriteria()) {
 			if (!lkvb.getValue().isEmpty()) {
-				log.info(lkvb.getKey() + " = " + lkvb.getValue());
+				log.fine(lkvb.getKey() + " = " + lkvb.getValue());
 				criteriaToSend.put(lkvb.getKey(), lkvb.getValue());
 			}
 		}
@@ -687,7 +689,7 @@ public class ApplicationController implements Serializable {
 			}
 		}
 		catch (Exception e1) {
-			log.info(e1.getMessage());
+			log.fine(e1.getMessage());
 			e1.printStackTrace();
 		}
 		if (response != null) {
@@ -749,7 +751,7 @@ public class ApplicationController implements Serializable {
 					FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirSearchForm", new FacesMessage(FacesMessage.SEVERITY_INFO, "Search successfully executed.", "Search successfully excuted."));
 				}
 				catch (Exception e1) {
-					log.info(e1.getMessage());
+					log.fine(e1.getMessage());
 					FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirSearchForm",
 							new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error searching resource(s)! Please check the client logs.", "Error reading resource! Please check the client logs."));
 					e1.printStackTrace();
@@ -771,7 +773,7 @@ public class ApplicationController implements Serializable {
 	 */
 	public void fhirSearchPage(String searchPageUrl) {
 		log.fine("[START] ApplicationController.fhirSearchPage()");
-		log.info("BasePath for FHIR delete: " + context.getSelectedServerURL());
+		log.fine("BasePath for FHIR delete: " + context.getSelectedServerURL());
 
 		String formatType = context.getSelectedFormatType();
 
@@ -858,7 +860,7 @@ public class ApplicationController implements Serializable {
 					FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirSearchForm", new FacesMessage(FacesMessage.SEVERITY_INFO, "Search successfully executed.", "Search successfully excuted."));
 				}
 				catch (Exception e1) {
-					log.info(e1.getMessage());
+					log.fine(e1.getMessage());
 					FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirSearchForm",
 							new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error searching resource(s)! Please check the client logs.", "Error searching resource(s)! Please check the client logs."));
 					e1.printStackTrace();
@@ -945,13 +947,13 @@ public class ApplicationController implements Serializable {
 
 		}
 		else {
-			log.info("No Resource found matching ID: " + context.getResourceId());
+			log.fine("No Resource found matching ID: " + context.getResourceId());
 			String form = "tabView:interactionsTabView:" + operation + "Form";
 			FacesContext.getCurrentInstance().addMessage(form, new FacesMessage(FacesMessage.SEVERITY_WARN, "No Resource found matching ID: " + context.getResourceId(), ""));
 			context.setResourceString(null);
 		}
 
-		log.info("resource id: " + context.getResourceId());
+		log.fine("resource id: " + context.getResourceId());
 		log.fine("[END] ApplicationController.searchResourceForUpdate()");
 	}
 
@@ -984,7 +986,7 @@ public class ApplicationController implements Serializable {
 	 */
 	public void fhirUpdate(ActionEvent event) {
 		log.fine("[START] ApplicationController.fhirUpdate()");
-		log.info("BasePath for FHIR update: " + context.getSelectedServerURL());
+		log.fine("BasePath for FHIR update: " + context.getSelectedServerURL());
 
 		context.setCurrentView("update");
 
@@ -1099,7 +1101,7 @@ public class ApplicationController implements Serializable {
 	 */
 	public void fhirPatch(ActionEvent event) {
 		log.fine("[START] ApplicationController.fhirPatch()");
-		log.info("BasePath for FHIR patch: " + context.getSelectedServerURL());
+		log.fine("BasePath for FHIR patch: " + context.getSelectedServerURL());
 
 		String patchFormatType = context.getSelectedPatchFormatType();
 		String ifMatch = context.getIfMatch();
@@ -1207,7 +1209,7 @@ public class ApplicationController implements Serializable {
 		}
 
 		try {
-			log.info("BasePath for FHIR delete: " + context.getSelectedServerURL());
+			log.fine("BasePath for FHIR delete: " + context.getSelectedServerURL());
 			context.setCurrentView("delete");
 			String formatType = context.getSelectedFormatType();
 
@@ -1224,12 +1226,12 @@ public class ApplicationController implements Serializable {
 			}
 		}
 		catch (NumberFormatException e) {
-			log.info(e.getMessage());
+			log.fine(e.getMessage());
 			FacesContext.getCurrentInstance().addMessage(formId, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Number format error deleting resource! Please check the client logs.", "Error reading resource! Please check the client logs."));
 			e.printStackTrace();
 		}
 		catch (Exception e) {
-			log.info(e.getMessage());
+			log.fine(e.getMessage());
 			FacesContext.getCurrentInstance().addMessage(formId, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error deleting resource! Please check the client logs.", "Error reading resource! Please check the client logs."));
 			e.printStackTrace();
 		}
@@ -1244,7 +1246,7 @@ public class ApplicationController implements Serializable {
 	 */
 	public void fhirValidate(ActionEvent event) {
 		log.fine("[START] ApplicationController.fhirValidate()");
-		log.info("BasePath for FHIR validate: " + context.getSelectedServerURL());
+		log.fine("BasePath for FHIR validate: " + context.getSelectedServerURL());
 
 		String formatType = context.getSelectedFormatType();
 		String resourceString = context.getResourceString();
@@ -1402,7 +1404,7 @@ public class ApplicationController implements Serializable {
 	 */
 	public void fhirMetadata(ActionEvent event) {
 		log.fine("[START] ApplicationController.fhirMetadata()");
-		log.info("BasePath for FHIR metadata " + context.getSelectedServerURL());
+		log.fine("BasePath for FHIR metadata " + context.getSelectedServerURL());
 
 		String formatType = context.getSelectedFormatType();
 
@@ -1418,7 +1420,7 @@ public class ApplicationController implements Serializable {
 			}
 		}
 		catch (Exception e) {
-			log.info(e.getMessage());
+			log.fine(e.getMessage());
 			FacesContext.getCurrentInstance().addMessage("tabView:interactionsTabView:fhirMetadataForm",
 					new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error executing metadata request! " + e.getMessage(), ""));
 			e.printStackTrace();
@@ -1467,12 +1469,26 @@ public class ApplicationController implements Serializable {
 	 */
 	public void fhirMetadataNewPage(ActionEvent event) {
 		log.fine("[START] ApplicationController.fhirMetadataNewPage");
-		log.info("BasePath for FHIR metadata (new page) " + context.getSelectedServerURL());
+		log.fine("BasePath for FHIR metadata (new page) " + context.getSelectedServerURL());
+
+		String formatType = context.getSelectedFormatType();
 
 		String conformanceUrl = context.getSelectedServerURL() + "/metadata";
 
 		try {
-			FacesContext.getCurrentInstance().getExternalContext().redirect(conformanceUrl);
+			FacesContext facesContext = FacesContext.getCurrentInstance();
+			ExternalContext externalContext = facesContext.getExternalContext();
+			HttpServletResponse response = (HttpServletResponse) externalContext.getResponse();
+
+			if (formatType.equals("XML")) {
+				response.setHeader("Accept", Constants.FHIR_XML_CONTENT);
+			}
+			else {
+				response.setHeader("Accept", Constants.FHIR_JSON_CONTENT);
+			}
+
+			externalContext.redirect(conformanceUrl);
+			facesContext.responseComplete();
 		}
 		catch (IOException e) {
 			log.severe(e.getMessage());
@@ -1489,7 +1505,7 @@ public class ApplicationController implements Serializable {
 	 */
 	public void fhirConvertFormat(ActionEvent event) {
 		log.fine("[START] ApplicationController.fhirConvertFormat()");
-		log.info("BasePath for FHIR convert: " + context.getSelectedServerURL());
+		log.fine("BasePath for FHIR convert: " + context.getSelectedServerURL());
 
 		String convertFromFormatType = context.getConvertFromFormatType();
 		String convertToFormatType = context.getConvertToFormatType();
@@ -1668,7 +1684,7 @@ public class ApplicationController implements Serializable {
 	 */
 	public void fhirEverything(ActionEvent event) {
 		log.fine("[START] ApplicationController.fhirEverything()");
-		log.info("BasePath for FHIR everything: " + context.getSelectedServerURL());
+		log.fine("BasePath for FHIR everything: " + context.getSelectedServerURL());
 
 		String formatType = context.getSelectedFormatType();
 		String resourceId = context.getResourceId();
@@ -1843,7 +1859,7 @@ public class ApplicationController implements Serializable {
 	 */
 	public void fhirpathEvaluate(ActionEvent event) {
 		log.fine("[START] ApplicationController.fhirpathEvaluate()");
-		log.info("BasePath for FHIR fhirpath evaluate: " + context.getSelectedServerURL());
+		log.fine("BasePath for FHIR fhirpath evaluate: " + context.getSelectedServerURL());
 
 		String formatType = context.getSelectedFormatType();
 		String methodString = context.getMethodString();
@@ -1999,7 +2015,7 @@ public class ApplicationController implements Serializable {
 	public void manageServer(String serverType) {
 
 		if (serverType.equalsIgnoreCase("existing")) {
-			log.info("[Start] ApplicationController.manageServer() - update Existing Server");
+			log.fine("[Start] ApplicationController.manageServer() - update Existing Server");
 			try {
 
 				Serverdirectory server = context.getServerDirectoryService().update(context.getSelectedServer());
@@ -2014,7 +2030,7 @@ public class ApplicationController implements Serializable {
 		}
 
 		if (serverType.equalsIgnoreCase("new")) {
-			log.info("[Start] ApplicationController.manageServer() - Create new Server");
+			log.fine("[Start] ApplicationController.manageServer() - Create new Server");
 			try {
 				Serverdirectory server = context.getServerDirectoryService().create(context.getNewServer());
 				if (server != null) {
@@ -2038,7 +2054,7 @@ public class ApplicationController implements Serializable {
 	public void serverToManage(Serverdirectory server) {
 		log.fine("[START] ApplicationController.serverToManage");
 		context.setSelectedServer(server);
-		log.info("serverToManage name: " + context.getSelectedServer().getName());
+		log.fine("serverToManage name: " + context.getSelectedServer().getName());
 	}
 
 	/**
@@ -2081,7 +2097,7 @@ public class ApplicationController implements Serializable {
 	 * @param event
 	 */
 	public void processSubscriptions(ActionEvent event) {
-		log.info("[START] ApplicationController.processSubscriptions()");
+		log.fine("[START] ApplicationController.processSubscriptions()");
 
 		List<LabelKeyValueBean> results = null;
 
@@ -2099,7 +2115,7 @@ public class ApplicationController implements Serializable {
 					// Convert from LocalDateTime to Date in current time zone
 					Date datePicker = Date.from(dateTimePicker.atZone(ZoneId.of("GMT")).toInstant());
 
-					log.info("datePicker = " + utcDateUtil.formatDate(datePicker, UTCDateUtil.DATETIME_ONLY_PARAMETER_FORMAT));
+					log.fine("datePicker = " + utcDateUtil.formatDate(datePicker, UTCDateUtil.DATETIME_ONLY_PARAMETER_FORMAT));
 
 					results = context.getSubscriptionServiceR5().processSubscriptions(datePicker);
 
@@ -2122,14 +2138,14 @@ public class ApplicationController implements Serializable {
 			}
 		}
 		catch (Exception e1) {
-			log.info(e1.getMessage());
+			log.fine(e1.getMessage());
 			FacesContext.getCurrentInstance().addMessage("tabView:subscriptionClientTab:subscriptionClientForm",
 					new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error executing subscription processing! Please check the client logs.", "Error executing subscription processing! Please check the client logs."));
 
 			e1.printStackTrace();
 		}
 
-		log.info("[END] ApplicationController.fhirProcessSubscriptions()");
+		log.fine("[END] ApplicationController.fhirProcessSubscriptions()");
 	}
 
 	/**

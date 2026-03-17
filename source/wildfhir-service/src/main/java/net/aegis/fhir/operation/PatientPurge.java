@@ -206,15 +206,15 @@ public class PatientPurge extends ResourceOperationProxy {
 		 */
 		String startDateCriteria = null;
 		if (startDate != null) {
-			log.info("startDate = " + startDate.getValueAsString());
+			log.fine("startDate = " + startDate.getValueAsString());
 			startDateCriteria = "ge" + startDate.getValueAsString();
-			log.info("startDateCriteria = " + startDateCriteria);
+			log.fine("startDateCriteria = " + startDateCriteria);
 		}
 		String endDateCriteria = null;
 		if (endDate != null) {
-			log.info("endDate = " + endDate.getValueAsString());
+			log.fine("endDate = " + endDate.getValueAsString());
 			endDateCriteria = "le" + endDate.getValueAsString();
-			log.info("endDateCriteria = " + endDateCriteria);
+			log.fine("endDateCriteria = " + endDateCriteria);
 		}
 
 		/*
@@ -229,9 +229,9 @@ public class PatientPurge extends ResourceOperationProxy {
 
 		for (LabelKeyValueBean lkvb : compartmentResourceTypeCriteriaList) {
 
-			log.info("========================================================================");
-			log.info("===== Processing resource type " + lkvb.getKey());
-			log.info("========================================================================");
+			log.fine("========================================================================");
+			log.fine("===== Processing resource type " + lkvb.getKey());
+			log.fine("========================================================================");
 
 			// Set patient criteria
 			queryParams = new MultivaluedHashMap<String, String>();
@@ -264,7 +264,7 @@ public class PatientPurge extends ResourceOperationProxy {
 				 * Purge found resources
 				 */
 				for (Resource resourceEntry : resources) {
-					log.info("     ----- Purging resource " + resourceEntry.getResourceType() + "/" + resourceEntry.getResourceId());
+					log.fine("     ----- Purging resource " + resourceEntry.getResourceType() + "/" + resourceEntry.getResourceId());
 
 					resourceService.purge(resourceEntry.getId());
 				}
@@ -282,7 +282,7 @@ public class PatientPurge extends ResourceOperationProxy {
 		 * Finally, purge the Patient if no date parameters were sent
 		 */
 		if (startDateCriteria == null && endDateCriteria == null) {
-			log.info("Purging Patient");
+			log.fine("Purging Patient");
 
 			resourceService.purge(patient.getId());
 			total++;
@@ -293,7 +293,7 @@ public class PatientPurge extends ResourceOperationProxy {
 			rOutcome.getIssue().add(issue);
 		}
 		else {
-			log.info("Start or End date parameters sent; skipping purge of Patient");
+			log.fine("Start or End date parameters sent; skipping purge of Patient");
 
 			issue = ServicesUtil.INSTANCE.getOperationOutcomeIssueComponent(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL,
 				"Patient $purge - Patient purge skipped; start or end date parameter sent.", null, null);
@@ -329,7 +329,7 @@ public class PatientPurge extends ResourceOperationProxy {
 
 		try {
 			if (context != null) {
-				log.info("Checking for search parameters...");
+				log.fine("Checking for search parameters...");
 
 				/*
 				 * Extract the individual expected parameters

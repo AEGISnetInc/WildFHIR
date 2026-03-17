@@ -214,7 +214,7 @@ public class FHIRValidatorClient {
 
 		log.fine("FHIRValidatorClient.validateResource() - END");
 
-		log.info("FHIR Validator - validation of resource completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
+		log.fine("FHIR Validator - validation of resource completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
 
 		org.hl7.fhir.r4.model.OperationOutcome r4Outcome = convertR5OOR4(rOutcome);
 
@@ -266,7 +266,7 @@ public class FHIRValidatorClient {
 
 		log.fine("FHIRValidatorClient.evaluate() - END");
 
-		log.info("FHIR Validator - evaluation of fhirpath expression completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
+		log.fine("FHIR Validator - evaluation of fhirpath expression completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
 
 		return result;
 	}
@@ -318,7 +318,7 @@ public class FHIRValidatorClient {
 
 		log.fine("FHIRValidatorClient.evaluateToBoolean() - END");
 
-		log.info("FHIR Validator - evaluation of fhirpath expression completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
+		log.fine("FHIR Validator - evaluation of fhirpath expression completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
 
 		return result;
 	}
@@ -370,7 +370,7 @@ public class FHIRValidatorClient {
 
 		log.fine("FHIRValidatorClient.evaluateToString() - END");
 
-		log.info("FHIR Validator - evaluation of fhirpath expression completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
+		log.fine("FHIR Validator - evaluation of fhirpath expression completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
 
 		return result;
 	}

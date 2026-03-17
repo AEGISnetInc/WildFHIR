@@ -642,7 +642,7 @@ public class ResourceValidation extends ResourceOperationProxy {
 
 		try {
 			if (context != null) {
-				log.info("Checking for validate parameters...");
+				log.fine("Checking for validate parameters...");
 
 				/*
 				 * Extract the individual expected parameters

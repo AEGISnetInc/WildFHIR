@@ -487,12 +487,12 @@ public class ResourceOperationsRESTService {
 								outputParameters.getParameter().get(0).hasName() && outputParameters.getParameter().get(0).getName().equals("return") &&
 								!operationName.startsWith("meta")) {
 
-							log.info("outputParameters contains only 1 parameter and operation is not meta* - building response with Resource only");
+							log.fine("outputParameters contains only 1 parameter and operation is not meta* - building response with Resource only");
 
 							builder = buildResource(operationName, locationPath, producesType, outputParameters.getParameter().get(0).getResource(), returnedDirective, responseFhirVersion);
 						}
 						else {
-							log.info("outputParameters contains multiple parameters - building response with Parameters");
+							log.fine("outputParameters contains multiple parameters - building response with Parameters");
 
 							builder = buildResource(operationName, locationPath, producesType, outputParameters, returnedDirective, responseFhirVersion);
 						}
@@ -740,13 +740,13 @@ public class ResourceOperationsRESTService {
 		String payload = null;
 
 		if (request != null) {
-			log.info("----- HTTP REQUEST -----");
+			log.fine("----- HTTP REQUEST -----");
 
-			log.info("Remote host is '" + (request.getRemoteHost() == null ? "NOT FOUND" : request.getRemoteHost()) + "'");
+			log.fine("Remote host is '" + (request.getRemoteHost() == null ? "NOT FOUND" : request.getRemoteHost()) + "'");
 		}
 
 		if (headers != null) {
-			log.info("----- HTTP HEADERS (REQUEST) -----");
+			log.fine("----- HTTP HEADERS (REQUEST) -----");
 
 			MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
 
@@ -755,13 +755,13 @@ public class ResourceOperationsRESTService {
 				for (String key : requestHeaders.keySet()) {
 
 					for (String keyValue : requestHeaders.get(key)) {
-						log.info("header(" + key + ") is " + keyValue);
+						log.fine("header(" + key + ") is " + keyValue);
 					}
 				}
 			}
 		}
 
-		log.info("----- REQUEST URL -----");
+		log.fine("----- REQUEST URL -----");
 		StringBuilder sbRequestUrl = new StringBuilder(context.getAbsolutePath().getPath());
 		MultivaluedMap<String, String> queryParams = context.getQueryParameters();
 		if (queryParams != null && !queryParams.isEmpty()) {
@@ -771,13 +771,13 @@ public class ResourceOperationsRESTService {
 				if (!first) {
 					sbRequestUrl.append("&");
 				}
-				log.info("header(" + key + ") is " + queryParams.get(key).toString());
+				log.fine("header(" + key + ") is " + queryParams.get(key).toString());
 				sbRequestUrl.append(key).append("=").append(queryParams.get(key).toString());
 			}
 		}
-		log.info(sbRequestUrl.toString());
+		log.fine(sbRequestUrl.toString());
 
-		log.info("----- PAYLOAD ----- [snipped; use fine logging]");
+		log.fine("----- PAYLOAD ----- [snipped; use fine logging]");
         if (resourceInputStream != null) {
 			try {
 				StringWriter writer = new StringWriter();
@@ -794,7 +794,7 @@ public class ResourceOperationsRESTService {
 			}
 		}
 		else {
-			log.info(">> NO PAYLOAD <<");
+			log.fine(">> NO PAYLOAD <<");
 		}
 
 		return payload;

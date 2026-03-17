@@ -188,7 +188,7 @@ public class ResourceService {
 
 			if (resourceId == null) {
 				nextResourceIdString = UUIDUtil.getUUID();
-				log.info("Next Resource Id String is " + nextResourceIdString);
+				log.fine("Next Resource Id String is " + nextResourceIdString);
 			}
 			else {
 				nextResourceIdString = resourceId;
@@ -298,14 +298,14 @@ public class ResourceService {
 			net.aegis.fhir.model.Resource resource = em.find(net.aegis.fhir.model.Resource.class, id);
 
 			if (resource != null) {
-				log.info("     Resource found - GET ALL RESOURCE HISTORY");
+				log.fine("     Resource found - GET ALL RESOURCE HISTORY");
 
 				// Build and execute query to return all of the resource version rows
 				List<net.aegis.fhir.model.Resource> resourceList = readAllHistoryForResource(resource);
 
 				// Delete all resource history rows
 				for (net.aegis.fhir.model.Resource resourceInstance : resourceList) {
-					log.info("     Resource found - DELETE RESOURCE HISTORY [" + resourceInstance.getId() + "]");
+					log.fine("     Resource found - DELETE RESOURCE HISTORY [" + resourceInstance.getId() + "]");
 
 					List<Resourcemetadata> resourcemetadataList = resourcemetadataService.readAllForResource(resourceInstance);
 
@@ -357,7 +357,7 @@ public class ResourceService {
 			// MUST FIRST DROP FOREIGN KEY CONSTRAINT
 			StringBuffer sbQuery = new StringBuffer("alter table resourcemetadata drop foreign key fk_resourcemetatdata_resource");
 
-			log.info("Native Query: " + sbQuery.toString());
+			log.fine("Native Query: " + sbQuery.toString());
 
 			resourcemetadataQuery = em.createNativeQuery(sbQuery.toString());
 
@@ -366,7 +366,7 @@ public class ResourceService {
 			// Build native query for drop index fk_resourcemetatdata_resource_idx
 			sbQuery = new StringBuffer("alter table resourcemetadata drop index fk_resourcemetatdata_resource_idx");
 
-			log.info("Native Query: " + sbQuery.toString());
+			log.fine("Native Query: " + sbQuery.toString());
 
 			resourcemetadataQuery = em.createNativeQuery(sbQuery.toString());
 
@@ -375,7 +375,7 @@ public class ResourceService {
 			// Build native query for truncate resourcemetadata
 			sbQuery = new StringBuffer("truncate resourcemetadata");
 
-			log.info("Native Query: " + sbQuery.toString());
+			log.fine("Native Query: " + sbQuery.toString());
 
 			resourcemetadataQuery = em.createNativeQuery(sbQuery.toString());
 
@@ -384,7 +384,7 @@ public class ResourceService {
 			// Build native query for truncate resource
 			sbQuery = new StringBuffer("truncate resource");
 
-			log.info("Native Query: " + sbQuery.toString());
+			log.fine("Native Query: " + sbQuery.toString());
 
 			resourcemetadataQuery = em.createNativeQuery(sbQuery.toString());
 
@@ -393,7 +393,7 @@ public class ResourceService {
 			// Build native query to re-create foreign key fk_resourcemetatdata_resource
 			sbQuery = new StringBuffer("alter table resourcemetadata add constraint fk_resourcemetatdata_resource foreign key (resourcejoinid) references resource (id)");
 
-			log.info("Native Query: " + sbQuery.toString());
+			log.fine("Native Query: " + sbQuery.toString());
 
 			resourcemetadataQuery = em.createNativeQuery(sbQuery.toString());
 
@@ -402,7 +402,7 @@ public class ResourceService {
 			// Build native query to re-create index fk_resourcemetatdata_resource_idx
 			sbQuery = new StringBuffer("create index fk_resourcemetatdata_resource_idx on resourcemetadata (resourcejoinid asc)");
 
-			log.info("Native Query: " + sbQuery.toString());
+			log.fine("Native Query: " + sbQuery.toString());
 
 			resourcemetadataQuery = em.createNativeQuery(sbQuery.toString());
 
@@ -690,7 +690,7 @@ public class ResourceService {
 		try {
 			// Check for paged request; page parameter is not null
 			if (page_ != null && page_.intValue() > 0) {
-				log.info("ResourceService.history - cached page requested");
+				log.fine("ResourceService.history - cached page requested");
 
 				// Retrieve page from history cache using locationPath as the key
 				Bundle bundle = PagingHistoryManager.INSTANCE.retrieveFromCache(locationPath);
@@ -707,7 +707,7 @@ public class ResourceService {
 				}
 			}
 			else {
-				log.info("ResourceService.history - new history request");
+				log.fine("ResourceService.history - new history request");
 
 				CriteriaBuilder cb = em.getCriteriaBuilder();
 				CriteriaQuery<net.aegis.fhir.model.Resource> criteria = cb.createQuery(net.aegis.fhir.model.Resource.class);
@@ -738,7 +738,7 @@ public class ResourceService {
 
 				List<net.aegis.fhir.model.Resource> historyResources = em.createQuery(criteria).getResultList();
 
-				log.info("ResourceService.history - historyResources.size() = " + historyResources.size());
+				log.fine("ResourceService.history - historyResources.size() = " + historyResources.size());
 
 				if (historyResources != null && historyResources.size() > 0) {
 					// 1 or more Resources found, build Bundle list of Element entry objects for each resource version
@@ -750,7 +750,7 @@ public class ResourceService {
 
 					if (historyResources.size() > maxCount.intValue()) {
 						// Maximum count allowed for is less than number of resources returned; reduce resources to maxCount limit
-						log.info("Total resources returned: " + historyResources.size() + "; Maximum count allowed for: " + maxCount);
+						log.fine("Total resources returned: " + historyResources.size() + "; Maximum count allowed for: " + maxCount);
 
 						int totalCount = 0;
 						resources = new ArrayList<net.aegis.fhir.model.Resource>();
@@ -778,7 +778,7 @@ public class ResourceService {
 						pageSize = resources.size();
 					}
 
-					log.info("ResourceService.history - pageSize = " + pageSize);
+					log.fine("ResourceService.history - pageSize = " + pageSize);
 
 					// Test whether paging is needed
 					boolean needPaging = false;
@@ -789,7 +789,7 @@ public class ResourceService {
 						pageCount = this.divideAndRoundUp(resources.size(), pageSize);
 					}
 
-					log.info("ResourceService.history - pageCount = " + pageCount + "; needPaging = " + needPaging);
+					log.fine("ResourceService.history - pageCount = " + pageCount + "; needPaging = " + needPaging);
 
 					String currentPage = locationPath + "&page=1";
 					String firstPage = locationPath + "&page=1";
@@ -823,7 +823,7 @@ public class ResourceService {
 						resourceCount++;
 						if (resourceCount > pageSize) {
 
-							log.info("ResourceService.history - Done with pageNum = " + pageNum);
+							log.fine("ResourceService.history - Done with pageNum = " + pageNum);
 
 							// Reset resourceCount for next page Bundle
 							resourceCount = 1;
@@ -1565,7 +1565,7 @@ public class ResourceService {
 		String resourceMessage = null;
 		XmlParser xmlParser = new XmlParser();
 
-		log.info("JSON PATCH String: " + jsonPatchString);
+		log.fine("JSON PATCH String: " + jsonPatchString);
 
 		try {
 			// Convert XML contents to Resource object
@@ -1685,13 +1685,13 @@ public class ResourceService {
 		String resourceMessage = null;
 		XmlParser xmlParser = new XmlParser();
 
-		log.info("XML PATCH String: " + xmlPatchString);
+		log.fine("XML PATCH String: " + xmlPatchString);
 
 		try {
 			// Convert XML contents to String
 			String xmlSourceString = new String(resource.getResourceContents());
 
-			log.info("XML Source String: " + xmlSourceString);
+			log.fine("XML Source String: " + xmlSourceString);
 
 			// Apply XML Patch and get updated resource back as an XML string
 			String xmlTargetString = XmlPatchUtil.INSTANCE.applyXmlPatch(xmlPatchString, xmlSourceString);
@@ -1798,7 +1798,7 @@ public class ResourceService {
 		try {
 			// Check for paged request; page parameter is not null
 			if (page_ != null && page_.intValue() > 0) {
-				log.info("ResourceService.search - cached page requested");
+				log.fine("ResourceService.search - cached page requested");
 
 				// Retrieve page from history cache using locationPath as the key
 				Bundle bundle = PagingSearchManager.INSTANCE.retrieveFromCache(locationPath);
@@ -1815,7 +1815,7 @@ public class ResourceService {
 				}
 			}
 			else {
-				log.info("ResourceService.search - new search request; compartment is " + isCompartment);
+				log.fine("ResourceService.search - new search request; compartment is " + isCompartment);
 
 				List<String> _matchedId = new ArrayList<String>();
 				List<String[]> _include = new ArrayList<String[]>();
@@ -1829,7 +1829,7 @@ public class ResourceService {
 
 				List<net.aegis.fhir.model.Resource> resources = searchQuery(parameterMap, formMap, authPatientMap, resourceType, isCompartment, _include, _includeIterate, _revinclude, validParams, invalidParams);
 
-				log.info("ResourceService.search - resources.size() = " + resources.size());
+				log.fine("ResourceService.search - resources.size() = " + resources.size());
 
 				// Extract base url from locationPath for use in Bundle.entry.fullUrl element
 				String baseSelfUrl = ServicesUtil.INSTANCE.extractBaseURL(locationPath, "?");
@@ -1842,7 +1842,7 @@ public class ResourceService {
 				if (orderedParams != null && !orderedParams.isEmpty()) {
 					selfUrl.append("?");
 					for (NameValuePair param : orderedParams) {
-						log.info("  param.name = '" + param.getName() + "'; param.value = '" + param.getValue() + "'");
+						log.fine("  param.name = '" + param.getName() + "'; param.value = '" + param.getValue() + "'");
 
 						// Add orderedParam to selfUrl only if param.name in validParams
 						for (String[] validParam : validParams) {
@@ -1853,7 +1853,7 @@ public class ResourceService {
 								selfUrl.append(param.getName()).append("=").append(URLEncoder.encode(param.getValue(), StandardCharsets.UTF_8.toString()));
 								validCount++;
 
-								log.info("      --> Adding " + param.getName() + " = '" + param.getValue() + "'");
+								log.fine("      --> Adding " + param.getName() + " = '" + param.getValue() + "'");
 								break; // Only include first validParam match
 							}
 						}
@@ -1957,7 +1957,7 @@ public class ResourceService {
 							pageSize = resources.size();
 						}
 
-						log.info("ResourceService.search - pageSize = " + pageSize);
+						log.fine("ResourceService.search - pageSize = " + pageSize);
 
 						// Test whether paging is needed
 						boolean needPaging = false;
@@ -1968,7 +1968,7 @@ public class ResourceService {
 							pageCount = this.divideAndRoundUp(resources.size(), pageSize);
 						}
 
-						log.info("ResourceService.search - pageCount = " + pageCount + "; needPaging = " + needPaging);
+						log.fine("ResourceService.search - pageCount = " + pageCount + "; needPaging = " + needPaging);
 
 						String currentPage = selfUrl.toString() + "&page=1";
 						String firstPage = selfUrl.toString() + "&page=1";
@@ -2007,7 +2007,7 @@ public class ResourceService {
 							resourceCount++;
 							if (resourceCount > pageSize) {
 
-								log.info("ResourceService.search - Done with pageNum = " + pageNum);
+								log.fine("ResourceService.search - Done with pageNum = " + pageNum);
 
 								// Reset resourceCount for next page Bundle
 								resourceCount = 1;
@@ -2226,7 +2226,7 @@ public class ResourceService {
 
 							// Process _include:iterate
 							if (_includeIterate != null && _includeIterate.size() > 0) {
-								log.info("Processing _include:iterate...");
+								log.fine("Processing _include:iterate...");
 
 								String source = null;
 								String parameter = null;
@@ -3035,7 +3035,7 @@ public class ResourceService {
 		List<String[]> _sort = new ArrayList<String[]>();
 
 		try {
-			log.info("Native query based on resource type and parameters");
+			log.fine("Native query based on resource type and parameters");
 
 			String tempTableName = "temp" + UUIDUtil.getGUID();
 
@@ -3141,7 +3141,7 @@ public class ResourceService {
 				for (Entry<String, List<String>> entry : paramSet) {
 
 					String key = entry.getKey();
-					//log.info("--> Processing search parameter [" + key + "]");
+					//log.fine("--> Processing search parameter [" + key + "]");
 
 					boolean isValidSearchParameter = false;
 					String invalidParamMessage = null;
@@ -3149,7 +3149,7 @@ public class ResourceService {
 
 					// Need to check resourceType; if null, then check for special _type parameter
 					if (resourceType != null) {
-						//log.info("   --> Resource Type is [" + resourceType + "]");
+						//log.fine("   --> Resource Type is [" + resourceType + "]");
 						isValidSearchParameter = net.aegis.fhir.model.ResourceType.isSupportedResourceCriteriaType(resourceType, key);
 						if (isValidSearchParameter) {
 							// Determine criteria type
@@ -3165,12 +3165,12 @@ public class ResourceService {
 					}
 					else {
 						if (!typeList.isEmpty()) {
-							//log.info("   --> Resource Type is null and _type defined");
+							//log.fine("   --> Resource Type is null and _type defined");
 							for (String type : typeList) {
-								//log.info("   --> Processing _type [" + type + "]");
+								//log.fine("   --> Processing _type [" + type + "]");
 								isValidSearchParameter = net.aegis.fhir.model.ResourceType.isSupportedResourceCriteriaType(type, key);
 								if (isValidSearchParameter) {
-									//log.info("      --> Valid parameter '" + key + "' for [" + type + "]");
+									//log.fine("      --> Valid parameter '" + key + "' for [" + type + "]");
 									// Determine criteria type
 									criteriaType = net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(type, key);
 
@@ -3186,7 +3186,7 @@ public class ResourceService {
 							}
 						}
 						if (!isValidSearchParameter) {
-							//log.info("   -->  Resource Type is null and _type not defined; check for global parameter");
+							//log.fine("   -->  Resource Type is null and _type not defined; check for global parameter");
 							isValidSearchParameter = net.aegis.fhir.model.ResourceType.isSupportedResourceCriteriaType(null, key);
 							if (criteriaType == null || criteriaType.isEmpty()) {
 								criteriaType = net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(null, key);
@@ -3207,7 +3207,7 @@ public class ResourceService {
 					}
 
 					if (isValidSearchParameter) {
-						//log.info("   --> Process valid search parameter");
+						//log.fine("   --> Process valid search parameter");
 
 						boolean isDateType = (criteriaType.equalsIgnoreCase("DATE") ? true : false);
 						boolean isNumericType = (criteriaType.equalsIgnoreCase("NUMBER") ? true : false);
@@ -3238,7 +3238,7 @@ public class ResourceService {
 							validParam[1] = value;
 							if (validParams != null) {
 								validParams.add(validParam);
-								//log.info("   --> Valid Param [" + key + "] Value [" + value + "] sqValue [" + sqValue + "]");
+								//log.fine("   --> Valid Param [" + key + "] Value [" + value + "] sqValue [" + sqValue + "]");
 							}
 
 							// Next process known, special parameters
@@ -3564,7 +3564,7 @@ public class ResourceService {
 								}
 
 								if (value != null & value.length() > 0) {
-									log.info("resourceType = '" + (resourceType == null ? "null" : resourceType) + "'; key = '" + key + "'; value = '" + value + "'");
+									log.fine("resourceType = '" + (resourceType == null ? "null" : resourceType) + "'; key = '" + key + "'; value = '" + value + "'");
 									// Initialize TimeZones
 									TimeZone timeZoneDefault = TimeZone.getDefault();
 									TimeZone timeZoneUTC = TimeZone.getTimeZone(UTCDateUtil.TIME_ZONE_UTC);
@@ -3582,7 +3582,7 @@ public class ResourceService {
 
 									// Check date, numeric and quantity types
 									if (isDateType || isPeriodType || isNumericType || isQuantityType) {
-										//log.info("--> date, numeric or quantity parameter type - check for valid parameter value(s) '" + value + "'");
+										//log.fine("--> date, numeric or quantity parameter type - check for valid parameter value(s) '" + value + "'");
 										/*
 										 *  IF NOT IS VALID DATE, NUMERIC OR QUANTITY VALUE, ADD TO LIST OF INVALID PARAMETERS
 										 *  - Check for valid prefix control if first character is not numeric
@@ -3769,7 +3769,7 @@ public class ResourceService {
 									}
 									// Check reference type
 									else if (isReferenceType) {
-										//log.info("   --> Reference parameter type - check for valid parameter value(s) '" + value + "'");
+										//log.fine("   --> Reference parameter type - check for valid parameter value(s) '" + value + "'");
 										/*
 										 *  IF NOT IS VALID REFERENCE VALUE, ADD TO LIST OF INVALID PARAMETERS
 										 *  - Invalid reference parameter value is for a reference parameter where multiple resource types are allowed
@@ -3778,18 +3778,18 @@ public class ResourceService {
 										 *  type, modify the parameter value with a prefix of the allowed resource type.
 										 */
 										String refType = net.aegis.fhir.model.ResourceType.findResourceTypeResourceRefType(resourceType, key);
-										//log.info("   --> Reference parameter type - parameter refType '" + refType + "'");
+										//log.fine("   --> Reference parameter type - parameter refType '" + refType + "'");
 										validValueList = new String[valueListCount];
 										for (String listValue : valueList) {
 											String validResourceType = net.aegis.fhir.model.ResourceType.findValidResourceType(listValue);
 
 											if (validResourceType != null) {
-												//log.info("   --> Reference parameter contains a valid resource type '" + validResourceType + "'");
+												//log.fine("   --> Reference parameter contains a valid resource type '" + validResourceType + "'");
 												validValueList[valueListInd] = listValue;
 											}
 											else {
 												if (refType == null || refType.isEmpty() || refType.equals("*")) {
-													//log.info("   --> INVALID! Reference parameter value does not contain valid resource type AND multiple types allowed!");
+													//log.fine("   --> INVALID! Reference parameter value does not contain valid resource type AND multiple types allowed!");
 													// missing refType for search parameter and parameter value does not contain a valid resource type
 													// INVALID PARAMETER VALUE - Add invalidParams list
 
@@ -3802,7 +3802,7 @@ public class ResourceService {
 													}
 												}
 												else {
-													//log.info("   --> Reference parameter value does not contain valid resource type AND single type allowed '" + refType + "'");
+													//log.fine("   --> Reference parameter value does not contain valid resource type AND single type allowed '" + refType + "'");
 													// single refType for search parameter and parameter value does not contain a valid resource type
 													// make sure we extract just the resource id value from the parameter value and then prefix with refType
 													String extractedResourceId = ServicesUtil.INSTANCE.extractResourceIdFromURL(listValue);
@@ -3865,7 +3865,7 @@ public class ResourceService {
 												continue;
 											}
 
-											log.info("listValue[" + valueListInd + "] = " + listValue);
+											log.fine("listValue[" + valueListInd + "] = " + listValue);
 
 											splitCriteriaWritten = false;
 
@@ -3886,7 +3886,7 @@ public class ResourceService {
 											 * Process system|value|code if found
 											 */
 											if (listValue.indexOf("|") >= 0) {
-												log.info("Process system|value|code; original = " + listValue);
+												log.fine("Process system|value|code; original = " + listValue);
 
 												String[] splitValue = listValue.split("\\|");
 												String pairValue = "";
@@ -3905,7 +3905,7 @@ public class ResourceService {
 													 * quantity search criteria ordering of value|system|code
 													 */
 													if (isQuantityType) {
-														log.info("isQuantityType = " + isQuantityType + " switch the namespace and value due to quantity search criteria ordering");
+														log.fine("isQuantityType = " + isQuantityType + " switch the namespace and value due to quantity search criteria ordering");
 
 														pairValue = splitValue[0];
 														if (splitValue.length > 1) {
@@ -3929,7 +3929,7 @@ public class ResourceService {
 															 * if DATE criteria type, convert date value to DATETIME_SORT_FORMAT
 															 */
 															if (isDateType || isPeriodType) {
-																log.info("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
+																log.fine("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
 
 																dateFormatLength = utcDateUtil.computeSortFormatLength(prefixValue);
 																if (dateFormatLength == 12) {
@@ -3954,9 +3954,9 @@ public class ResourceService {
 																}
 															}
 
-															log.info("pairValue = " + pairValue);
-															log.info("pairNamespace = " + pairNamespace);
-															log.info("pairCodeValue = " + pairCodeValue);
+															log.fine("pairValue = " + pairValue);
+															log.fine("pairNamespace = " + pairNamespace);
+															log.fine("pairCodeValue = " + pairCodeValue);
 
 															lowRangeValue = this.computeLowRangeValue(prefixValue, isDateType, isPeriodType, isNumericType, isQuantityType);
 															highRangeValue = this.computeHighRangeValue(prefixValue, isDateType, isPeriodType, isNumericType, isQuantityType);
@@ -4147,7 +4147,7 @@ public class ResourceService {
 														 * if DATE criteria type, convert date value to DATETIME_SORT_FORMAT
 														 */
 														if (isDateType || isPeriodType) {
-															log.info("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
+															log.fine("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
 
 															dateFormatLength = utcDateUtil.computeSortFormatLength(pairValue);
 															if (dateFormatLength == 12) {
@@ -4223,7 +4223,7 @@ public class ResourceService {
 											 * Process non-delimited value
 											 */
 											else {
-												log.info("Process non-delimited; value = " + listValue);
+												log.fine("Process non-delimited; value = " + listValue);
 
 												if (isDateType || isPeriodType || isNumericType || isQuantityType) {
 													/*
@@ -4239,7 +4239,7 @@ public class ResourceService {
 															 * if DATE criteria type, convert date value to DATETIME_SORT_FORMAT
 															 */
 															if (isDateType || isPeriodType) {
-																log.info("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
+																log.fine("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
 
 																dateFormatLength = utcDateUtil.computeSortFormatLength(prefixValue);
 																if (dateFormatLength == 12) {
@@ -4453,7 +4453,7 @@ public class ResourceService {
 														 * if DATE criteria type, convert date value to DATETIME_SORT_FORMAT
 														 */
 														if (isDateType || isPeriodType) {
-															log.info("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
+															log.fine("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
 
 															dateFormatLength = utcDateUtil.computeSortFormatLength(listValue);
 															if (dateFormatLength == 12) {
@@ -4687,7 +4687,7 @@ public class ResourceService {
 
 						// Generate criteria for each comma-delimited value
 						for (String listValue : valueList) {
-							log.info("   --> authorization patient map param listValue[" + valueListInd + "] = " + listValue);
+							log.fine("   --> authorization patient map param listValue[" + valueListInd + "] = " + listValue);
 
 							if (!firstEntry) {
 								sbCreateTempWhereCriteria.append(" or ");
@@ -4758,7 +4758,7 @@ public class ResourceService {
 					}
 					sbCreateTempTable.append(sbCreateTempWhereJoin.toString()).append(sbCreateTempWhereCriteria.toString());
 
-					log.info("Create Temp Table: " + sbCreateTempTable.toString());
+					log.fine("Create Temp Table: " + sbCreateTempTable.toString());
 
 					// Create temporary table for main Query
 					em.createNativeQuery(sbCreateTempTable.toString()).executeUpdate();
@@ -4816,7 +4816,7 @@ public class ResourceService {
 
 				sbQuery.append(sbCriteria.toString());
 
-				log.info("Native Query: " + sbQuery.toString());
+				log.fine("Native Query: " + sbQuery.toString());
 
 				resourceQuery = em.createNativeQuery(sbQuery.toString(), net.aegis.fhir.model.Resource.class);
 
@@ -4825,7 +4825,7 @@ public class ResourceService {
 
 				if (resources.size() > 0 && resources.size() > maxCount.intValue()) {
 					// Maximum count allowed for is less than number of resources returned; reduce resources to maxCount limit
-					log.info("Total resources returned: " + resources.size() + "; Maximum count allowed for: " + maxCount);
+					log.fine("Total resources returned: " + resources.size() + "; Maximum count allowed for: " + maxCount);
 
 					int totalCount = 0;
 
@@ -4842,7 +4842,7 @@ public class ResourceService {
 				}
 
 				if (bDropTempTable) {
-					log.info("Drop Temp Table: " + sbDropTempTable.toString());
+					log.fine("Drop Temp Table: " + sbDropTempTable.toString());
 
 					em.createNativeQuery(sbDropTempTable.toString()).executeUpdate();
 				}

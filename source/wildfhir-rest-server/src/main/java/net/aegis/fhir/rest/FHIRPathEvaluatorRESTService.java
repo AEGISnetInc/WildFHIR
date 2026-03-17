@@ -138,7 +138,7 @@ public class FHIRPathEvaluatorRESTService {
 
 			if (evalutateInputStream != null) {
 				// POST Operations with expected ValidationParameters payload
-				log.info("POST evaluate operation with expected Parameters payload");
+				log.fine("POST evaluate operation with expected Parameters payload");
 
 				if (contentType.indexOf("xml") >= 0) {
 					// Convert XML contents to Resource
@@ -174,7 +174,7 @@ public class FHIRPathEvaluatorRESTService {
 
 			if (inputParameters != null) {
 				// Extract expected parameters
-				log.info("Extract expected evaluate parameters");
+				log.fine("Extract expected evaluate parameters");
 				StringType method = null;
 				Resource resource = null;
 				byte[] resourceContents = null;

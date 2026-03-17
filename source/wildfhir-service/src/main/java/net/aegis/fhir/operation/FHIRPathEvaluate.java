@@ -92,7 +92,7 @@ public class FHIRPathEvaluate extends ResourceOperationProxy {
 
 				if (inputParameters != null) {
 					// Extract expected parameters
-					log.info("Extract expected evaluate parameters");
+					log.fine("Extract expected evaluate parameters");
 					StringType method = null;
 					Resource resource = null;
 					byte[] resourceContents = null;

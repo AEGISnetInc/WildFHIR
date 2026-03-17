@@ -145,18 +145,18 @@ public class GlobalProcessMessage extends ResourceOperationProxy {
 
 								// Processing starts here...
 								if (async != null) {
-									log.info("GlobalProcessMessage.executeOperation() - async parameter found '" + async.asStringValue() + "'");
+									log.fine("GlobalProcessMessage.executeOperation() - async parameter found '" + async.asStringValue() + "'");
 
 									// Return response-url or source.endpoint only if async == true
 									if (async.asStringValue().equalsIgnoreCase("true" )) {
 										if (responseUrl != null) {
-											log.info("GlobalProcessMessage.executeOperation() - responseUrl parameter found '" + responseUrl.asStringValue() + "'");
+											log.fine("GlobalProcessMessage.executeOperation() - responseUrl parameter found '" + responseUrl.asStringValue() + "'");
 											returnedDirective.append(responseUrl.asStringValue());
 										}
 										else {
 											// Check MessageHeader.source.endpoint
 											if (requestMessageHeader.hasSource() && requestMessageHeader.getSource().hasEndpoint()) {
-												log.info("GlobalProcessMessage.executeOperation() - MessageHeader.source.endpoint found '" + requestMessageHeader.getSource().getEndpoint() + "'");
+												log.fine("GlobalProcessMessage.executeOperation() - MessageHeader.source.endpoint found '" + requestMessageHeader.getSource().getEndpoint() + "'");
 												returnedDirective.append(requestMessageHeader.getSource().getEndpoint());
 											}
 										}
@@ -172,7 +172,7 @@ public class GlobalProcessMessage extends ResourceOperationProxy {
 
 								// Test proxy
 								if (messageProxy != null) {
-									log.info("Calling messageProxy.processMessage()");
+									log.fine("Calling messageProxy.processMessage()");
 
 									messageResponseBundle = messageProxy.processMessage(context, resourceService, resourcemetadataService, codeService, requestBundle, async, responseUrl);
 								}
@@ -262,7 +262,7 @@ public class GlobalProcessMessage extends ResourceOperationProxy {
 
 		try {
 			if (context != null) {
-				log.info("Checking for operation parameters...");
+				log.fine("Checking for operation parameters...");
 
 				/*
 				 * Extract the individual expected parameters

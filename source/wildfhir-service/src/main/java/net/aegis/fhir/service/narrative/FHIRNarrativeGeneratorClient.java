@@ -100,7 +100,7 @@ public class FHIRNarrativeGeneratorClient {
 
 		log.fine("FHIRNarrativeGeneratorClient.generate() - END");
 
-		log.info("FHIR NarrativeGenerator - generation of narrative text for resource completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
+		log.fine("FHIR NarrativeGenerator - generation of narrative text for resource completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
 
 	}
 

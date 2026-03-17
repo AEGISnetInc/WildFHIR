@@ -136,21 +136,21 @@ public class ResourceRESTService {
 		}
 		else {
 			/*
-			 * Re-direct to conformance metadata
+			 * Re-direct to client
 			 */
 			String locationPath = ui.getAbsolutePath().toString();
-			log.info("Absolute Path is " + locationPath);
+			log.fine("Absolute Path is " + locationPath);
 
 			String lastChar = locationPath.substring(locationPath.length() - 1, locationPath.length());
 			if (lastChar.equals("/")) {
 				locationPath = locationPath.substring(0, locationPath.length() - 1);
-				log.info("Absolute Path is " + locationPath);
+				log.fine("Absolute Path is " + locationPath);
 			}
 
 			Response.ResponseBuilder builder;
 
 			try {
-				builder = Response.seeOther(new URI(locationPath + "/metadata"));
+				builder = Response.seeOther(new URI(locationPath + "-client"));
 				response = builder.build();
 			}
 			catch (URISyntaxException e) {
@@ -802,13 +802,13 @@ public class ResourceRESTService {
 		String payload = null;
 
 		if (request != null) {
-			log.info("----- HTTP REQUEST -----");
+			log.fine("----- HTTP REQUEST -----");
 
-			log.info("Remote host is '" + (request.getRemoteHost() == null ? "NOT FOUND" : request.getRemoteHost()) + "'");
+			log.fine("Remote host is '" + (request.getRemoteHost() == null ? "NOT FOUND" : request.getRemoteHost()) + "'");
 		}
 
 		if (headers != null) {
-			log.info("----- HTTP HEADERS (REQUEST) -----");
+			log.fine("----- HTTP HEADERS (REQUEST) -----");
 
 			MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
 
@@ -817,14 +817,14 @@ public class ResourceRESTService {
 				for (String key : requestHeaders.keySet()) {
 
 					for (String keyValue : requestHeaders.get(key)) {
-						log.info("header(" + key + ") is " + keyValue);
+						log.fine("header(" + key + ") is " + keyValue);
 
 					}
 				}
 			}
 		}
 
-		log.info("----- REQUEST URL -----");
+		log.fine("----- REQUEST URL -----");
 		StringBuilder sbRequestUrl = new StringBuilder(context.getAbsolutePath().getPath());
 		MultivaluedMap<String, String> queryParams = context.getQueryParameters();
 		if (queryParams != null && !queryParams.isEmpty()) {
@@ -834,15 +834,15 @@ public class ResourceRESTService {
 				if (!first) {
 					sbRequestUrl.append("&");
 				}
-				log.info(key + " is " + queryParams.get(key).toString());
+				log.fine(key + " is " + queryParams.get(key).toString());
 				sbRequestUrl.append(key).append("=").append(queryParams.get(key).toString());
 			}
 		}
 
-		log.info("Absolute Path: " + sbRequestUrl.toString());
-		log.info("Request URL: " + context.getRequestUri().toString());
+		log.fine("Absolute Path: " + sbRequestUrl.toString());
+		log.fine("Request URL: " + context.getRequestUri().toString());
 
-		log.info("----- FORM INPUT PARAMS -----");
+		log.fine("----- FORM INPUT PARAMS -----");
 		if (form != null && !form.isEmpty()) {
 			sbRequestUrl.append("?");
 			boolean first = true;
@@ -850,7 +850,7 @@ public class ResourceRESTService {
 				if (!first) {
 					sbRequestUrl.append("&");
 				}
-				log.info("input(" + key + ") is " + form.get(key).toString());
+				log.fine("input(" + key + ") is " + form.get(key).toString());
 				sbRequestUrl.append(key).append("=").append(form.get(key).toString());
 			}
 		}
@@ -863,11 +863,11 @@ public class ResourceRESTService {
 				payload = writer.toString();
 
 				if (snipped == false) {
-					log.info("----- PAYLOAD -----");
-					log.info(payload);
+					log.fine("----- PAYLOAD -----");
+					log.fine(payload);
 				}
 				else {
-					log.info("----- PAYLOAD ----- [snipped]");
+					log.fine("----- PAYLOAD ----- [snipped]");
 				}
 
 			}
@@ -877,7 +877,7 @@ public class ResourceRESTService {
 			}
 		}
 		else {
-			log.info(">> NO PAYLOAD <<");
+			log.fine(">> NO PAYLOAD <<");
 		}
 
 		return payload;

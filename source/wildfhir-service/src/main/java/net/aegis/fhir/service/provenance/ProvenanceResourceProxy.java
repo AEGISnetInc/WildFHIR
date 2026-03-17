@@ -112,7 +112,7 @@ public abstract class ProvenanceResourceProxy {
 			signatureList.add(signature);
 			fhirResource.setSignature(signatureList);
 
-			log.info("prepareBasicData");
+			log.fine("prepareBasicData");
 		}
 		catch (FHIRException e) {
 			e.printStackTrace();
