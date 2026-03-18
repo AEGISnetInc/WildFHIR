@@ -25,12 +25,12 @@ Class-Path: jakarta.activation-api-2.1.4.jar angus-activation-2.0.3.jar
  jar commonmark-ext-gfm-tables-0.21.0.jar thymeleaf-3.1.3.RELEASE.jar og
  nl-3.3.4.jar javassist-3.29.0-GA.jar attoparser-2.0.7.RELEASE.jar unbes
  cape-1.1.6.RELEASE.jar xmlsec-3.0.6.jar woodstox-core-7.0.0.jar stax2-a
- pi-4.2.2.jar wildfhir-service-0.6.0-SNAPSHOT.jar joda-time-2.12.5.jar o
- khttp-4.10.0.jar okio-jvm-3.0.0.jar kotlin-stdlib-jdk8-1.6.10.jar kotli
- n-stdlib-1.6.20.jar annotations-13.0.jar kotlin-stdlib-common-1.5.31.ja
- r kotlin-stdlib-jdk7-1.6.10.jar logging-interceptor-4.10.0.jar commons-
- jcs-core-2.0-beta-1.jar commons-logging-1.2.jar mysql-connector-j-8.2.0
- .jar protobuf-java-3.21.9.jar commonmark-0.12.1.jar commonmark-ext-gfm-
- tables-0.12.1.jar txtmark-0.13.jar zjsonpatch-0.4.11.jar xml-patch-0.3.
- 1.jar jdom2-2.0.6.jar
+ pi-4.2.2.jar wildfhir-service-0.6.0.jar joda-time-2.12.5.jar okhttp-4.1
+ 0.0.jar okio-jvm-3.0.0.jar kotlin-stdlib-jdk8-1.6.10.jar kotlin-stdlib-
+ 1.6.20.jar annotations-13.0.jar kotlin-stdlib-common-1.5.31.jar kotlin-
+ stdlib-jdk7-1.6.10.jar logging-interceptor-4.10.0.jar commons-jcs-core-
+ 2.0-beta-1.jar commons-logging-1.2.jar mysql-connector-j-8.2.0.jar prot
+ obuf-java-3.21.9.jar commonmark-0.12.1.jar commonmark-ext-gfm-tables-0.
+ 12.1.jar txtmark-0.13.jar zjsonpatch-0.4.11.jar xml-patch-0.3.1.jar jdo
+ m2-2.0.6.jar
 
