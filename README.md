@@ -3,7 +3,7 @@
 WildFHIR Community Edition
 ==========================
 
-AEGIS WildFHIR - an open-source implementation of the FHIR R4 specification in Java. 
+AEGIS WildFHIR - an open-source implementation of the FHIR R4 (v4.0.1 Official) specification in Java. 
 
 This project is Open Source, licensed under the Apache Software License 2.0.
 
@@ -11,9 +11,9 @@ This project is Open Source, licensed under the Apache Software License 2.0.
 
 ## CI/CD
 
-### [Touchstone Testing Results for 0.5.0](https://touchstone.aegis.net/touchstone/conformance/detail?suite=FHIR4-0-1-Basic-Server&sVersion=30&testSystem=663543e06ee10f32b53012de&supportedOnly=false&cb=%2fFHIR4-0-1-Standard-Server&format=ALL&published=true)
+### [Touchstone Testing Results for 0.6.0](https://touchstone.aegis.net/touchstone/conformance/detail?suite=FHIR4-0-1-Basic-Server&supportedOnly=false&sVersion=38&testSystem=663543e06ee10f32b53012de&published=true&format=ALL&cb=%2FFHIR4-0-1-Standard-Server)
 
-<img src="WildFHIRCEv0.5.0Badge2025-03-27.png" width="286" height="430">
+<img src="WildFHIRCEv0.6.0Badge2026-03-18.png" width="286" height="430">
 
 
 ## Containerized Version of WildFHIR
@@ -28,11 +28,11 @@ Docker images may be found here:
 
 Complete project documentation is available on our [Wiki][link-docs].
 
-The WildFHIR CE R4 Implementation Guide is available here: [wildfhir.wildfhir.org/ig/wildfhirce](https://wildfhir.wildfhir.org/ig/wildfhirce)
+The WildFHIR CE R4 Implementation Guide v0.6.0 is available here: [wildfhir.wildfhir.org/ig/wildfhirce](https://wildfhir.wildfhir.org/ig/wildfhirce)
 
 A demonstration of this project is available here: [wildfhir.wildfhir.org/r4](https://wildfhir.wildfhir.org/r4)
 
-Please see [this wiki page][Link-wiki] for information on where to get help with WildFHIR.
+Please see [this wiki page][Link-wiki] for information on where to get help with WildFHIR CE.
 
 Contact our team [here][Link-support] for information on commercial support.
 
