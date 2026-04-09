@@ -34,9 +34,18 @@ package net.aegis.fhir.rest;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.util.List;
 import java.util.logging.Logger;
+
+import org.apache.commons.io.IOUtils;
+import org.hl7.fhir.r4.formats.JsonParser;
+import org.hl7.fhir.r4.formats.XmlParser;
+import org.hl7.fhir.r4.model.Base;
+import org.hl7.fhir.r4.model.OperationOutcome;
+import org.hl7.fhir.r4.model.Parameters;
+import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
+import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.StringType;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -49,24 +58,12 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-
 import net.aegis.fhir.model.Constants;
 import net.aegis.fhir.service.CodeService;
+import net.aegis.fhir.service.util.DebugUtil;
 import net.aegis.fhir.service.util.ServicesUtil;
 import net.aegis.fhir.service.validation.FHIRValidatorClient;
-
-import org.apache.commons.io.IOUtils;
-import org.hl7.fhir.r4.formats.JsonParser;
-import org.hl7.fhir.r4.formats.XmlParser;
-import org.hl7.fhir.r4.model.Base;
-import org.hl7.fhir.r4.model.OperationOutcome;
-import org.hl7.fhir.r4.model.Parameters;
-import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
-import org.hl7.fhir.r4.model.Resource;
-import org.hl7.fhir.r4.model.StringType;
 
 /**
  * JAX-RS FHIR Path Evaluator Service
@@ -86,9 +83,6 @@ public class FHIRPathEvaluatorRESTService {
 	@Inject
     CodeService codeService;
 
-	@Context
-	private UriInfo context;
-
 	/**
 	 * Validate POST operation where expected parameters are passed in a FHIR Parameters payload.
 	 *
@@ -101,11 +95,11 @@ public class FHIRPathEvaluatorRESTService {
 	@POST
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, "application/fhir+xml", "application/fhir+json", "application/xml+fhir", "application/json+fhir", "text/xml", "text/json" })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, "application/fhir+xml", "application/fhir+json", "application/xml+fhir", "application/json+fhir", "text/xml", "text/json" })
-	public Response evaluatePost(@Context HttpServletRequest request, @Context HttpHeaders headers, @Context UriInfo ui, InputStream evalutateInputStream) {
+	public Response evaluatePost(@Context HttpServletRequest request, @Context HttpHeaders headers, InputStream evalutateInputStream) {
 
 		log.fine("[START] FHIRPathEvaluatorRESTService.evaluatePost()");
 
-		debugRequest(request, headers, null);
+        DebugUtil.debugRequest(request, headers, null);
 
 		Response.ResponseBuilder builder = null;
 		String contentType = null;
@@ -131,7 +125,7 @@ public class FHIRPathEvaluatorRESTService {
 			contentType = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.CONTENT_TYPE);
 
 			// Get the produces type based on the request Accept
-			producesType = ServicesUtil.INSTANCE.getProducesType(headers, context);
+			producesType = ServicesUtil.INSTANCE.getProducesType(headers, request);
 
 			// Validate input format check; instantiate the Parameters
 			Parameters inputParameters = null;
@@ -307,88 +301,6 @@ public class FHIRPathEvaluatorRESTService {
 		log.fine("[END] FHIRPathEvaluatorRESTService.evaluatePost()");
 
 		return builder.build();
-	}
-
-	/**
-	 * <p>
-	 * Prints the contents of the received request.<br/>
-	 * Useful for debugging purposes.
-	 * </p>
-	 *
-	 * @param request
-	 * @param headers
-	 * @param validateInputStream
-	 * @return payload
-	 */
-	private String debugRequest(HttpServletRequest request, HttpHeaders headers, InputStream evalutateInputStream) {
-
-		StringBuilder debugString = new StringBuilder();
-		String payload = null;
-
-		if (request != null) {
-			debugString.append("----- HTTP REQUEST -----\n");
-
-			debugString.append("Remote host is '" + (request.getRemoteHost() == null ? "NOT FOUND" : request.getRemoteHost()) + "'\n");
-		}
-
-		if (headers != null) {
-			debugString.append("----- HTTP HEADERS (REQUEST) -----\n");
-
-			MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
-
-			if (requestHeaders != null) {
-
-				for (String key : requestHeaders.keySet()) {
-
-					for (String keyValue : requestHeaders.get(key)) {
-						debugString.append("header(" + key + ") is " + keyValue + "\n");
-					}
-				}
-			}
-		}
-
-		debugString.append("----- REQUEST URL -----\n");
-		StringBuilder sbRequestUrl = new StringBuilder(context.getAbsolutePath().getPath());
-		MultivaluedMap<String, String> queryParams = context.getQueryParameters();
-		if (queryParams != null && !queryParams.isEmpty()) {
-			sbRequestUrl.append("?");
-			boolean first = true;
-			for (String key : queryParams.keySet()) {
-				if (!first) {
-					sbRequestUrl.append("&");
-				}
-				debugString.append("param(" + key + ") is " + queryParams.get(key).toString() + "\n");
-				sbRequestUrl.append(key).append("=").append(queryParams.get(key).toString());
-			}
-		}
-		debugString.append("Absolute Path: " + sbRequestUrl.toString() + "\n");
-		debugString.append("Request URL: " + context.getRequestUri().toString() + "\n");
-
-		debugString.append("----- PAYLOAD -----\n");
-		if (evalutateInputStream != null) {
-			try {
-				StringWriter writer = new StringWriter();
-				String encoding = "UTF-8";
-				IOUtils.copy(evalutateInputStream, writer, encoding);
-				payload = writer.toString();
-
-				debugString.append(payload);
-				debugString.append("\n");
-
-			}
-			catch (Exception e) {
-				log.severe("Exception parsing payload! " + e.getMessage());
-				e.printStackTrace();
-			}
-		}
-		else {
-			debugString.append(">> NO PAYLOAD OR SNIPPED <<\n");
-		}
-
-		// log level FINE used for debug
-		log.fine(debugString.toString());
-
-		return payload;
 	}
 
 }

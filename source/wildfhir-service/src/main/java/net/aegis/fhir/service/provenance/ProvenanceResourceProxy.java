@@ -38,9 +38,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.UriInfo;
-
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -53,6 +50,8 @@ import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.Signature;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
 import net.aegis.fhir.service.audit.AuditEventConstant;
 import net.aegis.fhir.service.util.ServicesUtil;
 import net.aegis.fhir.service.util.UUIDUtil;
@@ -71,11 +70,11 @@ public abstract class ProvenanceResourceProxy {
 	public static String userName = "WildFHIR System";
 	public static String site = "wildfhirce-site";
 
-	public abstract Resource generateProvenance(UriInfo context, HttpHeaders headers, String payload, String resourceType, String locationPath, String resourceId, Identifier identifier, String operation) throws Exception;
+	public abstract Resource generateProvenance(HttpServletRequest request, HttpHeaders headers, String payload, String resourceType, String locationPath, String resourceId, Identifier identifier, String operation) throws Exception;
 
 	public abstract CodeableConcept getActivity();
 
-	protected void prepareBasicData(Provenance fhirResource, UriInfo context, HttpHeaders headers, String locationPath, Identifier identifier) throws Exception {
+	protected void prepareBasicData(Provenance fhirResource, HttpServletRequest request, HttpHeaders headers, String locationPath, Identifier identifier) throws Exception {
 
 		try {
 			//URI location = response.getLocation();

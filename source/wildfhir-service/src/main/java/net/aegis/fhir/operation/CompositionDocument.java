@@ -41,14 +41,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MultivaluedHashMap;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-
-import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.formats.IParser.OutputStyle;
+import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.model.Base;
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
@@ -73,6 +67,11 @@ import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.Signature;
 import org.hl7.fhir.r4.model.UriType;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.service.BatchService;
 import net.aegis.fhir.service.CodeService;
@@ -87,7 +86,6 @@ import net.aegis.fhir.service.narrative.FHIRNarrativeGeneratorClient;
 import net.aegis.fhir.service.provenance.ProvenanceService;
 import net.aegis.fhir.service.util.ServicesUtil;
 import net.aegis.fhir.service.util.UUIDUtil;
-//import net.aegis.fhir.service.validation.FHIRValidatorClient;
 
 /**
  * @author richard.ettema
@@ -97,11 +95,8 @@ public class CompositionDocument extends ResourceOperationProxy {
 
 	private Logger log = Logger.getLogger("CompositionDocument");
 
-	/* (non-Javadoc)
-	 * @see net.aegis.fhir.operation.ResourceOperationProxy#executeOperation(jakarta.ws.rs.core.UriInfo, jakarta.ws.rs.core.HttpHeaders, net.aegis.fhir.service.ResourceService, net.aegis.fhir.service.ResourcemetadataService, net.aegis.fhir.service.BatchService, net.aegis.fhir.service.TransactionService, net.aegis.fhir.service.CodeService, net.aegis.fhir.service.audit.AuditEventService, net.aegis.fhir.service.provenance.ProvenanceService, net.aegis.fhir.service.ConformanceService, java.lang.String, java.lang.String, java.lang.String, org.hl7.fhir.r4.model.Parameters, org.hl7.fhir.r4.model.Resource, java.lang.String, java.lang.String, boolean, java.lang.StringBuffer)
-	 */
 	@Override
-	public Parameters executeOperation(UriInfo context, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
+	public Parameters executeOperation(HttpServletRequest request, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
 
 		log.fine("[START] CompositionDocument.executeOperation()");
 
@@ -118,7 +113,7 @@ public class CompositionDocument extends ResourceOperationProxy {
 			 * If inputParameters is null, attempt to extract parameters from context
 			 */
 			if (inputParameters == null) {
-				inputParameters = getParametersFromQueryParams(context);
+				inputParameters = getParametersFromQueryParams(request);
 			}
 
 			// inputParameters is optional; if present, extract max value
@@ -194,11 +189,11 @@ public class CompositionDocument extends ResourceOperationProxy {
 				else {
 					// check for search criteria, perform search - assign found Composition exact match, else generate OperationOutcome.issue
 					// Get the query parameters that represent the search criteria
-					MultivaluedMap<String, String> queryParams = context.getQueryParameters();
+					MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
 
 					// if queryParams not empty, perform search
 					if (!queryParams.isEmpty()) {
-						resourceContainer = resourceService.search(queryParams, null, null, null, "Composition", context.getRequestUri().toString(), null, null, null, false);
+						resourceContainer = resourceService.search(queryParams, null, null, "Composition", request.getRequestURL().toString(), null, null, null, false);
 
 						// check for found matches and only one exact match
 						if (resourceContainer != null && resourceContainer.getBundle() != null &&
@@ -225,7 +220,7 @@ public class CompositionDocument extends ResourceOperationProxy {
 			if (composition != null) {
 
 				// call getCompositionDocument method
-				documentResource = this.getCompositionDocument(composition, context, resourceService, codeService, persist, graph, returnedDirective);
+				documentResource = this.getCompositionDocument(composition, request, resourceService, codeService, persist, graph, returnedDirective);
 			}
 			else {
 				if (issue == null) {
@@ -272,7 +267,7 @@ public class CompositionDocument extends ResourceOperationProxy {
 
 	/**
 	 * @param composition
-	 * @param context
+	 * @param request
 	 * @param resourceService
 	 * @param resourcemetadataService
 	 * @param codeService
@@ -282,7 +277,7 @@ public class CompositionDocument extends ResourceOperationProxy {
 	 * @return Constructed Document Bundle or OperationOutcome Resource
 	 * @throws Exception
 	 */
-	private Resource getCompositionDocument(Composition composition, UriInfo context, ResourceService resourceService, CodeService codeService, BooleanType persist, UriType graph, StringBuffer returnedDirective) throws Exception {
+	private Resource getCompositionDocument(Composition composition, HttpServletRequest request, ResourceService resourceService, CodeService codeService, BooleanType persist, UriType graph, StringBuffer returnedDirective) throws Exception {
 
 		log.fine("[START] CompositionDocument.getCompositionDocument()");
 
@@ -300,7 +295,13 @@ public class CompositionDocument extends ResourceOperationProxy {
 			return existingResource;
 		}
 
-		String locationPath = context.getRequestUri().toString();
+		// Construct full request URL with any query parameters
+		StringBuffer requestURL = request.getRequestURL();
+		String queryString = request.getQueryString();
+		if (queryString != null) {
+			requestURL.append("?").append(queryString);
+		}
+		String locationPath = requestURL.toString();
 
 		// Extract base url from locationPath for use in Bundle.entry.fullUrl element
 		String baseUrl = ServicesUtil.INSTANCE.extractBaseURL(locationPath, "Composition");
@@ -849,7 +850,7 @@ public class CompositionDocument extends ResourceOperationProxy {
 			List<String[]> validParams = new ArrayList<String[]>();
 			List<String[]> invalidParams = new ArrayList<String[]>();
 
-			List<net.aegis.fhir.model.Resource> resources = resourceService.searchQuery(searchParams, null, null, "Bundle", false, null, null, null, validParams, invalidParams);
+			List<net.aegis.fhir.model.Resource> resources = resourceService.searchQuery(searchParams, null, "Bundle", false, null, null, null, validParams, invalidParams);
 
 			log.fine("CompositionDocument - existing document resources.size() = " + resources.size());
 
@@ -896,11 +897,11 @@ public class CompositionDocument extends ResourceOperationProxy {
 
 	/**
 	 *
-	 * @param context
+	 * @param request
 	 * @return <code>Parameters</code>
 	 * @throws Exception
 	 */
-	private Parameters getParametersFromQueryParams(UriInfo context) throws Exception {
+	private Parameters getParametersFromQueryParams(HttpServletRequest request) throws Exception {
 
 		log.fine("[START] CompositionDocument.getParametersFromQueryParams()");
 
@@ -908,7 +909,7 @@ public class CompositionDocument extends ResourceOperationProxy {
 		Parameters queryParameters = new Parameters();
 
 		try {
-			if (context != null) {
+			if (request != null) {
 				log.fine("Checking for document parameters...");
 
 				/*
@@ -919,7 +920,7 @@ public class CompositionDocument extends ResourceOperationProxy {
 				UriType graph = null;
 
 				// Get the query parameters that represent the search criteria
-				MultivaluedMap<String, String> queryParams = context.getQueryParameters();
+				MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
 
 				if (queryParams != null && queryParams.size() > 0) {
 					ParametersParameterComponent parameter = null;

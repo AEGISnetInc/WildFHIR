@@ -39,13 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.Invocation.Builder;
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MultivaluedHashMap;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.http.NameValuePair;
@@ -57,6 +50,12 @@ import org.hl7.fhir.r4.model.Resource;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import net.aegis.fhir.model.Constants;
 import net.aegis.fhir.service.CodeService;
 import net.aegis.fhir.service.util.ServicesUtil;

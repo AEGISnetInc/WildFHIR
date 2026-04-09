@@ -37,10 +37,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.UriInfo;
-
 import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
@@ -50,6 +46,9 @@ import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
 import org.hl7.fhir.r4.model.UrlType;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MultivaluedMap;
 import net.aegis.fhir.message.ProcessMessageProxy;
 import net.aegis.fhir.message.ProcessMessageProxyObjectFactory;
 import net.aegis.fhir.service.BatchService;
@@ -70,11 +69,8 @@ public class GlobalProcessMessage extends ResourceOperationProxy {
 
 	private Logger log = Logger.getLogger("GlobalProcessMessage");
 
-	/* (non-Javadoc)
-	 * @see net.aegis.fhir.operation.ResourceOperationProxy#executeOperation(jakarta.ws.rs.core.UriInfo, jakarta.ws.rs.core.HttpHeaders, net.aegis.fhir.service.ResourceService, net.aegis.fhir.service.ResourcemetadataService, net.aegis.fhir.service.BatchService, net.aegis.fhir.service.TransactionService, net.aegis.fhir.service.CodeService, net.aegis.fhir.service.audit.AuditEventService, net.aegis.fhir.service.provenance.ProvenanceService, net.aegis.fhir.service.ConformanceService, java.lang.String, java.lang.String, java.lang.String, org.hl7.fhir.r4.model.Parameters, org.hl7.fhir.r4.model.Resource, java.lang.String, java.lang.String, boolean, java.lang.StringBuffer)
-	 */
 	@Override
-	public Parameters executeOperation(UriInfo context, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
+	public Parameters executeOperation(HttpServletRequest request, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
 
         log.fine("[START] GlobalProcessMessage.executeOperation()");
 
@@ -120,7 +116,7 @@ public class GlobalProcessMessage extends ResourceOperationProxy {
 								messageEvent = requestMessageHeader.getEventCoding().getCode();
 
 								// extract parameters from context (if present)
-								inputParameters = getParametersFromQueryParams(context);
+								inputParameters = getParametersFromQueryParams(request);
 
 								// inputParameters is optional; if present, extract async and/or response-url values
 								if (inputParameters != null && inputParameters.hasParameter()) {
@@ -174,7 +170,7 @@ public class GlobalProcessMessage extends ResourceOperationProxy {
 								if (messageProxy != null) {
 									log.fine("Calling messageProxy.processMessage()");
 
-									messageResponseBundle = messageProxy.processMessage(context, resourceService, resourcemetadataService, codeService, requestBundle, async, responseUrl);
+									messageResponseBundle = messageProxy.processMessage(request, resourceService, resourcemetadataService, codeService, requestBundle, async, responseUrl);
 								}
 								else {
 									// Something went wrong
@@ -249,11 +245,11 @@ public class GlobalProcessMessage extends ResourceOperationProxy {
 
 	/**
 	 *
-	 * @param context
+	 * @param request
 	 * @return <code>Parameters</code>
 	 * @throws Exception
 	 */
-	private Parameters getParametersFromQueryParams(UriInfo context) throws Exception {
+	private Parameters getParametersFromQueryParams(HttpServletRequest request) throws Exception {
 
 		log.fine("[START] GlobalProcessMessage.getParametersFromQueryParams()");
 
@@ -261,7 +257,7 @@ public class GlobalProcessMessage extends ResourceOperationProxy {
 		Parameters queryParameters = new Parameters();
 
 		try {
-			if (context != null) {
+			if (request != null) {
 				log.fine("Checking for operation parameters...");
 
 				/*
@@ -271,7 +267,7 @@ public class GlobalProcessMessage extends ResourceOperationProxy {
 				UrlType responseUrl = null;
 
 				// Get the query parameters that represent the search criteria
-				MultivaluedMap<String, String> queryParams = context.getQueryParameters();
+				MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
 
 				if (queryParams != null && queryParams.size() > 0) {
 					Set<Entry<String, List<String>>> paramSet = queryParams.entrySet();

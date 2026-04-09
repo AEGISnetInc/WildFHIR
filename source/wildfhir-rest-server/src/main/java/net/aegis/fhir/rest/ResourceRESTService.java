@@ -33,7 +33,6 @@
 package net.aegis.fhir.rest;
 
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.logging.Logger;
@@ -55,14 +54,11 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-
 import net.aegis.fhir.service.CodeService;
 import net.aegis.fhir.service.RESTBatchTransactionOps;
 import net.aegis.fhir.service.RESTResourceOps;
+import net.aegis.fhir.service.util.DebugUtil;
 import net.aegis.fhir.service.util.ServicesUtil;
-
-import org.apache.commons.io.IOUtils;
 
 /**
  * JAX-RS Resource Service
@@ -87,9 +83,6 @@ public class ResourceRESTService {
 	@Inject
 	RESTResourceOps resourceOps;
 
-	@Context
-	private UriInfo context;
-
 	/**
 	 * This method supports when the base path is invoked and handles two use cases:
 	 * <ul>
@@ -100,23 +93,22 @@ public class ResourceRESTService {
 	 *
 	 * @param request
 	 * @param headers
-	 * @param ui
 	 * @return <code>Response</code>
 	 */
 	@GET
 	@Path("/")
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, "application/fhir+xml", "application/fhir+json", "application/xml+fhir", "application/json+fhir", "text/xml", "text/json" })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, "application/fhir+xml", "application/fhir+json", "application/xml+fhir", "application/json+fhir", "text/xml", "text/json" })
-	public Response baseUrl(@Context HttpServletRequest request, @Context HttpHeaders headers, @Context UriInfo ui) {
+	public Response baseUrl(@Context HttpServletRequest request, @Context HttpHeaders headers) {
 
 		log.fine("[START] ResourceRESTService.baseUrl()");
 
 		Response response = null;
 
-		debugRequest(request, headers, null);
+		DebugUtil.debugRequest(request, headers, null);
 
 		// Get the query parameters that represent the search criteria
-		MultivaluedMap<String, String> queryParams = ui.getQueryParameters();
+		MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
 
 		if (queryParams != null && queryParams.size() > 0) {
 			/*
@@ -125,9 +117,9 @@ public class ResourceRESTService {
 			try {
 				// Validate request fhir version with supported fhir version
 				if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-					response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+					response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 				} else {
-					response = resourceOps.search(headers, ui, null, null);
+					response = resourceOps.search(request, headers, null, null);
 				}
 			}
 			catch (Exception e) {
@@ -138,7 +130,7 @@ public class ResourceRESTService {
 			/*
 			 * Re-direct to client
 			 */
-			String locationPath = ui.getAbsolutePath().toString();
+			String locationPath = request.getRequestURL().toString();
 			log.fine("Absolute Path is " + locationPath);
 
 			String lastChar = locationPath.substring(locationPath.length() - 1, locationPath.length());
@@ -166,7 +158,6 @@ public class ResourceRESTService {
 	 *
 	 * @param request
 	 * @param headers
-	 * @param ui
 	 * @param resourceType
 	 * @param resourceId
 	 * @return <code>Response</code>
@@ -175,13 +166,13 @@ public class ResourceRESTService {
 	@Path("{resourceType}/{id}")
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, "application/fhir+xml", "application/fhir+json", "application/xml+fhir", "application/json+fhir", "text/xml", "text/json" })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, "application/fhir+xml", "application/fhir+json", "application/xml+fhir", "application/json+fhir", "text/xml", "text/json" })
-	public Response read(@Context HttpServletRequest request, @Context HttpHeaders headers, @Context UriInfo ui, @PathParam("resourceType") String resourceType, @PathParam("id") String resourceId) {
+	public Response read(@Context HttpServletRequest request, @Context HttpHeaders headers, @PathParam("resourceType") String resourceType, @PathParam("id") String resourceId) {
 
 		log.fine("[START] ResourceRESTService.read(" + resourceType + ", " + resourceId + ")");
 
 		Response response = null;
 
-		debugRequest(request, headers, null);
+		DebugUtil.debugRequest(request, headers, null);
 
 		/*
 		 * Check for GET search using "_search" - INVALID ACCORDING TO THE SPEC! BUT IT SEEMS SOME CLIENTS ARE SENDING THIS
@@ -190,9 +181,9 @@ public class ResourceRESTService {
 			try {
 				// Validate request fhir version with supported fhir version
 				if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-					response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+					response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 				} else {
-					response = resourceOps.search(headers, ui, null, resourceType);
+					response = resourceOps.search(request, headers, null, resourceType);
 				}
 			}
 			catch (Exception e) {
@@ -204,9 +195,9 @@ public class ResourceRESTService {
 			try {
 				// Validate request fhir version with supported fhir version
 				if(!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-					response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+					response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 				} else {
-					response = resourceOps.resourceTypeRead(context, headers, null, null, resourceId, resourceType);
+					response = resourceOps.resourceTypeRead(request, headers, null, null, resourceId, resourceType);
 				}
 			}
 			catch (Exception e) {
@@ -222,7 +213,6 @@ public class ResourceRESTService {
 	 *
 	 * @param request
 	 * @param headers
-	 * @param ui
 	 * @param compartment
 	 * @param resourceId
 	 * @param resourceType
@@ -232,20 +222,20 @@ public class ResourceRESTService {
 	@Path("{compartment}/{id}/{resourceType}")
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, "application/fhir+xml", "application/fhir+json", "application/xml+fhir", "application/json+fhir", "text/xml", "text/json" })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, "application/fhir+xml", "application/fhir+json", "application/xml+fhir", "application/json+fhir", "text/xml", "text/json" })
-	public Response compartment(@Context HttpServletRequest request, @Context HttpHeaders headers, @Context UriInfo ui, @PathParam("compartment") String compartment, @PathParam("id") String resourceId, @PathParam("resourceType") String resourceType) {
+	public Response compartment(@Context HttpServletRequest request, @Context HttpHeaders headers, @PathParam("compartment") String compartment, @PathParam("id") String resourceId, @PathParam("resourceType") String resourceType) {
 
 		log.fine("[START] ResourceRESTService.compartment(" + compartment + ", " + resourceId + ", " + resourceType + ")");
 
 		Response response = null;
 
-		debugRequest(request, headers, null);
+		DebugUtil.debugRequest(request, headers, null);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
-				response = resourceOps.compartment(request, headers, ui, compartment, resourceId, resourceType);
+				response = resourceOps.compartment(request, headers, compartment, resourceId, resourceType);
 			}
 		}
 		catch (Exception e) {
@@ -275,14 +265,14 @@ public class ResourceRESTService {
 
 		Response response = null;
 
-		debugRequest(request, headers, null);
+		DebugUtil.debugRequest(request, headers, null);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
-				response = resourceOps.resourceTypeVRead(context, headers, resourceId, versionId, resourceType);
+				response = resourceOps.resourceTypeVRead(request, headers, resourceId, versionId, resourceType);
 			}
 		}
 		catch (Exception e) {
@@ -316,14 +306,14 @@ public class ResourceRESTService {
 
 		Response response = null;
 
-		String payload = debugRequest(request, headers, resourceInputStream);
+		String payload = DebugUtil.debugRequest(request, headers, resourceInputStream);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
-				response = resourceOps.update(context, headers, null, null, resourceId, payload, resourceType);
+				response = resourceOps.update(request, headers, null, null, resourceId, payload, resourceType);
 			}
 		}
 		catch (Exception e) {
@@ -357,14 +347,14 @@ public class ResourceRESTService {
 
 		Response response = null;
 
-		debugRequest(request, headers, resourceInputStream, null, false);
+		DebugUtil.debugRequest(request, headers, resourceInputStream, null, false);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
-				response = resourceOps.patch(context, headers, resourceId, resourceInputStream, resourceType);
+				response = resourceOps.patch(request, headers, resourceId, resourceInputStream, resourceType);
 			}
 		}
 		catch (Exception e) {
@@ -397,14 +387,14 @@ public class ResourceRESTService {
 
 		Response response = null;
 
-		String payload = debugRequest(request, headers, resourceInputStream);
+		String payload = DebugUtil.debugRequest(request, headers, resourceInputStream);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
-				response = resourceOps.update(context, headers, null, null, null, payload, resourceType);
+				response = resourceOps.update(request, headers, null, null, null, payload, resourceType);
 			}
 		}
 		catch (Exception e) {
@@ -433,14 +423,14 @@ public class ResourceRESTService {
 
 		Response response = null;
 
-		debugRequest(request, headers, null);
+		DebugUtil.debugRequest(request, headers, null);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
-				response = resourceOps.delete(context, headers, null, resourceId, resourceType);
+				response = resourceOps.delete(request, headers, null, resourceId, resourceType);
 			}
 		}
 		catch (Exception e) {
@@ -467,14 +457,14 @@ public class ResourceRESTService {
 
 		Response response = null;
 
-		debugRequest(request, headers, null);
+		DebugUtil.debugRequest(request, headers, null);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
-				response = resourceOps.delete(context, headers, null, null, resourceType);
+				response = resourceOps.delete(request, headers, null, null, resourceType);
 			}
 		}
 		catch (Exception e) {
@@ -503,14 +493,14 @@ public class ResourceRESTService {
 
 		Response response = null;
 
-		debugRequest(request, headers, null);
+		DebugUtil.debugRequest(request, headers, null);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
-				response = resourceOps.history(context, headers, null, resourceId, resourceType);
+				response = resourceOps.history(request, headers, null, resourceId, resourceType);
 			}
 		}
 		catch (Exception e) {
@@ -538,14 +528,14 @@ public class ResourceRESTService {
 
 		Response response = null;
 
-		debugRequest(request, headers, null);
+		DebugUtil.debugRequest(request, headers, null);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
-				response = resourceOps.history(context, headers, null, null, resourceType);
+				response = resourceOps.history(request, headers, null, null, resourceType);
 			}
 		}
 		catch (Exception e) {
@@ -572,14 +562,14 @@ public class ResourceRESTService {
 
 		Response response = null;
 
-		debugRequest(request, headers, null);
+		DebugUtil.debugRequest(request, headers, null);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
-				response = resourceOps.history(context, headers, null, null, null);
+				response = resourceOps.history(request, headers, null, null, null);
 			}
 		}
 		catch (Exception e) {
@@ -611,14 +601,14 @@ public class ResourceRESTService {
 
 		Response response = null;
 
-		String payload = debugRequest(request, headers, resourceInputStream, null, true);
+		String payload = DebugUtil.debugRequest(request, headers, resourceInputStream, null, true);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
-				response = batchTransactionOps.batchTransaction(context, headers, payload);
+				response = batchTransactionOps.batchTransaction(request, headers, payload);
 			}
 		}
 		catch (Exception e) {
@@ -651,14 +641,14 @@ public class ResourceRESTService {
 
 		Response response = null;
 
-		String payload = debugRequest(request, headers, resourceInputStream);
+		String payload = DebugUtil.debugRequest(request, headers, resourceInputStream);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
-				response = resourceOps.create(context, headers, null, payload, resourceType, null);
+				response = resourceOps.create(request, headers, null, payload, resourceType, null);
 			}
 		}
 		catch (Exception e) {
@@ -673,7 +663,6 @@ public class ResourceRESTService {
 	 *
 	 * @param request
 	 * @param headers
-	 * @param ui
 	 * @param resourceType
 	 * @return <code>Response</code>
 	 */
@@ -681,20 +670,20 @@ public class ResourceRESTService {
 	@Path("{resourceType}")
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, "application/fhir+xml", "application/fhir+json", "application/xml+fhir", "application/json+fhir", "text/xml", "text/json" })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, "application/fhir+xml", "application/fhir+json", "application/xml+fhir", "application/json+fhir", "text/xml", "text/json" })
-	public Response searchGet(@Context HttpServletRequest request, @Context HttpHeaders headers, @Context UriInfo ui, @PathParam("resourceType") String resourceType) {
+	public Response searchGet(@Context HttpServletRequest request, @Context HttpHeaders headers, @PathParam("resourceType") String resourceType) {
 
 		log.fine("[START] ResourceRESTService.searchGet(" + resourceType + ")");
 
 		Response response = null;
 
-		debugRequest(request, headers, null);
+		DebugUtil.debugRequest(request, headers, null);
 
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
-				response = resourceOps.search(headers, ui, null, resourceType);
+				response = resourceOps.search(request, headers, null, resourceType);
 			}
 		}
 		catch (Exception e) {
@@ -714,7 +703,6 @@ public class ResourceRESTService {
 	 *
 	 * @param request
 	 * @param headers
-	 * @param ui
 	 * @param resourceType
 	 * @param form
 	 * @return <code>Response</code>
@@ -723,13 +711,13 @@ public class ResourceRESTService {
 	@Path("{resourceType}/_search")
 	@Consumes({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, "application/fhir+xml", "application/fhir+json", "application/xml+fhir", "application/json+fhir", "text/xml", "text/json", MediaType.APPLICATION_FORM_URLENCODED, MediaType.APPLICATION_OCTET_STREAM })
 	@Produces({ MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, "application/fhir+xml", "application/fhir+json", "application/xml+fhir", "application/json+fhir", "text/xml", "text/json" })
-	public Response searchPost(@Context HttpServletRequest request, @Context HttpHeaders headers, @Context UriInfo ui, @PathParam("resourceType") String resourceType, MultivaluedMap<String, String> form) {
+	public Response searchPost(@Context HttpServletRequest request, @Context HttpHeaders headers, @PathParam("resourceType") String resourceType, MultivaluedMap<String, String> form) {
 
 		log.fine("[START] ResourceRESTService.searchPost(" + resourceType + ")");
 
 		Response response = null;
 
-		debugRequest(request, headers, null, form);
+		DebugUtil.debugRequest(request, headers, null, form);
 
 		try {
 			// Get the content type based on the request Content-Type
@@ -737,15 +725,15 @@ public class ResourceRESTService {
 
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
 				if (contentType != null && contentType.equals(MediaType.APPLICATION_FORM_URLENCODED)) {
 					// Process form payload if present
-					response = resourceOps.search(headers, ui, null, resourceType, form);
+					response = resourceOps.search(request, headers, null, resourceType, form);
 				}
 				else {
 					// Allow POST search without a form payload
-					response = resourceOps.search(headers, ui, null, resourceType);
+					response = resourceOps.search(request, headers, null, resourceType);
 				}
 			}
 		}
@@ -754,133 +742,6 @@ public class ResourceRESTService {
 		}
 
 		return response;
-	}
-
-	/**
-	 * <p>
-	 * Prints the contents of the received request.<br/>
-	 * Useful for debugging purposes.
-	 * </p>
-	 *
-	 * @param request
-	 * @param headers
-	 * @param response
-	 */
-	private String debugRequest(HttpServletRequest request, HttpHeaders headers, InputStream resourceInputStream) {
-		return debugRequest(request, headers, resourceInputStream, null);
-	}
-
-	/**
-	 * <p>
-	 * Prints the contents of the received request.<br/>
-	 * Useful for debugging purposes.
-	 * </p>
-	 *
-	 * @param request
-	 * @param headers
-	 * @param response
-	 * @param form
-	 */
-	private String debugRequest(HttpServletRequest request, HttpHeaders headers, InputStream resourceInputStream, MultivaluedMap<String, String> form) {
-		return debugRequest(request, headers, resourceInputStream, form, false);
-	}
-
-	/**
-	 * <p>
-	 * Prints the contents of the received request.<br/>
-	 * Useful for debugging purposes.
-	 * </p>
-	 *
-	 * @param request
-	 * @param headers
-	 * @param response
-	 * @param form
-	 * @param snipped
-	 */
-	private String debugRequest(HttpServletRequest request, HttpHeaders headers, InputStream resourceInputStream, MultivaluedMap<String, String> form, boolean snipped) {
-
-		String payload = null;
-
-		if (request != null) {
-			log.fine("----- HTTP REQUEST -----");
-
-			log.fine("Remote host is '" + (request.getRemoteHost() == null ? "NOT FOUND" : request.getRemoteHost()) + "'");
-		}
-
-		if (headers != null) {
-			log.fine("----- HTTP HEADERS (REQUEST) -----");
-
-			MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
-
-			if (requestHeaders != null) {
-
-				for (String key : requestHeaders.keySet()) {
-
-					for (String keyValue : requestHeaders.get(key)) {
-						log.fine("header(" + key + ") is " + keyValue);
-
-					}
-				}
-			}
-		}
-
-		log.fine("----- REQUEST URL -----");
-		StringBuilder sbRequestUrl = new StringBuilder(context.getAbsolutePath().getPath());
-		MultivaluedMap<String, String> queryParams = context.getQueryParameters();
-		if (queryParams != null && !queryParams.isEmpty()) {
-			sbRequestUrl.append("?");
-			boolean first = true;
-			for (String key : queryParams.keySet()) {
-				if (!first) {
-					sbRequestUrl.append("&");
-				}
-				log.fine(key + " is " + queryParams.get(key).toString());
-				sbRequestUrl.append(key).append("=").append(queryParams.get(key).toString());
-			}
-		}
-
-		log.fine("Absolute Path: " + sbRequestUrl.toString());
-		log.fine("Request URL: " + context.getRequestUri().toString());
-
-		log.fine("----- FORM INPUT PARAMS -----");
-		if (form != null && !form.isEmpty()) {
-			sbRequestUrl.append("?");
-			boolean first = true;
-			for (String key : form.keySet()) {
-				if (!first) {
-					sbRequestUrl.append("&");
-				}
-				log.fine("input(" + key + ") is " + form.get(key).toString());
-				sbRequestUrl.append(key).append("=").append(form.get(key).toString());
-			}
-		}
-
-		if (resourceInputStream != null) {
-			try {
-				StringWriter writer = new StringWriter();
-				String encoding = "UTF-8";
-				IOUtils.copy(resourceInputStream, writer, encoding);
-				payload = writer.toString();
-
-				if (snipped == false) {
-					log.fine("----- PAYLOAD -----");
-					log.fine(payload);
-				}
-				else {
-					log.fine("----- PAYLOAD ----- [snipped]");
-				}
-
-			}
-			catch (Exception e) {
-				log.severe("Exception parsing payload! " + e.getMessage());
-				e.printStackTrace();
-			}
-		}
-		else {
-			log.fine(">> NO PAYLOAD <<");
-		}
-
-		return payload;
 	}
 
 }

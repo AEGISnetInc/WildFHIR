@@ -32,19 +32,16 @@
  */
 package net.aegis.fhir.service.subscription.r5.topic;
 
-import java.util.logging.Logger;
-
-import jakarta.ws.rs.core.MultivaluedMap;
-
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.formats.IParser.OutputStyle;
+import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryRequestComponent;
@@ -63,6 +60,7 @@ import org.hl7.fhir.r5.model.SubscriptionStatus;
 import org.hl7.fhir.r5.model.SubscriptionStatus.SubscriptionNotificationType;
 import org.hl7.fhir.r5.model.SubscriptionStatus.SubscriptionStatusNotificationEventComponent;
 
+import jakarta.ws.rs.core.MultivaluedMap;
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.service.CodeService;
 import net.aegis.fhir.service.ResourceService;
@@ -76,7 +74,7 @@ import net.aegis.fhir.service.util.UUIDUtil;
 /**
  * WildFHIR CE Subscription Topic for default processing based on the
  * FHIR R5 Subscription Backport to R4 Implementation Guide
- * 
+ *
  * @author richard.ettema
  *
  */
@@ -128,7 +126,7 @@ public class WildfhirCESubscriptionTopic extends SubscriptionTopicProxy {
 			MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
 
 			// Search for all SubscriptionStatus with subscription = current Subscription; return as searchset Bundle
-			ResourceContainer rc = resourceService.search(queryParams, null, null, null, "SubscriptionStatus", "INTERNAL", null, null, null, false);
+			ResourceContainer rc = resourceService.search(queryParams, null, null, "SubscriptionStatus", "INTERNAL", null, null, null, false);
 
 			// Check for matched SubscriptionStatus resources
 			if (rc != null && rc.getBundle() != null && !rc.getBundle().getEntry().isEmpty()) {
@@ -158,7 +156,7 @@ public class WildfhirCESubscriptionTopic extends SubscriptionTopicProxy {
 			queryParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
 
 			// Search for all Consent matching criteria; return as searchset Bundle
-			rc = resourceService.search(queryParams, null, null, null, "Consent", "INTERNAL", null, null, null, false);
+			rc = resourceService.search(queryParams, null, null, "Consent", "INTERNAL", null, null, null, false);
 
 			// Check for matched Subscription resources
 			if (rc != null && rc.getBundle() != null && !rc.getBundle().getEntry().isEmpty()) {

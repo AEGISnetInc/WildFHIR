@@ -32,14 +32,14 @@
  */
 package net.aegis.fhir.service.provenance;
 
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.UriInfo;
-
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Provenance;
 import org.hl7.fhir.r4.model.Resource;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
 
 /**
  * @author richard.ettema
@@ -48,11 +48,11 @@ import org.hl7.fhir.r4.model.Resource;
 public class ProvenanceAppendResource extends ProvenanceResourceProxy {
 
 	@Override
-	public Resource generateProvenance(UriInfo context, HttpHeaders headers, String payload, String resourceType, String locationPath, String resourceId, Identifier identifier, String operation) throws Exception {
+	public Resource generateProvenance(HttpServletRequest request, HttpHeaders headers, String payload, String resourceType, String locationPath, String resourceId, Identifier identifier, String operation) throws Exception {
 
 		Provenance fhirResource = new Provenance();
 
-		prepareBasicData(fhirResource, context, headers, locationPath, identifier);
+		prepareBasicData(fhirResource, request, headers, locationPath, identifier);
 
 		return fhirResource;
 	}

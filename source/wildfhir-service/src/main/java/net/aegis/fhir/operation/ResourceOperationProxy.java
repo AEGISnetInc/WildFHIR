@@ -32,9 +32,11 @@
  */
 package net.aegis.fhir.operation;
 
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.UriInfo;
+import org.hl7.fhir.r4.model.Parameters;
+import org.hl7.fhir.r4.model.Resource;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
 import net.aegis.fhir.service.BatchService;
 import net.aegis.fhir.service.CodeService;
 import net.aegis.fhir.service.ConformanceService;
@@ -43,9 +45,6 @@ import net.aegis.fhir.service.ResourcemetadataService;
 import net.aegis.fhir.service.TransactionService;
 import net.aegis.fhir.service.audit.AuditEventService;
 import net.aegis.fhir.service.provenance.ProvenanceService;
-
-import org.hl7.fhir.r4.model.Parameters;
-import org.hl7.fhir.r4.model.Resource;
 
 /**
  * @author richard.ettema
@@ -56,7 +55,7 @@ public abstract class ResourceOperationProxy {
 	/**
 	 * Execute the operation
 	 *
-	 * @param context
+	 * @param request
 	 * @param headers
 	 * @param resourceService
 	 * @param resourcemetadataService
@@ -78,6 +77,6 @@ public abstract class ResourceOperationProxy {
 	 * @return <code>Parameters</code>
 	 * @throws Exception
 	 */
-	public abstract Parameters executeOperation(UriInfo context, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception;
+	public abstract Parameters executeOperation(HttpServletRequest request, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception;
 
 }

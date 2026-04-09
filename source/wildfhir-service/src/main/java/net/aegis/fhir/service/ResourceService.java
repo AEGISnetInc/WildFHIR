@@ -50,6 +50,28 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.hl7.fhir.r4.formats.IParser.OutputStyle;
+import org.hl7.fhir.r4.formats.JsonParser;
+import org.hl7.fhir.r4.formats.XmlParser;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
+import org.hl7.fhir.r4.model.Bundle.BundleEntryRequestComponent;
+import org.hl7.fhir.r4.model.Bundle.BundleEntryResponseComponent;
+import org.hl7.fhir.r4.model.Bundle.BundleEntrySearchComponent;
+import org.hl7.fhir.r4.model.Bundle.BundleLinkComponent;
+import org.hl7.fhir.r4.model.Bundle.BundleType;
+import org.hl7.fhir.r4.model.Bundle.HTTPVerb;
+import org.hl7.fhir.r4.model.Bundle.SearchEntryMode;
+import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.Meta;
+import org.hl7.fhir.r4.model.OperationOutcome;
+import org.hl7.fhir.r4.model.ResourceType;
+import org.hl7.fhir.r4.model.Subscription;
+import org.hl7.fhir.r4.model.Subscription.SubscriptionStatus;
+
 import jakarta.annotation.Resource;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionManagement;
@@ -67,29 +89,6 @@ import jakarta.transaction.Status;
 import jakarta.transaction.UserTransaction;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.hl7.fhir.r4.formats.IParser.OutputStyle;
-import org.hl7.fhir.r4.formats.JsonParser;
-import org.hl7.fhir.r4.formats.XmlParser;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.DateTimeType;
-import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r4.model.Bundle.BundleEntryRequestComponent;
-import org.hl7.fhir.r4.model.Bundle.BundleEntryResponseComponent;
-import org.hl7.fhir.r4.model.Bundle.BundleEntrySearchComponent;
-import org.hl7.fhir.r4.model.Bundle.BundleLinkComponent;
-import org.hl7.fhir.r4.model.Bundle.BundleType;
-import org.hl7.fhir.r4.model.Bundle.HTTPVerb;
-import org.hl7.fhir.r4.model.Bundle.SearchEntryMode;
-import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.OperationOutcome;
-import org.hl7.fhir.r4.model.ResourceType;
-import org.hl7.fhir.r4.model.Subscription;
-import org.hl7.fhir.r4.model.Subscription.SubscriptionStatus;
-
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.paging.PagingHistoryManager;
@@ -1771,18 +1770,17 @@ public class ResourceService {
 	 *
 	 * @param parameterMap
 	 * @param formMap
-	 * @param authPatientMap
 	 * @param orderedParams
 	 * @param resourceType
-	 * @param requestUrl
 	 * @param locationPath
 	 * @param count_
 	 * @param page_
+	 * @param summary_
 	 * @param isCompartment
 	 * @return <code>ResourceContainer</code>
 	 * @throws Exception
 	 */
-	public ResourceContainer search(MultivaluedMap<String,String> parameterMap, MultivaluedMap<String,String> formMap, MultivaluedMap<String,String> authPatientMap, List<NameValuePair> orderedParams, String resourceType, String locationPath, Integer count_, Integer page_, String summary_, boolean isCompartment) throws Exception {
+	public ResourceContainer search(MultivaluedMap<String,String> parameterMap, MultivaluedMap<String,String> formMap, List<NameValuePair> orderedParams, String resourceType, String locationPath, Integer count_, Integer page_, String summary_, boolean isCompartment) throws Exception {
 
 		log.fine("[START] ResourceService.search");
 
@@ -1827,7 +1825,7 @@ public class ResourceService {
 				List<String[]> validParams = new ArrayList<String[]>();
 				List<String[]> invalidParams = new ArrayList<String[]>();
 
-				List<net.aegis.fhir.model.Resource> resources = searchQuery(parameterMap, formMap, authPatientMap, resourceType, isCompartment, _include, _includeIterate, _revinclude, validParams, invalidParams);
+				List<net.aegis.fhir.model.Resource> resources = searchQuery(parameterMap, formMap, resourceType, isCompartment, _include, _includeIterate, _revinclude, validParams, invalidParams);
 
 				log.fine("ResourceService.search - resources.size() = " + resources.size());
 
@@ -2407,7 +2405,7 @@ public class ResourceService {
 
 												// Search for resources with reverse search
 												placeHolderValidParams = new ArrayList<String[]>();
-												List<net.aegis.fhir.model.Resource> revSearch = this.searchQuery(queryParams, null, null, source, false, null, null, null, placeHolderValidParams, null);
+												List<net.aegis.fhir.model.Resource> revSearch = this.searchQuery(queryParams, null, source, false, null, null, null, placeHolderValidParams, null);
 
 												if (revSearch != null && revSearch.size() > 0) {
 													log.fine("-->-->-->--> _revinclude reverse search found matches (" + revSearch.size() + ")");
@@ -3008,7 +3006,6 @@ public class ResourceService {
 	 *
 	 * @param parameterMap
 	 * @param formMap
-	 * @param authPatientMap
 	 * @param resourceType
 	 * @param isCompartment
 	 * @param _include
@@ -3020,7 +3017,7 @@ public class ResourceService {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	public List<net.aegis.fhir.model.Resource> searchQuery(MultivaluedMap<String,String> parameterMap, MultivaluedMap<String,String> formMap, MultivaluedMap<String,String> authPatientMap, String resourceType, boolean isCompartment, List<String[]> _include, List<String[]> _includeIterate, List<String[]> _revinclude, List<String[]> validParams, List<String[]> invalidParams) throws Exception {
+	public List<net.aegis.fhir.model.Resource> searchQuery(MultivaluedMap<String,String> parameterMap, MultivaluedMap<String,String> formMap, String resourceType, boolean isCompartment, List<String[]> _include, List<String[]> _includeIterate, List<String[]> _revinclude, List<String[]> validParams, List<String[]> invalidParams) throws Exception {
 
 		log.fine("[START] ResourceService.searchQuery");
 
@@ -3067,7 +3064,7 @@ public class ResourceService {
 
 			Set<Entry<String, List<String>>> paramSet = new HashSet<Entry<String, List<String>>>();
 
-			if ((parameterMap != null && parameterMap.size() > 0) || (formMap != null && formMap.size() > 0) || (authPatientMap != null && authPatientMap.size() > 0)) {
+			if ((parameterMap != null && parameterMap.size() > 0) || (formMap != null && formMap.size() > 0)) {
 
 				HashMap<String, String[]> nearParams = new HashMap<String, String[]>();
 
@@ -4646,63 +4643,6 @@ public class ResourceService {
 					}
 
 					// Close compartment temp select criteria
-					sbCreateTempWhereCriteria.append(")");
-				}
-
-				// Check for and process authorization patient map parameters
-				// Authorization Patient Map Parameters DO NOT COUNT IN OVERALL PARAMETER COUNT
-				if (authPatientMap != null && authPatientMap.size() > 0) {
-					// Initialize authorization patient map temp select criteria
-					if (sbCreateTempWhereCriteria.length() > 5) {
-						iExists++;
-						sExists = sExistsBase + iExists;
-
-						sbCreateTempSelect.append(", resourcemetadata ").append(sExists);
-						sbCreateTempWhereCriteria.append(" and ");
-						if (iExists > 1) {
-							sbCreateTempWhereJoin.append(" and ");
-						}
-						sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
-					}
-					sbCreateTempWhereCriteria.append("(");
-
-					// Build temp select criteria to or these parameters
-					Set<Entry<String, List<String>>> authPatientSet = authPatientMap.entrySet();
-
-					boolean firstEntry = true;
-					for (Entry<String, List<String>> entry : authPatientSet) {
-
-						// Need to check for single-quote characters; if found, escape with leading single-quote
-						String sqValue = "";
-						if (entry.getValue().get(0).contains("'")) {
-							sqValue = entry.getValue().get(0).replaceAll("'", "''");
-						}
-						else {
-							sqValue = entry.getValue().get(0);
-						}
-
-						// Now check for comma-delimited value
-						String[] valueList = sqValue.split("\\,");
-						int valueListInd = 0;
-
-						// Generate criteria for each comma-delimited value
-						for (String listValue : valueList) {
-							log.fine("   --> authorization patient map param listValue[" + valueListInd + "] = " + listValue);
-
-							if (!firstEntry) {
-								sbCreateTempWhereCriteria.append(" or ");
-							}
-
-							// FHIR-158 - Force parameter value comparison to be case-sensitive via MySQL binary qualifier on string value
-							sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramName = '").append(entry.getKey()).append("' and ")
-								.append(sExists).append(".paramValue like binary '%").append(listValue).append("%')");
-
-							firstEntry = false;
-							valueListInd++;
-						}
-					}
-
-					// Close authorization patient map temp select criteria
 					sbCreateTempWhereCriteria.append(")");
 				}
 

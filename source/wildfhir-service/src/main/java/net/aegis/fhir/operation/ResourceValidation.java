@@ -34,15 +34,24 @@ package net.aegis.fhir.operation;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Logger;
 
+import org.hl7.fhir.r4.formats.JsonParser;
+import org.hl7.fhir.r4.formats.XmlParser;
+import org.hl7.fhir.r4.model.CodeType;
+import org.hl7.fhir.r4.model.OperationOutcome;
+import org.hl7.fhir.r4.model.Parameters;
+import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
+import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.UriType;
+import org.hl7.fhir.r4.utils.NarrativeGenerator;
+
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.service.BatchService;
 import net.aegis.fhir.service.CodeService;
@@ -55,16 +64,6 @@ import net.aegis.fhir.service.provenance.ProvenanceService;
 import net.aegis.fhir.service.util.ServicesUtil;
 import net.aegis.fhir.service.validation.FHIRValidatorClient;
 
-import org.hl7.fhir.r4.formats.JsonParser;
-import org.hl7.fhir.r4.formats.XmlParser;
-import org.hl7.fhir.r4.model.CodeType;
-import org.hl7.fhir.r4.model.OperationOutcome;
-import org.hl7.fhir.r4.model.Parameters;
-import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
-import org.hl7.fhir.r4.model.Resource;
-import org.hl7.fhir.r4.model.UriType;
-import org.hl7.fhir.r4.utils.NarrativeGenerator;
-
 /**
  * Resource validation generic proxy implementation
  *
@@ -75,11 +74,8 @@ public class ResourceValidation extends ResourceOperationProxy {
 
 	private Logger log = Logger.getLogger("ResourceValidation");
 
-	/* (non-Javadoc)
-	 * @see net.aegis.fhir.operation.ResourceOperationProxy#executeOperation(jakarta.ws.rs.core.UriInfo, jakarta.ws.rs.core.HttpHeaders, net.aegis.fhir.service.ResourceService, net.aegis.fhir.service.ResourcemetadataService, net.aegis.fhir.service.BatchService, net.aegis.fhir.service.TransactionService, net.aegis.fhir.service.CodeService, net.aegis.fhir.service.audit.AuditEventService, net.aegis.fhir.service.provenance.ProvenanceService, net.aegis.fhir.service.ConformanceService, java.lang.String, java.lang.String, java.lang.String, org.hl7.fhir.r4.model.Parameters, org.hl7.fhir.r4.model.Resource, java.lang.String, java.lang.String, boolean, java.lang.StringBuffer)
-	 */
 	@Override
-	public Parameters executeOperation(UriInfo context, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
+	public Parameters executeOperation(HttpServletRequest request, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
 
 		log.fine("[START] ResourceValidation.executeOperation()");
 
@@ -90,7 +86,7 @@ public class ResourceValidation extends ResourceOperationProxy {
 			 * If inputParameters is null, attempt to extract parameters from context
 			 */
 			if (inputParameters == null) {
-				inputParameters = getParametersFromQueryParams(context);
+				inputParameters = getParametersFromQueryParams(request);
 			}
 
 			/*
@@ -629,11 +625,11 @@ public class ResourceValidation extends ResourceOperationProxy {
 
 	/**
 	 *
-	 * @param context
+	 * @param request
 	 * @return <code>Parameters</code>
 	 * @throws Exception
 	 */
-	private Parameters getParametersFromQueryParams(UriInfo context) throws Exception {
+	private Parameters getParametersFromQueryParams(HttpServletRequest request) throws Exception {
 
 		log.fine("[START] ResourceOperationsRESTService.getParametersFromQueryParams()");
 
@@ -641,7 +637,7 @@ public class ResourceValidation extends ResourceOperationProxy {
 		Parameters queryParameters = new Parameters();
 
 		try {
-			if (context != null) {
+			if (request != null) {
 				log.fine("Checking for validate parameters...");
 
 				/*
@@ -651,7 +647,7 @@ public class ResourceValidation extends ResourceOperationProxy {
 				UriType uri = null;
 
 				// Get the query parameters that represent the search criteria
-				MultivaluedMap<String, String> queryParams = context.getQueryParameters();
+				MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
 
 				if (queryParams != null && queryParams.size() > 0) {
 					Set<Entry<String, List<String>>> paramSet = queryParams.entrySet();

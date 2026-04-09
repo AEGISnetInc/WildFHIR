@@ -38,10 +38,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.hl7.fhir.r4.formats.IParser.OutputStyle;
+import org.hl7.fhir.r4.formats.XmlParser;
+import org.hl7.fhir.r4.model.CanonicalType;
+import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Meta;
+import org.hl7.fhir.r4.model.Parameters;
+import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
+import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.Type;
+
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.service.BatchService;
 import net.aegis.fhir.service.CodeService;
@@ -53,16 +62,6 @@ import net.aegis.fhir.service.audit.AuditEventService;
 import net.aegis.fhir.service.provenance.ProvenanceService;
 import net.aegis.fhir.service.util.UUIDUtil;
 
-import org.hl7.fhir.r4.formats.XmlParser;
-import org.hl7.fhir.r4.formats.IParser.OutputStyle;
-import org.hl7.fhir.r4.model.CanonicalType;
-import org.hl7.fhir.r4.model.Coding;
-import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.Parameters;
-import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
-import org.hl7.fhir.r4.model.Resource;
-import org.hl7.fhir.r4.model.Type;
-
 /**
  * @author richard.ettema
  *
@@ -73,17 +72,14 @@ public class ResourceMetaAdd extends ResourceOperationProxy {
 
 	private ResourceService resourceService;
 
-	/* (non-Javadoc)
-	 * @see net.aegis.fhir.operation.ResourceOperationProxy#executeOperation(jakarta.ws.rs.core.UriInfo, jakarta.ws.rs.core.HttpHeaders, net.aegis.fhir.service.ResourceService, net.aegis.fhir.service.ResourcemetadataService, net.aegis.fhir.service.BatchService, net.aegis.fhir.service.TransactionService, net.aegis.fhir.service.CodeService, net.aegis.fhir.service.audit.AuditEventService, net.aegis.fhir.service.provenance.ProvenanceService, net.aegis.fhir.service.ConformanceService, java.lang.String, java.lang.String, java.lang.String, org.hl7.fhir.r4.model.Parameters, org.hl7.fhir.r4.model.Resource, java.lang.String, java.lang.String, boolean, java.lang.StringBuffer)
-	 */
 	@Override
-	public Parameters executeOperation(UriInfo context, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
+	public Parameters executeOperation(HttpServletRequest request, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
 
 		log.fine("[START] ResourceMetaAdd.executeOperation()");
 
 		this.resourceService = resourceService;
 
-		String baseUrl = context.getAbsolutePath().toString();
+		String baseUrl = request.getRequestURL().toString();
 
 		Parameters out = new Parameters();
 

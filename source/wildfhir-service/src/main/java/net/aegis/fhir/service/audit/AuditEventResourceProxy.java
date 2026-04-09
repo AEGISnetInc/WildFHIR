@@ -37,27 +37,26 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r4.model.AuditEvent;
+import org.hl7.fhir.r4.model.AuditEvent.AuditEventAction;
+import org.hl7.fhir.r4.model.AuditEvent.AuditEventActionEnumFactory;
+import org.hl7.fhir.r4.model.AuditEvent.AuditEventAgentComponent;
+import org.hl7.fhir.r4.model.AuditEvent.AuditEventAgentNetworkComponent;
+import org.hl7.fhir.r4.model.AuditEvent.AuditEventAgentNetworkType;
+import org.hl7.fhir.r4.model.AuditEvent.AuditEventOutcome;
+import org.hl7.fhir.r4.model.AuditEvent.AuditEventOutcomeEnumFactory;
+import org.hl7.fhir.r4.model.AuditEvent.AuditEventSourceComponent;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Enumeration;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
-import org.hl7.fhir.r4.model.AuditEvent.AuditEventAction;
-import org.hl7.fhir.r4.model.AuditEvent.AuditEventActionEnumFactory;
-import org.hl7.fhir.r4.model.AuditEvent.AuditEventOutcome;
-import org.hl7.fhir.r4.model.AuditEvent.AuditEventOutcomeEnumFactory;
-import org.hl7.fhir.r4.model.AuditEvent.AuditEventSourceComponent;
-import org.hl7.fhir.r4.model.AuditEvent.AuditEventAgentComponent;
-import org.hl7.fhir.r4.model.AuditEvent.AuditEventAgentNetworkComponent;
-import org.hl7.fhir.r4.model.AuditEvent.AuditEventAgentNetworkType;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
 import net.aegis.fhir.service.util.ServicesUtil;
 
 /**
@@ -74,11 +73,11 @@ public abstract class AuditEventResourceProxy {
 	public static String userName = "WildFHIR System";
 	public static String site = "wildfhirce-site";
 
-	public abstract Resource generateAuditEvent(UriInfo context, HttpHeaders headers, String payload, String resourceType, boolean response, String resourceId, Identifier identifier, String operation) throws Exception;
+	public abstract Resource generateAuditEvent(HttpServletRequest request, HttpHeaders headers, String payload, String resourceType, boolean response, String resourceId, Identifier identifier, String operation) throws Exception;
 
 	public abstract AuditEventAction setAction();
 
-	protected void prepareBasicData(AuditEvent audit, UriInfo context, HttpHeaders headers, boolean response) throws Exception {
+	protected void prepareBasicData(AuditEvent audit, HttpServletRequest request, HttpHeaders headers, boolean response) throws Exception {
 
 		try {
 			audit.setType(getType(headers));

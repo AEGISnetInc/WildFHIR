@@ -10,12 +10,11 @@
 	<p:tab id="fhirMetadataTab" title="metadata" dynamic="true" cache="false">
 		<h:form id="fhirMetadataForm" prependId="false" style="width:100%;border:none;">
 			<p:message for="fhirMetadataForm" />
-			<p></p>
-			<p:panelGrid id="fhirMetadataGridPanel1" columns="1" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel" width="100%">
-				<p><h:outputText value="Get FHIR CapabilityStatement Statement" style="padding:2px;text-decoration:underline;font-weight:bold;font-size:16px;" /></p>
-			</p:panelGrid>
+			<h:outputText value="FHIR Interaction - Get FHIR CapabilityStatement Statement"
+				style="padding:0px;font-style:italic;font-weight:bold;font-size:14px;" />
 
-			<p:panelGrid id="fhirMetadataGridPanel2" layout="tabular" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel" width="100%">
+			<p></p>
+			<p:panelGrid id="fhirMetadataGridPanel1" layout="tabular" columns="2" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel" width="100%">
 				<h:outputText value="Format Type (Default JSON): * " />
 				<p:selectOneMenu required="false" label="Select Format Type" value="#{context.selectedFormatType}" maxlength="10" style="width:80px;text-align:left;padding-right:30px;">
 					<f:selectItems value="#{context.formatTypes}" var="formatType" itemLabel="#{formatType}         " itemValue="#{formatType}" />
@@ -31,7 +30,7 @@
 				<p:commandButton value="Open New Page" icon="ui-icon-disk" actionListener="#{controller.fhirMetadataNewPage}"/>
 			</p:panelGrid>
 
-			<p:panelGrid id="fhirMetadataGridPanel3" columns="1" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel" width="100%">
+			<p:panelGrid id="fhirMetadataGridPanel2" columns="1" border="0" cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel" width="100%">
 				<p><h:outputText value="CapabilityStatement not found" rendered="#{context.resourceResults.size() == 0}"/></p>
 			</p:panelGrid>
 

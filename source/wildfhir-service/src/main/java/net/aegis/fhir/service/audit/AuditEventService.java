@@ -34,16 +34,15 @@ package net.aegis.fhir.service.audit;
 
 import java.util.logging.Logger;
 
+import org.hl7.fhir.r4.model.Identifier;
+
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionManagement;
 import jakarta.ejb.TransactionManagementType;
 import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.core.Response.Status;
-
-import org.hl7.fhir.r4.model.Identifier;
-
 import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.service.CodeService;
@@ -75,7 +74,7 @@ public class AuditEventService {
 	 * @param operation
 	 * @throws Exception
 	 */
-	public void createAuditEvent(UriInfo context, HttpHeaders headers, String payload, String resourceType, boolean response, String resourceId, Identifier identifier, String operation) throws Exception {
+	public void createAuditEvent(HttpServletRequest request, HttpHeaders headers, String payload, String resourceType, boolean response, String resourceId, Identifier identifier, String operation) throws Exception {
 
 		Resource resource = null;
 		ResourceContainer resCon = null;
@@ -83,7 +82,7 @@ public class AuditEventService {
 
 		try {
 			if (codeService.isSupported("auditEventServiceEnabled")) {
-				resource = AuditEventServiceUtil.INSTANCE.generateAuditEvent(context, headers, payload, resourceType, response, resourceId, identifier, operation);
+				resource = AuditEventServiceUtil.INSTANCE.generateAuditEvent(request, headers, payload, resourceType, response, resourceId, identifier, operation);
 
 				// Get server base url from code table configuration
 				baseUrl = codeService.getCodeValue("baseUrl");

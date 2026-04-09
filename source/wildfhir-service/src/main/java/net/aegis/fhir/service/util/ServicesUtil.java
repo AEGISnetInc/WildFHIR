@@ -36,44 +36,27 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.ProcessBuilder;
 import java.net.InetAddress;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MultivaluedHashMap;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-
-import net.aegis.fhir.model.Constants;
-import net.aegis.fhir.model.ResourceType;
-import net.aegis.fhir.service.narrative.FHIRNarrativeGeneratorClient;
-
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.http.NameValuePair;
-import org.hl7.fhir.r4.formats.IParser.OutputStyle;
 import org.hl7.fhir.convertors.factory.VersionConvertorFactory_40_50;
+import org.hl7.fhir.r4.formats.IParser.OutputStyle;
 import org.hl7.fhir.r4.formats.JsonParser;
 import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.CodeType;
-import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
-import org.hl7.fhir.r5.model.SubscriptionStatus;
-import org.hl7.fhir.r5.model.Enumerations.SubscriptionStatusCodes;
-import org.hl7.fhir.r5.model.SubscriptionStatus.SubscriptionNotificationType;
-import org.hl7.fhir.r5.model.SubscriptionStatus.SubscriptionStatusNotificationEventComponent;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Composition;
@@ -82,9 +65,23 @@ import org.hl7.fhir.r4.model.InstantType;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.Parameters;
+import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
+import org.hl7.fhir.r5.model.Enumerations.SubscriptionStatusCodes;
+import org.hl7.fhir.r5.model.SubscriptionStatus;
+import org.hl7.fhir.r5.model.SubscriptionStatus.SubscriptionNotificationType;
+import org.hl7.fhir.r5.model.SubscriptionStatus.SubscriptionStatusNotificationEventComponent;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+import net.aegis.fhir.model.Constants;
+import net.aegis.fhir.model.ResourceType;
+import net.aegis.fhir.service.narrative.FHIRNarrativeGeneratorClient;
 
 /**
  * ServicesUtil - Common methods used across the services layer
@@ -127,7 +124,6 @@ public enum ServicesUtil {
 		catch (Exception e) {
 			// Handle generic exceptions
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -159,7 +155,6 @@ public enum ServicesUtil {
 		catch (Exception e) {
 			// Handle generic exceptions
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -211,7 +206,6 @@ public enum ServicesUtil {
 		catch (Exception e) {
 			// Handle generic exceptions
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -257,7 +251,6 @@ public enum ServicesUtil {
 		catch (Exception e) {
 			// Handle generic exceptions
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -267,43 +260,52 @@ public enum ServicesUtil {
 	/**
 	 *
 	 * @param headers
-	 * @param context
+	 * @param request
 	 * @return produces type based on request Accept header value
 	 * @throws Exception
 	 */
-	public String getProducesType(HttpHeaders headers, UriInfo context) throws Exception {
+	public String getProducesType(HttpHeaders headers, HttpServletRequest request) throws Exception {
 
-		log.fine("[START] ServicesUtil.getProducesType(headers, context)");
+		log.fine("[START] ServicesUtil.getProducesType(headers, request)");
 
-		return getProducesType(headers, context, null);
+		return getProducesType(headers, request, null);
 	}
 
 	/**
 	 *
 	 * @param headers
-	 * @param context
+	 * @param request
+	 * @param formMap
 	 * @return produces type based on request Accept header value
 	 * @throws Exception
 	 */
-	public String getProducesType(HttpHeaders headers, UriInfo context, MultivaluedMap<String,String> formMap) throws Exception {
+	public String getProducesType(HttpHeaders headers, HttpServletRequest request, MultivaluedMap<String,String> formMap) throws Exception {
 
-		log.fine("[START] ServicesUtil.getProducesType(headers, context, formMap)");
+		log.fine("[START] ServicesUtil.getProducesType(headers, request, formMap)");
 
 		// Default produces type to XML
 		String producesType = null;
 
 		try {
-			if (context != null || formMap != null) {
+			if (request != null || formMap != null) {
 				log.fine("Checking for _format parameter...");
 
 				// Get the query parameters that represent the search criteria
 				Set<Entry<String, List<String>>> paramSet = new HashSet<Entry<String, List<String>>>();
 
-				if (context != null) {
-					MultivaluedMap<String, String> queryParams = context.getQueryParameters();
+				if (request != null) {
+					MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
+					String rawQuery = request.getQueryString();
 
-					if (queryParams != null && queryParams.size() > 0) {
-						Set<Entry<String, List<String>>> parameterSet = queryParams.entrySet();
+					if (rawQuery != null && !rawQuery.isEmpty()) {
+					    for (String pair : rawQuery.split("&")) {
+					        int idx = pair.indexOf("=");
+					        String key   = idx > 0 ? pair.substring(0, idx) : pair;
+					        String value = idx > 0 ? pair.substring(idx + 1) : "";
+					        queryParams.add(key, value);
+					    }
+
+					    Set<Entry<String, List<String>>> parameterSet = queryParams.entrySet();
 
 						paramSet.addAll(parameterSet);
 					}
@@ -370,7 +372,7 @@ public enum ServicesUtil {
 						producesType = "text/xml";
 					}
 					else {
-						// If json or xml in contentType, return current R3+ valid mime type
+						// If json or xml in contentType, return current STU3 valid mime type
 						if (contentType.indexOf("json") >= 0) {
 							producesType = "application/fhir+json";
 						}
@@ -394,7 +396,6 @@ public enum ServicesUtil {
 		catch (Exception e) {
 			// Handle generic exceptions
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -404,25 +405,33 @@ public enum ServicesUtil {
 	/**
 	 *
 	 * @param paramName
-	 * @param context
+	 * @param request
 	 * @return string value of uri parameter; null if not present
 	 * @throws Exception
 	 */
-	public String getUriParameter(String paramName, UriInfo context) throws Exception {
+	public String getUriParameter(String paramName, HttpServletRequest request) throws Exception {
 
-		log.fine("[START] ServicesUtil.getUriParameter(" + paramName + ", context)");
+		log.fine("[START] ServicesUtil.getUriParameter(" + paramName + ", request)");
 
 		// Default parameter value to null
 		String paramValue = null;
 
 		try {
-			if (paramName != null && context != null) {
+			if (paramName != null && request != null) {
 				log.fine("Checking for " + paramName + " parameter...");
 
 				// Get the query parameters that represent the search criteria
-				MultivaluedMap<String, String> queryParams = context.getQueryParameters();
+				MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
+				String rawQuery = request.getQueryString();
 
-				if (queryParams != null && queryParams.size() > 0) {
+				if (rawQuery != null && !rawQuery.isEmpty()) {
+				    for (String pair : rawQuery.split("&")) {
+				        int idx = pair.indexOf("=");
+				        String key   = idx > 0 ? pair.substring(0, idx) : pair;
+				        String value = idx > 0 ? pair.substring(idx + 1) : "";
+				        queryParams.add(key, value);
+				    }
+
 					Set<Entry<String, List<String>>> paramSet = queryParams.entrySet();
 
 					for (Entry<String, List<String>> entry : paramSet) {
@@ -442,7 +451,6 @@ public enum ServicesUtil {
 		catch (Exception e) {
 			// Handle generic exceptions
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -487,7 +495,6 @@ public enum ServicesUtil {
 		catch (Exception e) {
 			// Handle generic exceptions
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -542,7 +549,6 @@ public enum ServicesUtil {
 		catch (Exception e) {
 			// Handle generic exceptions
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -1358,6 +1364,29 @@ public enum ServicesUtil {
 	}
 
 	/**
+	 * Return the query parameters from the Request as a MultivaluedMap
+	 *
+	 * @param request
+	 * @return MultivaluedMap
+	 */
+	public MultivaluedMap<String, String> parseRequestQuery(HttpServletRequest request) {
+
+		// Get the query parameters from the Request
+		MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<String, String>();
+		String rawQuery = request.getQueryString();
+		if (rawQuery != null && !rawQuery.isEmpty()) {
+			for (String pair : rawQuery.split("&")) {
+				int idx = pair.indexOf("=");
+				String key = idx > 0 ? pair.substring(0, idx) : pair;
+				String value = idx > 0 ? pair.substring(idx + 1) : "";
+				queryParams.add(key, value);
+			}
+		}
+
+		return queryParams;
+	}
+
+	/**
 	 * Returns the elapsed time as a formatted string
 	 *
 	 * @param startMillis
@@ -1394,15 +1423,17 @@ public enum ServicesUtil {
 	/**
 	 * build response for fhir version mismatch
 	 * @param headers
-	 * @return
+	 * @param request
+	 * @param supportedFhirVersion
+	 * @return Response
 	 * @throws Exception
 	 */
-	public Response fhirVersioMismatchedResponse(HttpHeaders headers, String supportedFhirVersion, UriInfo context) throws Exception {
+	public Response fhirVersioMismatchedResponse(HttpHeaders headers, HttpServletRequest request, String supportedFhirVersion) throws Exception {
 
 		log.fine("Begin ServicesUtil.fhirVersioNotnMismatchedResponse()");
 
 		Response.ResponseBuilder builder = null;
-		String producesType = getProducesType(headers, context);
+		String producesType = getProducesType(headers, request);
 
 		log.fine("fhirVersionMatched.producesType: " + producesType);
 
@@ -1480,8 +1511,10 @@ public enum ServicesUtil {
 			}
 		}
 		catch (Exception e) {
+			// Handle generic exceptions
 			log.severe(e.getMessage());
 			e.printStackTrace();
+			// Exception not thrown to allow operation to complete
 		}
 
 		log.fine("fhirVersionMatched:" + versionMatched);

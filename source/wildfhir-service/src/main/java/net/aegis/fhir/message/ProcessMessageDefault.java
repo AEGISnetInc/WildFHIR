@@ -34,12 +34,11 @@ package net.aegis.fhir.message;
 
 import java.util.logging.Logger;
 
-import jakarta.ws.rs.core.UriInfo;
-
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.UrlType;
 
+import jakarta.servlet.http.HttpServletRequest;
 import net.aegis.fhir.service.CodeService;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.ResourcemetadataService;
@@ -52,11 +51,8 @@ public class ProcessMessageDefault extends ProcessMessageProxy {
 
 	private Logger log = Logger.getLogger("ProcessMessageDefault");
 
-	/* (non-Javadoc)
-	 * @see net.aegis.fhir.message.ProcessMessageProxy#processMessage(jakarta.ws.rs.core.UriInfo, net.aegis.fhir.service.ResourceService, net.aegis.fhir.service.ResourcemetadataService, net.aegis.fhir.service.CodeService, org.hl7.fhir.r4.model.Bundle, org.hl7.fhir.r4.model.BooleanType, org.hl7.fhir.r4.model.UrlType)
-	 */
 	@Override
-	public Bundle processMessage(UriInfo context, ResourceService resourceService, ResourcemetadataService resourcemetadataService, CodeService codeService, Bundle requestBundle, BooleanType async, UrlType responseUrl) throws Exception {
+	public Bundle processMessage(HttpServletRequest request, ResourceService resourceService, ResourcemetadataService resourcemetadataService, CodeService codeService, Bundle requestBundle, BooleanType async, UrlType responseUrl) throws Exception {
 
         log.fine("[START] ProcessMessageDefault.processMessage()");
 
