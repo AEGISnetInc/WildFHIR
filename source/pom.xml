@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.aegis.fhir</groupId>
     <artifactId>wildfhir</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
     <packaging>pom</packaging>
     <name>WildFHIR</name>
     <description>AEGIS WildFHIR - an open-source implementation of the FHIR R4 specification in Java</description>
@@ -18,9 +18,9 @@
     </licenses>
 
     <properties>
-        <release.version>0.6.0</release.version>
+        <release.version>0.7.0</release.version>
 
-        <core.version>6.8.2</core.version>
+        <core.version>6.9.5</core.version>
 
         <!-- Explicitly declare encodings to avoid warning messages on build and to ensure consistent build -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -120,7 +120,7 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.17.0</version>
+            <version>2.25.3</version>
         </dependency>
 
         <!-- force use of commons-io 2.17.0 used in hapi-fhir-base; otherwise picks up 2.1 from resteasy-jaxrs dependency which causes errors due to missing IOUtils.toString() method -->
@@ -151,7 +151,7 @@
             <id>github</id>
             <url>https://maven.pkg.github.com/hapifhir/org.hl7.fhir.core/</url>
             <snapshots>
-                <enabled>false</enabled>
+                <enabled>true</enabled>
             </snapshots>
         </repository>
     </repositories>
