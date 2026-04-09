@@ -32,12 +32,11 @@
  */
 package net.aegis.fhir.message;
 
-import jakarta.ws.rs.core.UriInfo;
-
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.UrlType;
 
+import jakarta.servlet.http.HttpServletRequest;
 import net.aegis.fhir.service.CodeService;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.ResourcemetadataService;
@@ -51,7 +50,7 @@ public abstract class ProcessMessageProxy {
 	/**
 	 * Process the message based on the MessageHeader.eventCoding.code
 	 *
-	 * @param context
+	 * @param request
 	 * @param resourceService
 	 * @param resourcemetadataService
 	 * @param codeService
@@ -61,7 +60,7 @@ public abstract class ProcessMessageProxy {
 	 * @return <code>Bundle</code>
 	 * @throws Exception
 	 */
-	public abstract Bundle processMessage(UriInfo context, ResourceService resourceService, ResourcemetadataService resourcemetadataService, CodeService codeService, Bundle requestBundle, BooleanType async, UrlType responseUrl) throws Exception;
+	public abstract Bundle processMessage(HttpServletRequest request, ResourceService resourceService, ResourcemetadataService resourcemetadataService, CodeService codeService, Bundle requestBundle, BooleanType async, UrlType responseUrl) throws Exception;
 
 	/**
 	 * Process the message bundle to persist (save) the message bundle resource as-is and all

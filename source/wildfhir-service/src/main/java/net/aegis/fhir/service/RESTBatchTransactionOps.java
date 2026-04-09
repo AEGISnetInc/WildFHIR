@@ -38,20 +38,19 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.hl7.fhir.r4.formats.IParser.OutputStyle;
+import org.hl7.fhir.r4.formats.JsonParser;
+import org.hl7.fhir.r4.formats.XmlParser;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle.BundleType;
+import org.hl7.fhir.r4.model.OperationOutcome;
+import org.hl7.fhir.r4.model.Resource;
+
 import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-
-import org.hl7.fhir.r4.formats.JsonParser;
-import org.hl7.fhir.r4.formats.XmlParser;
-import org.hl7.fhir.r4.formats.IParser.OutputStyle;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.OperationOutcome;
-import org.hl7.fhir.r4.model.Resource;
-import org.hl7.fhir.r4.model.Bundle.BundleType;
-
 import net.aegis.fhir.model.Constants;
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.service.util.ServicesUtil;
@@ -75,13 +74,13 @@ public class RESTBatchTransactionOps {
     /**
      * This returns a <code>Bundle</code> with the found history contents for the resource type.
      *
-     * @param context
+     * @param request
      * @param headers
      * @param id
      * @param resourceType
      * @return <code>Response</code>
      */
-    public Response batchTransaction(UriInfo context, HttpHeaders headers, String payload) {
+    public Response batchTransaction(HttpServletRequest request, HttpHeaders headers, String payload) {
 
         log.fine("[START] RESTBatchTransactionOps.batchTransaction()");
 
@@ -103,7 +102,7 @@ public class RESTBatchTransactionOps {
 
 		try {
 			// Get the produces type based on the request Accept
-			producesType = ServicesUtil.INSTANCE.getProducesType(headers, context);
+			producesType = ServicesUtil.INSTANCE.getProducesType(headers, request);
 
 			/*
 			 * Global Batch, Transaction Concurrency Check
@@ -179,21 +178,21 @@ public class RESTBatchTransactionOps {
 
 		        		List<String> authMapPatient = null;
 
-		        		String locationPath = context.getRequestUri().toString();
+		        		String locationPath = request.getRequestURL().toString();
 
 						Bundle bundleToProcess = (Bundle) resource;
 
 						// If 'batch', call batch processing
 						if (bundleToProcess.hasType() && bundleToProcess.getType().equals(BundleType.BATCH)) {
 
-							ResourceContainer resourceContainer = batchService.batch(context, headers, contentType, producesType, bundleToProcess, locationPath, authMapPatient);
+							ResourceContainer resourceContainer = batchService.batch(request, headers, contentType, producesType, bundleToProcess, locationPath, authMapPatient);
 
 							builder = responseBundle(producesType, resourceContainer, locationPath, responseFhirVersion);
 						}
 						// Else if 'transaction', call transaction processing
 						else if (bundleToProcess.hasType() && bundleToProcess.getType().equals(BundleType.TRANSACTION)) {
 
-							ResourceContainer resourceContainer = transactionService.transaction(context, headers, contentType, producesType, bundleToProcess, locationPath, authMapPatient);
+							ResourceContainer resourceContainer = transactionService.transaction(request, headers, contentType, producesType, bundleToProcess, locationPath, authMapPatient);
 
 							builder = responseBundle(producesType, resourceContainer, locationPath, responseFhirVersion);
 						}

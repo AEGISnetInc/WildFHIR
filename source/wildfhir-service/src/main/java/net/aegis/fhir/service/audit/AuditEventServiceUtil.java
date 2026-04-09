@@ -34,14 +34,13 @@ package net.aegis.fhir.service.audit;
 
 import java.io.ByteArrayOutputStream;
 
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.UriInfo;
-
 import org.hl7.fhir.r4.formats.IParser.OutputStyle;
 import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.model.AuditEvent;
 import org.hl7.fhir.r4.model.Identifier;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
 import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.service.narrative.FHIRNarrativeGeneratorClient;
 
@@ -56,11 +55,11 @@ public enum AuditEventServiceUtil {
 	private AuditEventServiceUtil() {
 	}
 
-	public Resource generateAuditEvent(UriInfo context, HttpHeaders headers, String payload, String resourceType, boolean response, String resourceId, Identifier identifier, String operation) throws Exception {
+	public Resource generateAuditEvent(HttpServletRequest request, HttpHeaders headers, String payload, String resourceType, boolean response, String resourceId, Identifier identifier, String operation) throws Exception {
 		net.aegis.fhir.model.Resource resourceDomain = new net.aegis.fhir.model.Resource();
 		AuditEventResourceProxyObjectFactory objectFactory = new AuditEventResourceProxyObjectFactory();
 		AuditEventResourceProxy proxy = objectFactory.getAuditEventResourceProxy(resourceType, operation);
-		org.hl7.fhir.r4.model.Resource fhirModel = proxy.generateAuditEvent(context, headers, payload, resourceType, response, resourceId, identifier, operation);
+		org.hl7.fhir.r4.model.Resource fhirModel = proxy.generateAuditEvent(request, headers, payload, resourceType, response, resourceId, identifier, operation);
 
 		if (fhirModel != null) {
 			AuditEvent audit = (AuditEvent) fhirModel;

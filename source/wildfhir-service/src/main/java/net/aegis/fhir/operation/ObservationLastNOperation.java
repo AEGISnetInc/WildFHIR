@@ -41,36 +41,35 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Logger;
-
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MultivaluedHashMap;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.IntegerType;
-import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.OperationOutcome;
-import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleEntrySearchComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleLinkComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleType;
 import org.hl7.fhir.r4.model.Bundle.SearchEntryMode;
 import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.IntegerType;
+import org.hl7.fhir.r4.model.Meta;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.OperationOutcome;
+import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Timing;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.model.Resourcemetadata;
@@ -95,11 +94,8 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 
 	private Logger log = Logger.getLogger("ObservationLastNOperation");
 
-	/* (non-Javadoc)
-	 * @see net.aegis.fhir.operation.ResourceOperationProxy#executeOperation(jakarta.ws.rs.core.UriInfo, jakarta.ws.rs.core.HttpHeaders, net.aegis.fhir.service.ResourceService, net.aegis.fhir.service.ResourcemetadataService, net.aegis.fhir.service.BatchService, net.aegis.fhir.service.TransactionService, net.aegis.fhir.service.CodeService, net.aegis.fhir.service.audit.AuditEventService, net.aegis.fhir.service.provenance.ProvenanceService, net.aegis.fhir.service.ConformanceService, java.lang.String, java.lang.String, java.lang.String, org.hl7.fhir.r4.model.Parameters, org.hl7.fhir.r4.model.Resource, java.lang.String, java.lang.String, boolean, java.lang.StringBuffer)
-	 */
 	@Override
-	public Parameters executeOperation(UriInfo context, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
+	public Parameters executeOperation(HttpServletRequest request, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
 
 		log.fine("[START] ObservationLastNOperation.executeOperation()");
 
@@ -117,7 +113,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 			 * If inputParameters is null, attempt to extract parameters from context
 			 */
 			if (inputParameters == null) {
-				inputParameters = getParametersFromQueryParams(context);
+				inputParameters = getParametersFromQueryParams(request);
 			}
 
 			// inputParameters is optional; if present, extract max value
@@ -134,7 +130,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 				}
 			}
 
-			Bundle observationLastNResults = getObservationLastN(context, resourceService, resourcemetadataService, codeService, maxValue);
+			Bundle observationLastNResults = getObservationLastN(request, resourceService, resourcemetadataService, codeService, maxValue);
 
 			if (observationLastNResults == null) {
 				// results came back null; throw exception with error message
@@ -154,13 +150,13 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 
 	/**
 	 *
-	 * @param context
+	 * @param request
 	 * @param resourceService
 	 * @param maxValue
 	 * @return Constructed Bundle response
 	 * @throws Exception
 	 */
-	private Bundle getObservationLastN(UriInfo context, ResourceService resourceService, ResourcemetadataService resourcemetadataService, CodeService codeService, IntegerType maxValue) throws Exception {
+	private Bundle getObservationLastN(HttpServletRequest request, ResourceService resourceService, ResourcemetadataService resourcemetadataService, CodeService codeService, IntegerType maxValue) throws Exception {
 
 		log.fine("[START] ObservationLastNOperation.getObservationLastN()");
 
@@ -169,13 +165,17 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 		String countString = null;
 		String summaryString = null;
 
-		String locationPath = context.getRequestUri().toString();
+		// Construct full request URL with any query parameters
+		StringBuffer requestURL = request.getRequestURL();
+		String queryString = request.getQueryString();
+		if (queryString != null) {
+			requestURL.append("?").append(queryString);
+		}
+		String locationPath = requestURL.toString();
 
 		// Extract base url from locationPath for use in Bundle.entry.fullUrl element
 		String baseUrl = ServicesUtil.INSTANCE.extractBaseURL(locationPath, "/$lastn");
 		String includeBaseUrl = ServicesUtil.INSTANCE.extractBaseURL(locationPath, "Observation");
-
-		MultivaluedMap<String, String> authPatientParams = null;
 
 		// If max value null (not set), per FHIR spec $lastn operation default to one (1)
 		if (maxValue == null) {
@@ -183,7 +183,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 		}
 
 		// Get the query parameters that represent the search criteria
-		MultivaluedMap<String, String> queryParams = context.getQueryParameters();
+		MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
 
 		// Define lastn parameters with initial _sort by code:asc and date:desc
 		MultivaluedMap<String, String> lastnParams = new MultivaluedHashMap<String, String>();
@@ -222,13 +222,12 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 		List<String[]> invalidParams = new ArrayList<String[]>();
 
 		// Execute search query with lastn parameters
-		List<Resource> resources = resourceService.searchQuery(lastnParams, null, authPatientParams, "Observation", false, _include, _includeIterate, _revinclude, validParams, invalidParams);
+		List<Resource> resources = resourceService.searchQuery(lastnParams, null, "Observation", false, _include, _includeIterate, _revinclude, validParams, invalidParams);
 
 		log.fine("ObservationLastNOperation - resources.size() = " + resources.size());
 
-		String queryString = context.getRequestUri().getQuery();
-		List<NameValuePair> orderedParams = URLEncodedUtils.parse(queryString, Charset.forName("UTF-8"));
-		for(NameValuePair param : orderedParams) {
+		List<NameValuePair> orderedParams = URLEncodedUtils.parse(queryString, Charset.defaultCharset());
+		for (NameValuePair param : orderedParams) {
 			log.fine("  param.name = '" + param.getName() + "'; param.value = '" + param.getValue() + "'");
 		}
 
@@ -780,7 +779,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 													MultivaluedMap<String, String> revQueryParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
 
 													// Search for resources with reverse search
-													List<Resource> revSearch = resourceService.searchQuery(revQueryParams, null, null, source, false, null, null, null, null, null);
+													List<Resource> revSearch = resourceService.searchQuery(revQueryParams, null, source, false, null, null, null, null, null);
 
 													if (revSearch != null && revSearch.size() > 0) {
 														log.fine("-->-->-->--> _revinclude reverse search found matches (" + revSearch.size() + ")");
@@ -1281,11 +1280,11 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 
 	/**
 	 *
-	 * @param context
+	 * @param request
 	 * @return <code>Parameters</code>
 	 * @throws Exception
 	 */
-	private Parameters getParametersFromQueryParams(UriInfo context) throws Exception {
+	private Parameters getParametersFromQueryParams(HttpServletRequest request) throws Exception {
 
 		log.fine("[START] ResourceOperationsRESTService.getParametersFromQueryParams()");
 
@@ -1293,7 +1292,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 		Parameters queryParameters = new Parameters();
 
 		try {
-			if (context != null) {
+			if (request != null) {
 				log.fine("Checking for search parameters...");
 
 				/*
@@ -1302,7 +1301,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 				IntegerType max = null;
 
 				// Get the query parameters that represent the search criteria
-				MultivaluedMap<String, String> queryParams = context.getQueryParameters();
+				MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
 
 				if (queryParams != null && queryParams.size() > 0) {
 					Set<Entry<String, List<String>>> paramSet = queryParams.entrySet();

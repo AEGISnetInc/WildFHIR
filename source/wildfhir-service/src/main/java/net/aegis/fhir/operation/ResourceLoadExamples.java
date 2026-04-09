@@ -36,16 +36,28 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.FileUtils;
+import org.hl7.fhir.r4.formats.IParser.OutputStyle;
+import org.hl7.fhir.r4.formats.JsonParser;
+import org.hl7.fhir.r4.formats.XmlParser;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
+import org.hl7.fhir.r4.model.Bundle.BundleType;
+import org.hl7.fhir.r4.model.Parameters;
+import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
+import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.StringType;
+
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.service.BatchService;
 import net.aegis.fhir.service.CodeService;
@@ -55,19 +67,8 @@ import net.aegis.fhir.service.ResourcemetadataService;
 import net.aegis.fhir.service.TransactionService;
 import net.aegis.fhir.service.audit.AuditEventService;
 import net.aegis.fhir.service.provenance.ProvenanceService;
+import net.aegis.fhir.service.util.ServicesUtil;
 import net.aegis.fhir.service.util.UUIDUtil;
-
-import org.apache.commons.io.FileUtils;
-import org.hl7.fhir.r4.formats.JsonParser;
-import org.hl7.fhir.r4.formats.XmlParser;
-import org.hl7.fhir.r4.formats.IParser.OutputStyle;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r4.model.Bundle.BundleType;
-import org.hl7.fhir.r4.model.Parameters;
-import org.hl7.fhir.r4.model.Resource;
-import org.hl7.fhir.r4.model.StringType;
-import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
 
 /**
  * @author richard.ettema
@@ -87,11 +88,8 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 	private XmlParser xmlP;
 	private JsonParser jsonP;
 
-	/* (non-Javadoc)
-	 * @see net.aegis.fhir.operation.ResourceOperationProxy#executeOperation(jakarta.ws.rs.core.UriInfo, jakarta.ws.rs.core.HttpHeaders, net.aegis.fhir.service.ResourceService, net.aegis.fhir.service.ResourcemetadataService, net.aegis.fhir.service.BatchService, net.aegis.fhir.service.TransactionService, net.aegis.fhir.service.CodeService, net.aegis.fhir.service.audit.AuditEventService, net.aegis.fhir.service.provenance.ProvenanceService, net.aegis.fhir.service.ConformanceService, java.lang.String, java.lang.String, java.lang.String, org.hl7.fhir.r4.model.Parameters, org.hl7.fhir.r4.model.Resource, java.lang.String, java.lang.String, boolean, java.lang.StringBuffer)
-	 */
 	@Override
-	public Parameters executeOperation(UriInfo context, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
+	public Parameters executeOperation(HttpServletRequest request, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
 
 		log.fine("[START] ResourceLoadExamples.executeOperation()");
 
@@ -106,7 +104,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 			 * If inputParameters is null, attempt to extract parameters from context
 			 */
 			if (inputParameters == null) {
-				inputParameters = getParametersFromQueryParams(context);
+				inputParameters = getParametersFromQueryParams(request);
 			}
 
 			/*
@@ -135,7 +133,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 				xmlP = new XmlParser();
 				xmlP.setOutputStyle(OutputStyle.PRETTY);
 				jsonP = new JsonParser();
-				out = processDirectory(context, headers, contentType, dirpath, baseurl);
+				out = processDirectory(request, headers, contentType, dirpath, baseurl);
 			}
 		}
 		catch (Exception e) {
@@ -151,10 +149,13 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 	 * This method does the actual work of inserting the resource into the repository.
 	 * </p>
 	 *
-	 * @param dirpath
-	 *            - path to directory of files to be inserted
+	 * @param request
+	 * @param headers
+	 * @param contentType
+	 * @param dirpath - path to directory of files to be inserted
+	 * @param baseurl
 	 */
-	private Parameters processDirectory(UriInfo context, HttpHeaders headers, String contentType, StringType dirpath, StringType baseurl) {
+	private Parameters processDirectory(HttpServletRequest request, HttpHeaders headers, String contentType, StringType dirpath, StringType baseurl) {
 
 		log.fine("Process directory of resources");
 
@@ -172,7 +173,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 				for (File file : dir.listFiles()) {
 					String format = file.getName().substring(file.getName().lastIndexOf('.') + 1, file.getName().length()).toUpperCase();
 
-					processResourceFileImport(context, headers, contentType, format, file, baseurl.getValue());
+					processResourceFileImport(request, headers, contentType, format, file, baseurl.getValue());
 				}
 			}
 
@@ -193,14 +194,16 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 	 * This method does the actual work of inserting the resource into the repository.
 	 * </p>
 	 *
-	 * @param format
-	 *            - format type of the resource file (XML or JSON)
-	 * @param file
-	 *            - file to be inserted
+	 * @param request
+	 * @param headers
+	 * @param contentType
+	 * @param format - format type of the resource file (XML or JSON)
+	 * @param file - file to be inserted
+	 * @param baseurl
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	private void processResourceFileImport(UriInfo context, HttpHeaders headers, String contentType, String format, File file, String baseurl) {
+	private void processResourceFileImport(HttpServletRequest request, HttpHeaders headers, String contentType, String format, File file, String baseurl) {
 
 		log.fine("Process as resource: " + file.getName());
 
@@ -331,7 +334,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 
 				Bundle bundleResource = (Bundle)exampleResource;
 
-				ResourceContainer resourceContainer = batchService.batch(context, headers, contentType, contentType, bundleResource, null, null);
+				ResourceContainer resourceContainer = batchService.batch(request, headers, contentType, contentType, bundleResource, null, null);
 
 				if (resourceContainer != null &&
 						resourceContainer.getResponseStatus().equals(Response.Status.OK) &&
@@ -365,7 +368,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 
 				Bundle bundleResource = (Bundle)exampleResource;
 
-				ResourceContainer resourceContainer = transactionService.transaction(context, headers, contentType, contentType, bundleResource, null, null);
+				ResourceContainer resourceContainer = transactionService.transaction(request, headers, contentType, contentType, bundleResource, null, null);
 
 				if (resourceContainer != null &&
 						resourceContainer.getResponseStatus().equals(Response.Status.OK) &&
@@ -397,11 +400,11 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 
 	/**
 	 *
-	 * @param context
+	 * @param request
 	 * @return <code>Parameters</code>
 	 * @throws Exception
 	 */
-	private Parameters getParametersFromQueryParams(UriInfo context) throws Exception {
+	private Parameters getParametersFromQueryParams(HttpServletRequest request) throws Exception {
 
 		log.fine("[START] ResourceOperationsRESTService.getParametersFromQueryParams()");
 
@@ -409,7 +412,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 		Parameters queryParameters = new Parameters();
 
 		try {
-			if (context != null) {
+			if (request != null) {
 				log.fine("Checking for search parameters...");
 
 				/*
@@ -419,7 +422,7 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 		        StringType dirpath = null;
 
 				// Get the query parameters that represent the search criteria
-				MultivaluedMap<String, String> queryParams = context.getQueryParameters();
+				MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
 
 				if (queryParams != null && queryParams.size() > 0) {
 					Set<Entry<String, List<String>>> paramSet = queryParams.entrySet();

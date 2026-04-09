@@ -34,14 +34,13 @@ package net.aegis.fhir.service.provenance;
 
 import java.io.ByteArrayOutputStream;
 
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.UriInfo;
-
 import org.hl7.fhir.r4.formats.IParser.OutputStyle;
+import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Provenance;
-import org.hl7.fhir.r4.formats.XmlParser;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
 import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.service.narrative.FHIRNarrativeGeneratorClient;
 
@@ -56,11 +55,11 @@ public enum ProvenanceServiceUtil {
 	private ProvenanceServiceUtil() {
 	}
 
-	public Resource generateProvenance(UriInfo context, HttpHeaders headers, String payload, String resourceType, String locationPath, String resourceId, Identifier identifier, String operation) throws Exception {
+	public Resource generateProvenance(HttpServletRequest request, HttpHeaders headers, String payload, String resourceType, String locationPath, String resourceId, Identifier identifier, String operation) throws Exception {
 		net.aegis.fhir.model.Resource resourceDomain = new net.aegis.fhir.model.Resource();
 		ProvenanceResourceProxyObjectFactory objectFactory = new ProvenanceResourceProxyObjectFactory();
 		ProvenanceResourceProxy proxy = objectFactory.getProvenanceResourceProxy(resourceType, operation);
-		org.hl7.fhir.r4.model.Resource fhirModel = proxy.generateProvenance(context, headers, payload, resourceType, locationPath, resourceId, identifier, operation);
+		org.hl7.fhir.r4.model.Resource fhirModel = proxy.generateProvenance(request, headers, payload, resourceType, locationPath, resourceId, identifier, operation);
 
 		if (fhirModel != null) {
 			Provenance provenance = (Provenance) fhirModel;

@@ -38,10 +38,6 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Logger;
 
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.UriInfo;
-
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.hl7.fhir.r4.model.BooleanType;
@@ -55,6 +51,9 @@ import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MultivaluedMap;
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.model.Resourcemetadata;
 import net.aegis.fhir.service.BatchService;
@@ -78,11 +77,8 @@ public class PatientMatch extends ResourceOperationProxy {
 
 	private ResourceService resourceService;
 
-	/* (non-Javadoc)
-	 * @see net.aegis.fhir.operation.ResourceOperationProxy#executeOperation(jakarta.ws.rs.core.UriInfo, jakarta.ws.rs.core.HttpHeaders, net.aegis.fhir.service.ResourceService, net.aegis.fhir.service.ResourcemetadataService, net.aegis.fhir.service.BatchService, net.aegis.fhir.service.TransactionService, net.aegis.fhir.service.CodeService, net.aegis.fhir.service.audit.AuditEventService, net.aegis.fhir.service.provenance.ProvenanceService, net.aegis.fhir.service.ConformanceService, java.lang.String, java.lang.String, java.lang.String, org.hl7.fhir.r4.model.Parameters, org.hl7.fhir.r4.model.Resource, java.lang.String, java.lang.String, boolean, java.lang.StringBuffer)
-	 */
 	@Override
-	public Parameters executeOperation(UriInfo context, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
+	public Parameters executeOperation(HttpServletRequest request, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
 
         log.fine("[START] PatientMatch.executeOperation()");
 
@@ -139,7 +135,7 @@ public class PatientMatch extends ResourceOperationProxy {
 				paramCount = new IntegerType(0);
 			}
 
-			Resource matchResponse = peformPatientMatch(context, paramResource, paramOnlyCertainMatches, paramCount);
+			Resource matchResponse = peformPatientMatch(request, paramResource, paramOnlyCertainMatches, paramCount);
 
 			if (matchResponse != null) {
 				// Return matchResponse resource as-is as the return output parameter
@@ -165,13 +161,21 @@ public class PatientMatch extends ResourceOperationProxy {
 		return out;
 	}
 
-	private Resource peformPatientMatch(UriInfo context, Resource patientCriteria, BooleanType onlyCertainMatches, IntegerType count) throws Exception {
+	private Resource peformPatientMatch(HttpServletRequest request, Resource patientCriteria, BooleanType onlyCertainMatches, IntegerType count) throws Exception {
 
 		Resource matchResponse = null;
 
 		UTCDateUtil utcDateUtil = new UTCDateUtil();
 
-		String baseUrl = ServicesUtil.INSTANCE.extractBaseURL(context.getAbsolutePath().toString(), "/Patient");
+		// Construct full request URL with any query parameters
+		StringBuffer requestURL = request.getRequestURL();
+		String queryString = request.getQueryString();
+		if (queryString != null) {
+			requestURL.append("?").append(queryString);
+		}
+		String locationPath = requestURL.toString();
+
+		String baseUrl = ServicesUtil.INSTANCE.extractBaseURL(locationPath, "/Patient");
 
 		// Extract Patient search parameter values from patientCriteria and build search parameter string
 		List<Resourcemetadata> resourcemetadataList = this.resourceService.getResourcemetadataMatch(patientCriteria, baseUrl);
@@ -226,7 +230,7 @@ public class PatientMatch extends ResourceOperationProxy {
 		DecimalType searchScore = new DecimalType(1.0);
 
 		// 3 - Perform search with extracted parameters
-		ResourceContainer rcPatientMatch = this.resourceService.search(queryParams, null, null, null, patientCriteria.getResourceType().name(), context.getRequestUri().toString(), null, null, null, false);
+		ResourceContainer rcPatientMatch = this.resourceService.search(queryParams, null, null, patientCriteria.getResourceType().name(), locationPath, null, null, null, false);
 
 		// Check for matched Patient resources
 		if (rcPatientMatch != null && rcPatientMatch.getBundle() != null) {

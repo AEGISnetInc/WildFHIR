@@ -38,16 +38,29 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Logger;
 
+import org.hl7.fhir.r4.formats.XmlParser;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
+import org.hl7.fhir.r4.model.Bundle.BundleEntrySearchComponent;
+import org.hl7.fhir.r4.model.Bundle.BundleType;
+import org.hl7.fhir.r4.model.Bundle.SearchEntryMode;
+import org.hl7.fhir.r4.model.DateType;
+import org.hl7.fhir.r4.model.Meta;
+import org.hl7.fhir.r4.model.OperationOutcome;
+import org.hl7.fhir.r4.model.Parameters;
+import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
+import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Reference;
+
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-
 import net.aegis.fhir.model.LabelKeyValueBean;
 import net.aegis.fhir.model.Resource;
 import net.aegis.fhir.model.ResourceContainer;
@@ -66,20 +79,6 @@ import net.aegis.fhir.service.provenance.ProvenanceService;
 import net.aegis.fhir.service.util.ServicesUtil;
 import net.aegis.fhir.service.util.UUIDUtil;
 
-import org.hl7.fhir.r4.formats.XmlParser;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.DateType;
-import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.OperationOutcome;
-import org.hl7.fhir.r4.model.Parameters;
-import org.hl7.fhir.r4.model.Patient;
-import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r4.model.Bundle.BundleEntrySearchComponent;
-import org.hl7.fhir.r4.model.Bundle.BundleType;
-import org.hl7.fhir.r4.model.Bundle.SearchEntryMode;
-import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
-import org.hl7.fhir.r4.model.Reference;
-
 /**
  * @author richard.ettema
  *
@@ -88,11 +87,8 @@ public class PatientEverything extends ResourceOperationProxy {
 
 	private Logger log = Logger.getLogger("PatientEverything");
 
-	/* (non-Javadoc)
-	 * @see net.aegis.fhir.operation.ResourceOperationProxy#executeOperation(jakarta.ws.rs.core.UriInfo, jakarta.ws.rs.core.HttpHeaders, net.aegis.fhir.service.ResourceService, net.aegis.fhir.service.ResourcemetadataService, net.aegis.fhir.service.BatchService, net.aegis.fhir.service.TransactionService, net.aegis.fhir.service.CodeService, net.aegis.fhir.service.audit.AuditEventService, net.aegis.fhir.service.provenance.ProvenanceService, net.aegis.fhir.service.ConformanceService, java.lang.String, java.lang.String, java.lang.String, org.hl7.fhir.r4.model.Parameters, org.hl7.fhir.r4.model.Resource, java.lang.String, java.lang.String, boolean, java.lang.StringBuffer)
-	 */
 	@Override
-	public Parameters executeOperation(UriInfo context, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
+	public Parameters executeOperation(HttpServletRequest request, HttpHeaders headers, ResourceService resourceService, ResourcemetadataService resourcemetadataService, BatchService batchService, TransactionService transactionService, CodeService codeService, AuditEventService auditEventService, ProvenanceService provenanceService, ConformanceService conformanceService, String softwareVersion, String resourceType, String resourceId, Parameters inputParameters, org.hl7.fhir.r4.model.Resource inputResource, String inputString, String contentType, boolean isPost, StringBuffer returnedDirective) throws Exception {
 
 		log.fine("[START] PatientEverything.executeOperation()");
 
@@ -106,7 +102,7 @@ public class PatientEverything extends ResourceOperationProxy {
 			 * If inputParameters is null, attempt to extract parameters from context
 			 */
 			if (inputParameters == null) {
-				inputParameters = getParametersFromQueryParams(context);
+				inputParameters = getParametersFromQueryParams(request);
 			}
 
 			/*
@@ -168,7 +164,7 @@ public class PatientEverything extends ResourceOperationProxy {
 					 * Perform a search operation against all Patient Compartment resource types and combine all results into
 					 * a single searchset Bundle.
 					 */
-					everythingSearchSet = getPatientEverything(context, resourceService, patient, startDate, endDate);
+					everythingSearchSet = getPatientEverything(request, resourceService, patient, startDate, endDate);
 				}
 			}
 			else {
@@ -211,7 +207,7 @@ public class PatientEverything extends ResourceOperationProxy {
 
 	/**
 	 *
-	 * @param context
+	 * @param request
 	 * @param resourceService
 	 * @param patient
 	 * @param startDate
@@ -219,11 +215,17 @@ public class PatientEverything extends ResourceOperationProxy {
 	 * @return Constructed Bundle response
 	 * @throws Exception
 	 */
-	private Bundle getPatientEverything(UriInfo context, ResourceService resourceService, Patient patient, DateType startDate, DateType endDate) throws Exception {
+	private Bundle getPatientEverything(HttpServletRequest request, ResourceService resourceService, Patient patient, DateType startDate, DateType endDate) throws Exception {
 
 		log.fine("[START] PatientEverything.getPatientEverything()");
 
-		String locationPath = context.getRequestUri().toString();
+		// Construct full request URL with any query parameters
+		StringBuffer requestURL = request.getRequestURL();
+		String queryString = request.getQueryString();
+		if (queryString != null) {
+			requestURL.append("?").append(queryString);
+		}
+		String locationPath = requestURL.toString();
 
 		// Extract base url from locationPath for use in Bundle.entry.fullUrl element
 		String baseUrl = ServicesUtil.INSTANCE.extractBaseURL(locationPath, "/Patient");
@@ -382,7 +384,7 @@ public class PatientEverything extends ResourceOperationProxy {
 				List<String[]> validParams = new ArrayList<String[]>();
 				List<String[]> invalidParams = new ArrayList<String[]>();
 
-				resources = resourceService.searchQuery(queryParams, null, null, lkvb.getKey(), false, null, null, null, validParams, invalidParams);
+				resources = resourceService.searchQuery(queryParams, null, lkvb.getKey(), false, null, null, null, validParams, invalidParams);
 
 				if (resources != null && resources.size() > 0) {
 					/*
@@ -492,11 +494,11 @@ public class PatientEverything extends ResourceOperationProxy {
 
 	/**
 	 *
-	 * @param context
+	 * @param request
 	 * @return <code>Parameters</code>
 	 * @throws Exception
 	 */
-	private Parameters getParametersFromQueryParams(UriInfo context) throws Exception {
+	private Parameters getParametersFromQueryParams(HttpServletRequest request) throws Exception {
 
 		log.fine("[START] ResourceOperationsRESTService.getParametersFromQueryParams()");
 
@@ -504,7 +506,7 @@ public class PatientEverything extends ResourceOperationProxy {
 		Parameters queryParameters = new Parameters();
 
 		try {
-			if (context != null) {
+			if (request != null) {
 				log.fine("Checking for search parameters...");
 
 				/*
@@ -514,7 +516,7 @@ public class PatientEverything extends ResourceOperationProxy {
 				DateType endDate = null;
 
 				// Get the query parameters that represent the search criteria
-				MultivaluedMap<String, String> queryParams = context.getQueryParameters();
+				MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
 
 				if (queryParams != null && queryParams.size() > 0) {
 					Set<Entry<String, List<String>>> paramSet = queryParams.entrySet();

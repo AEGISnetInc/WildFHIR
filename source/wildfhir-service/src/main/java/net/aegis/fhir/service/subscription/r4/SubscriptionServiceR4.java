@@ -38,17 +38,16 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
-import jakarta.ejb.Stateless;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
-
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.Subscription;
 
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import net.aegis.fhir.model.LabelKeyValueBean;
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.service.CodeService;
@@ -137,7 +136,7 @@ public class SubscriptionServiceR4 {
 			MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
 
 			// Search for all Subscriptions with status = active; return as searchset Bundle
-			ResourceContainer rcSubscriptions = resourceService.search(queryParams, null, null, null, "Subscription", "INTERNAL", null, null, null, false);
+			ResourceContainer rcSubscriptions = resourceService.search(queryParams, null, null, "Subscription", "INTERNAL", null, null, null, false);
 
 			// Check for matched Subscription resources
 			if (rcSubscriptions != null && rcSubscriptions.getBundle() != null && !rcSubscriptions.getBundle().getEntry().isEmpty()) {
@@ -192,7 +191,7 @@ public class SubscriptionServiceR4 {
 						queryParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
 
 						// Search for all criteria matches since last check; return as searchset Bundle
-						ResourceContainer rcMatches = resourceService.search(queryParams, null, null, null, subscriptionResourceType, "INTERNAL", null, null, null, false);
+						ResourceContainer rcMatches = resourceService.search(queryParams, null, null, subscriptionResourceType, "INTERNAL", null, null, null, false);
 
 						// Check for matched Subscription resources
 						if (rcMatches != null && rcMatches.getBundle() != null && !rcMatches.getBundle().getEntry().isEmpty()) {

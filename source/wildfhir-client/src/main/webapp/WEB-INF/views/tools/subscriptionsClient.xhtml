@@ -8,20 +8,18 @@
 	<!-- This is the view file for the Subscription Client Tab -->
 
 	<p:tab id="subscriptionClientTab" title="Subscriptions" cache="false">
-		<h:form id="subscriptionClientForm" prependId="false"
-			style="width:100%;border:none;">
-			<p:panelGrid id="subscriptionClientPanel1" columns="1" border="0"
-				cellpadding="0" cellspacing="0" styleClass="borderlessGridPanel">
-				<p:messages id="messagesForSubscriptionClientForm" />
-				<h:outputText value="Subscription Client"
-					style="padding:0px;font-style:italic;font-weight:bold;font-size:14px;" />
-				<h:outputText value="This is a manual execution of the subscription notification service."
-					style="padding:0px;font-style:italic;font-weight;font-size:12px;" />
-			</p:panelGrid>
+		<h:form id="subscriptionClientForm" prependId="false" style="width:100%;border:none;">
+			<p:messages for="subscriptionClientForm" id="subscriptionClientMessages"
+				showDetail="true" autoUpdate="true" closable="true" />
+			<h:outputText value="WildFHIR Tools - Subscription Client"
+				style="padding:0px;font-style:italic;font-weight:bold;font-size:14px;" />
+			<br></br>
+			<h:outputText value="This is a manual execution of the subscription notification service."
+				style="padding:0px;font-style:italic;font-weight;font-size:12px;" />
 
 			<hr></hr>
 
-			<p:panelGrid id="subscriptionClientPanel2" layout="tabular" columns="2" border="0"
+			<p:panelGrid id="subscriptionClientPanel1" layout="tabular" columns="2" border="0"
 				cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
 				<h:outputText value="Since DateTime: " />
 				<p:datePicker id="buttonbar" value="#{context.dateTimePicker}" showButtonBar="true" showTime="true" showSeconds="true" hourFormat="24" pattern="yyyy-MM-dd HH:mm" />

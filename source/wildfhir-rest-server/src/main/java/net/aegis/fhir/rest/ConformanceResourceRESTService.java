@@ -35,11 +35,15 @@ package net.aegis.fhir.rest;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
 import java.net.URI;
 import java.util.Date;
 import java.util.logging.Logger;
+
+import org.hl7.fhir.r4.formats.IParser.OutputStyle;
+import org.hl7.fhir.r4.formats.JsonParser;
+import org.hl7.fhir.r4.formats.XmlParser;
+import org.hl7.fhir.r4.model.CapabilityStatement;
+import org.hl7.fhir.r4.model.OperationOutcome;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -52,23 +56,14 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.EntityTag;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
-
 import net.aegis.fhir.model.Constants;
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.service.CodeService;
 import net.aegis.fhir.service.ConformanceService;
+import net.aegis.fhir.service.util.DebugUtil;
 import net.aegis.fhir.service.util.ServicesUtil;
 import net.aegis.fhir.service.util.UTCDateUtil;
-
-import org.apache.commons.io.IOUtils;
-import org.hl7.fhir.r4.formats.IParser.OutputStyle;
-import org.hl7.fhir.r4.formats.JsonParser;
-import org.hl7.fhir.r4.formats.XmlParser;
-import org.hl7.fhir.r4.model.CapabilityStatement;
-import org.hl7.fhir.r4.model.OperationOutcome;
 
 /**
  * JAX-RS capabilities Service
@@ -87,9 +82,6 @@ public class ConformanceResourceRESTService {
 
 	@Inject
 	UTCDateUtil utcDateUtil;
-
-	@Context
-	private UriInfo context;
 
 	@Inject
 	CodeService codeService;
@@ -114,7 +106,7 @@ public class ConformanceResourceRESTService {
 		try {
 			// Validate request fhir version with supported fhir version
 			if (!ServicesUtil.INSTANCE.fhirVersionMatched(request, headers, codeService.findCodeValueByName("supportedVersions"))) {
-				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, codeService.findCodeValueByName("supportedVersions"), context);
+				response = ServicesUtil.INSTANCE.fhirVersioMismatchedResponse(headers, request, codeService.findCodeValueByName("supportedVersions"));
 			} else {
 				response = getConformance(request, headers, true, "0");
 			}
@@ -140,7 +132,7 @@ public class ConformanceResourceRESTService {
 
 		log.fine("[START] ConformanceResourceRESTService.getConformance()");
 
-		debugRequest(request, headers, null);
+        DebugUtil.debugRequest(request, headers, null);
 
 		Response.ResponseBuilder builder = null;
 		ByteArrayInputStream iConformance = null;
@@ -158,7 +150,7 @@ public class ConformanceResourceRESTService {
 
 		try {
 			// Get the produces type based on the request Content-Type
-			String producesType = ServicesUtil.INSTANCE.getProducesType(headers, context);
+			String producesType = ServicesUtil.INSTANCE.getProducesType(headers, request);
 
 			ResourceContainer resourceContainer = conformanceService.read();
 
@@ -170,7 +162,7 @@ public class ConformanceResourceRESTService {
 
 				if (resourceContainer.getConformance() != null) {
 					// Define URI location
-					String locationPath = context.getBaseUri().getPath();
+					String locationPath = request.getRequestURL().toString();
 					if (isMetadata) {
 						locationPath += "/metadata";
 					}
@@ -262,81 +254,6 @@ public class ConformanceResourceRESTService {
 		}
 
 		return builder.build();
-	}
-
-	/**
-	 * <p>
-	 * Prints the contents of the received request.<br/>
-	 * Useful for debugging purposes.
-	 * </p>
-	 *
-	 * @param request
-	 * @param headers
-	 * @param response
-	 */
-	private String debugRequest(HttpServletRequest request, HttpHeaders headers, InputStream resourceInputStream) {
-
-		String payload = null;
-
-		if (request != null) {
-			log.fine("----- HTTP REQUEST -----");
-
-			log.fine("Remote host is '" + (request.getRemoteHost() == null ? "NOT FOUND" : request.getRemoteHost()) + "'");
-		}
-
-		if (headers != null) {
-			log.fine("----- HTTP HEADERS (REQUEST) -----");
-
-			MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
-
-			if (requestHeaders != null) {
-
-				for (String key : requestHeaders.keySet()) {
-
-					for (String keyValue : requestHeaders.get(key)) {
-						log.fine("header(" + key + ") is " + keyValue);
-					}
-				}
-			}
-		}
-
-		log.fine("----- REQUEST URL -----");
-		StringBuilder sbRequestUrl = new StringBuilder(context.getAbsolutePath().getPath());
-		MultivaluedMap<String, String> queryParams = context.getQueryParameters();
-		if (queryParams != null && !queryParams.isEmpty()) {
-			sbRequestUrl.append("?");
-			boolean first = true;
-			for (String key : queryParams.keySet()) {
-				if (!first) {
-					sbRequestUrl.append("&");
-				}
-				log.fine("header(" + key + ") is " + queryParams.get(key).toString());
-				sbRequestUrl.append(key).append("=").append(queryParams.get(key).toString());
-			}
-		}
-		log.fine(sbRequestUrl.toString());
-
-		log.fine("----- PAYLOAD ----- [snipped; use fine logging]");
-        if (resourceInputStream != null) {
-			try {
-				StringWriter writer = new StringWriter();
-				String encoding = "UTF-8";
-				IOUtils.copy(resourceInputStream, writer, encoding);
-				payload = writer.toString();
-
-				log.fine(payload);
-
-			}
-			catch (Exception e) {
-				log.severe("Exception parsing payload! " + e.getMessage());
-				e.printStackTrace();
-			}
-		}
-		else {
-			log.fine(">> NO PAYLOAD <<");
-		}
-
-		return payload;
 	}
 
 }
