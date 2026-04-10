@@ -58,6 +58,7 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import net.aegis.fhir.model.Constants;
 import net.aegis.fhir.service.CodeService;
+import net.aegis.fhir.service.util.DebugUtil;
 import net.aegis.fhir.service.util.ServicesUtil;
 import net.aegis.fhir.service.util.WebClientHelper;
 
@@ -159,12 +160,11 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse.bufferEntity();
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -238,12 +238,11 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse.bufferEntity();
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -348,12 +347,11 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse.bufferEntity();
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -459,12 +457,11 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse.bufferEntity();
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -557,13 +554,12 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse.bufferEntity();
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 			client.close();
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -617,12 +613,11 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse.bufferEntity();
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -704,12 +699,11 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse.bufferEntity();
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -762,12 +756,11 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse.bufferEntity();
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -859,12 +852,11 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse.bufferEntity();
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -957,12 +949,11 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse.bufferEntity();
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -1058,12 +1049,11 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse.bufferEntity();
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -1166,12 +1156,11 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse.bufferEntity();
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -1224,12 +1213,11 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse.bufferEntity();
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -1270,12 +1258,11 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse.bufferEntity();
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -1323,12 +1310,11 @@ public class ResourceRESTClient implements Serializable {
 				resourceResponse = targetBuilder.post(Entity.text(""));
 			}
 
-			debugResponse(resourceResponse);
+			DebugUtil.debugResponse(resourceResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -1392,50 +1378,11 @@ public class ResourceRESTClient implements Serializable {
 				}
 			}
 		}
+		else {
+			log.fine("ResourceRESTClient.addHeaders() - HEADERS EMPTY OR NULL");
+		}
 
 		return targetBuilder;
-	}
-
-	/**
-	 * <p>
-	 * Prints the contents of the supplied {@link Response}.<br/>
-	 * Useful for debugging purposes.
-	 * </p>
-	 *
-	 * @param response
-	 */
-	private void debugResponse(Response response) {
-
-		if (response != null) {
-			if (response.getHeaders() != null) {
-
-				log.fine("----- HTTP HEADERS (RESPONSE) -----");
-
-				for (String key : response.getHeaders().keySet()) {
-					log.fine("header(" + key + ") is " + response.getHeaders().get(key).toString());
-				}
-			}
-
-			log.fine("----- RESPONSE STATUS -----");
-			log.fine(Integer.toString(response.getStatus()));
-
-			log.fine("----- PAYLOAD ----- [snipped; use fine logging]");
-			String entity = null;
-			if (response.getStatus() == Response.Status.NOT_MODIFIED.getStatusCode()) {
-				entity = Response.Status.NOT_MODIFIED.getReasonPhrase();
-			} else {
-				if (response.hasEntity()) {
-					entity = response.readEntity(String.class);
-				} else {
-					entity = ">> NO ENTITY PAYLOAD <<";
-				}
-			}
-			log.fine(entity);
-
-		}
-		else {
-			log.fine("Response is NULL.");
-		}
 	}
 
 }

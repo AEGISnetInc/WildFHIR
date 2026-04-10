@@ -51,6 +51,7 @@ import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
 import net.aegis.fhir.model.Constants;
 import net.aegis.fhir.service.CodeService;
+import net.aegis.fhir.service.util.DebugUtil;
 import net.aegis.fhir.service.util.WebClientHelper;
 
 /**
@@ -160,12 +161,11 @@ public class FHIRPathEvaluatorRESTClient implements Serializable {
 				operationResponse.bufferEntity();
 			}
 
-			debugResponse(operationResponse);
+			DebugUtil.debugResponse(operationResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -211,7 +211,7 @@ public class FHIRPathEvaluatorRESTClient implements Serializable {
 	 */
 	public Builder addHeaders(Builder targetBuilder, List<String> headers) throws Exception {
 
-		log.fine("[START] ResourceRESTClient.addHeaders()");
+		log.fine("[START] FHIRPathEvaluatorRESTClient.addHeaders()");
 
 		if (headers != null && !headers.isEmpty()) {
 			int separator = -1;
@@ -230,52 +230,10 @@ public class FHIRPathEvaluatorRESTClient implements Serializable {
 			}
 		}
 		else {
-			log.warning("ResourceRESTClient.addHeaders() - HEADERS EMPTY OR NULL");
+			log.fine("FHIRPathEvaluatorRESTClient.addHeaders() - HEADERS EMPTY OR NULL");
 		}
 
 		return targetBuilder;
-	}
-
-	/**
-	 * <p>
-	 * Prints the contents of the supplied {@link Response}.<br/>
-	 * Useful for debugging purposes.
-	 * </p>
-	 *
-	 * @param response
-	 */
-	private void debugResponse(Response response) {
-
-		if (response != null) {
-			if (response.getHeaders() != null) {
-
-				log.fine("----- HTTP HEADERS (RESPONSE) -----");
-
-				for (String key : response.getHeaders().keySet()) {
-					log.fine("header(" + key + ") is " + response.getHeaders().get(key).toString());
-				}
-			}
-
-			log.fine("----- RESPONSE STATUS -----");
-			log.fine(Integer.toString(response.getStatus()));
-
-			log.fine("----- PAYLOAD ----- [snipped; use fine logging]");
-			String entity = null;
-			if (response.getStatus() == Response.Status.NOT_MODIFIED.getStatusCode()) {
-				entity = Response.Status.NOT_MODIFIED.getReasonPhrase();
-			} else {
-				if (response.hasEntity()) {
-					entity = response.readEntity(String.class);
-				} else {
-					entity = ">> NO ENTITY PAYLOAD <<";
-				}
-			}
-			log.fine(entity);
-
-		}
-		else {
-			log.fine("Response is NULL.");
-		}
 	}
 
 }

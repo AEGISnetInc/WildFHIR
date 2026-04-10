@@ -109,7 +109,7 @@ public class SubscriptionactivityService {
 			userTransaction.commit();
 		} catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
+			log.severe(e.getMessage());
 			throw e;
 		}
 
@@ -143,7 +143,7 @@ public class SubscriptionactivityService {
 			userTransaction.commit();
 		} catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
+			log.severe(e.getMessage());
 			throw e;
 		}
 
@@ -186,7 +186,7 @@ public class SubscriptionactivityService {
 			userTransaction.commit();
 		} catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
+			log.severe(e.getMessage());
 			throw e;
 		}
 
@@ -224,7 +224,7 @@ public class SubscriptionactivityService {
 			}
 		} catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
+			log.severe(e.getMessage());
 			throw e;
 		}
 
@@ -255,7 +255,7 @@ public class SubscriptionactivityService {
 
 		} catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
+			log.severe(e.getMessage());
 			throw e;
 		}
 
@@ -290,7 +290,7 @@ public class SubscriptionactivityService {
 
 		} catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
+			log.severe(e.getMessage());
 			throw e;
 		}
 
