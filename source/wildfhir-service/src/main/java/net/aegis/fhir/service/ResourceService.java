@@ -36,6 +36,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -415,7 +416,6 @@ public class ResourceService {
 		} catch (Exception e) {
 			// Exception caught
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -3219,6 +3219,9 @@ public class ResourceService {
 						String sqValue = "";
 
 						for (String value : entry.getValue()) {
+
+							// First, decode URL query parameter value
+							value = URLDecoder.decode(value, "UTF-8");
 
 							// Set single quote escaped string value
 							if (value.contains("'")) {
