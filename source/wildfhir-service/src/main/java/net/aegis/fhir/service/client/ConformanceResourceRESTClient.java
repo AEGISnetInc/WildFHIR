@@ -43,6 +43,7 @@ import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
 import net.aegis.fhir.model.Constants;
 import net.aegis.fhir.service.CodeService;
+import net.aegis.fhir.service.util.DebugUtil;
 import net.aegis.fhir.service.util.WebClientHelper;
 
 /**
@@ -81,8 +82,7 @@ public class ConformanceResourceRESTClient implements Serializable {
 	 * @return {@link Response}
 	 * @throws Exception
 	 */
-	public Response metadata(String baseUrl, String contentType)
-			throws Exception {
+	public Response metadata(String baseUrl, String contentType) throws Exception {
 
 		log.fine("[START] ConformanceResourceRESTClient.metadata()");
 
@@ -113,13 +113,10 @@ public class ConformanceResourceRESTClient implements Serializable {
 				conformanceResponse.bufferEntity();
 			}
 
-			// Expensive - only use for debugging
-			// log.info("Conformance object returned: " +
-			// conformanceResponse.readEntity(String.class));
+			DebugUtil.debugResponse(conformanceResponse);
 
 		} catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {

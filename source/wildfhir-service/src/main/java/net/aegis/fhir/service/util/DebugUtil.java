@@ -41,6 +41,7 @@ import org.apache.commons.io.IOUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 
 /**
  * <p>
@@ -103,40 +104,39 @@ public class DebugUtil {
 
 		try {
 			if (request != null) {
-				log.fine("----- HTTP REQUEST -----");
-				log.fine("Remote host is '" + (request.getRemoteHost() == null ? "NOT FOUND" : request.getRemoteHost()) + "'");
+				log.info("----- HTTP REQUEST ----- Remote host '" + (request.getRemoteHost() == null ? "NOT FOUND" : request.getRemoteHost()) + "'");
+
+				// Use HttpServletRequest to get the raw, unescaped URL safely
+				StringBuffer fullRawUrl = request.getRequestURL();
+				String rawQuery = request.getQueryString();
+				if (rawQuery != null) {
+					fullRawUrl.append("?").append(rawQuery);
+				}
+				
+				log.info("Request URL: " + request.getMethod() + " " + fullRawUrl.toString());
 			}
 
 			if (headers != null) {
-				log.fine("----- HTTP HEADERS (REQUEST) -----");
+				log.info("----- HTTP HEADERS (REQUEST) -----");
 
 				MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
 				if (requestHeaders != null) {
 					for (String key : requestHeaders.keySet()) {
 						for (String keyValue : requestHeaders.get(key)) {
-							log.fine("header(" + key + ") is " + keyValue);
+							log.info("header(" + key + ") is " + keyValue);
 						}
 					}
 				}
 			}
 
-			log.fine("----- REQUEST URL -----");
-
-			// Use HttpServletRequest to get the raw, unescaped URL safely
-			String rawPath = request.getRequestURI();
-			String rawQuery = request.getQueryString();
-			String fullRawUrl = rawQuery != null ? rawPath + "?" + rawQuery : rawPath;
-
-			log.fine("Request URL: " + fullRawUrl);
-
-		    log.fine("----- FORM INPUT PARAMS -----");
 			if (form != null && !form.isEmpty()) {
-				for (String key : form.keySet()) {
-					log.fine("input(" + key + ") is " + form.get(key).toString());
+			    log.info("----- FORM INPUT PARAMS -----");
+
+			    for (String key : form.keySet()) {
+					log.info("input(" + key + ") is " + form.get(key).toString());
 				}
 			}
 
-			log.fine("----- PAYLOAD -----");
 			if (resourceInputStream != null) {
 				try {
 					StringWriter writer = new StringWriter();
@@ -145,25 +145,70 @@ public class DebugUtil {
 					payload = writer.toString();
 	
 					if (snipped == false) {
+						log.info("----- PAYLOAD ----- [snipped; use fine logging]");
 						log.fine(payload);
 					}
 					else {
-						log.fine(">> SNIPPED <<");
+						log.info("----- PAYLOAD ----- [snipped]");
 					}
 				}
 				catch (Exception e) {
 					log.severe("Exception parsing payload! " + e.getMessage());
-					e.printStackTrace();
 				}
 			}
-			else {
-				log.fine(">> NO PAYLOAD <<");
-			}
 		}
-		catch(Exception e) {
-			log.severe(e.getMessage());
+		catch (Exception e) {
+			log.severe("Exception parsing request! " + e.getMessage());
 		}
 
 		return payload;
     }
+
+	/**
+	 * <p>
+	 * Prints the contents of the supplied {@link Response}.<br/>
+	 * Useful for debugging purposes.
+	 * </p>
+	 *
+	 * @param response
+	 */
+	public static void debugResponse(Response response) {
+
+		try {
+			if (response != null) {
+				log.info("----- HTTP RESPONSE ----- Location '" + (response.getLocation() == null ? "NOT DEFINED" : response.getLocation().toString()));
+
+				if (response.getHeaders() != null) {
+
+					log.info("----- HTTP HEADERS (RESPONSE) -----");
+
+					for (String key : response.getHeaders().keySet()) {
+						log.info("header(" + key + ") is " + response.getHeaders().get(key).toString());
+					}
+				}
+
+				log.info("----- RESPONSE STATUS ----- " + Integer.toString(response.getStatus()));
+
+				log.info("----- PAYLOAD ----- [snipped; use fine logging]");
+				String entity = null;
+				if (response.getStatus() == Response.Status.NOT_MODIFIED.getStatusCode()) {
+					entity = Response.Status.NOT_MODIFIED.getReasonPhrase();
+				} else {
+					if (response.hasEntity()) {
+						entity = response.readEntity(String.class);
+					} else {
+						entity = ">> NO ENTITY PAYLOAD <<";
+					}
+				}
+				log.fine(entity);
+			}
+			else {
+				log.info("----- HTTP RESPONSE ----- NULL");
+			}
+		}
+		catch (Exception e) {
+			log.severe("Exception parsing response! " + e.getMessage());
+		}
+	}
+
 }

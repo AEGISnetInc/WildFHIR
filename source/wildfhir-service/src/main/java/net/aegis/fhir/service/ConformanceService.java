@@ -188,7 +188,6 @@ public class ConformanceService {
 		} catch (Exception e) {
 			// Exception caught
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -227,7 +226,6 @@ public class ConformanceService {
 		} catch (Exception e) {
 			// Exception caught
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -260,7 +258,6 @@ public class ConformanceService {
 		} catch (Exception e) {
 			// Exception caught
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -299,7 +296,6 @@ public class ConformanceService {
 		} catch (Exception e) {
 			// Exception caught
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -324,7 +320,7 @@ public class ConformanceService {
 				String baseUrl = getBaseUrl();
 				log.fine("getBaseUrl: " + baseUrl);
 				resourceContainer.setResponseStatus(Response.Status.OK);
-			}else {
+			} else {
 				resourceContainer.setResponseStatus(Response.Status.NOT_FOUND);
 			}
 

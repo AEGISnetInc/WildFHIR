@@ -34,6 +34,8 @@ package net.aegis.fhir.service.client;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -51,6 +53,7 @@ import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
 import net.aegis.fhir.model.Constants;
 import net.aegis.fhir.service.CodeService;
+import net.aegis.fhir.service.util.DebugUtil;
 import net.aegis.fhir.service.util.WebClientHelper;
 
 /**
@@ -122,7 +125,7 @@ public class ResourceOperationRESTClient implements Serializable {
 			sbOperation.append("$").append(operationName);
 
 			if (pathParameters != null && !pathParameters.isEmpty()) {
-				sbOperation.append("?").append(encodeURL(pathParameters));
+				sbOperation.append("?").append(URLEncoder.encode(pathParameters, StandardCharsets.UTF_8.toString()));
 			}
 
 			client = WebClientHelper.createClientWihtoutHostVerification();
@@ -211,12 +214,11 @@ public class ResourceOperationRESTClient implements Serializable {
 				operationResponse.bufferEntity();
 			}
 
-			debugResponse(operationResponse);
+			DebugUtil.debugResponse(operationResponse);
 
 		}
 		catch (Exception e) {
 			// Exception caught
-			e.printStackTrace();
 			throw e;
 		} finally {
 			if (client != null) {
@@ -262,7 +264,7 @@ public class ResourceOperationRESTClient implements Serializable {
 	 */
 	public Builder addHeaders(Builder targetBuilder, List<String> headers) throws Exception {
 
-		log.fine("[START] ResourceRESTClient.addHeaders()");
+		log.fine("[START] ResourceOperationRESTClient.addHeaders()");
 
 		if (headers != null && !headers.isEmpty()) {
 			int separator = -1;
@@ -281,85 +283,10 @@ public class ResourceOperationRESTClient implements Serializable {
 			}
 		}
 		else {
-			log.warning("ResourceRESTClient.addHeaders() - HEADERS EMPTY OR NULL");
+			log.fine("ResourceOperationRESTClient.addHeaders() - HEADERS EMPTY OR NULL");
 		}
 
 		return targetBuilder;
-	}
-
-	/**
-	 * <p>
-	 * Prints the contents of the supplied {@link Response}.<br/>
-	 * Useful for debugging purposes.
-	 * </p>
-	 *
-	 * @param response
-	 */
-	private void debugResponse(Response response) {
-
-		if (response != null) {
-			if (response.getHeaders() != null) {
-
-				log.fine("----- HTTP HEADERS (RESPONSE) -----");
-
-				for (String key : response.getHeaders().keySet()) {
-					log.fine("header(" + key + ") is " + response.getHeaders().get(key).toString());
-				}
-			}
-
-			log.fine("----- RESPONSE STATUS -----");
-			log.fine(Integer.toString(response.getStatus()));
-
-			log.fine("----- PAYLOAD ----- [snipped; use fine logging]");
-			String entity = null;
-			if (response.getStatus() == Response.Status.NOT_MODIFIED.getStatusCode()) {
-				entity = Response.Status.NOT_MODIFIED.getReasonPhrase();
-			} else {
-				if (response.hasEntity()) {
-					entity = response.readEntity(String.class);
-				} else {
-					entity = ">> NO ENTITY PAYLOAD <<";
-				}
-			}
-			log.fine(entity);
-
-		}
-		else {
-			log.fine("Response is NULL.");
-		}
-	}
-
-	/**
-	 * Encode specific URL characters.
-	 *
-	 * @param rawContent
-	 * @return encoded string
-	 */
-	private String encodeURL(String rawContent) {
-		if (rawContent == null) {
-			return "";
-		}
-		else {
-			StringBuffer sb = new StringBuffer();
-
-			for (int i = 0; i < rawContent.length(); i++) {
-				char ch = rawContent.charAt(i);
-				if (ch == '"') {
-					sb.append("%22");
-				}
-				else if (ch == '{') {
-					sb.append("%7B");
-				}
-				else if (ch == '}') {
-					sb.append("%7D");
-				}
-				else {
-					sb.append(ch);
-				}
-			}
-
-			return sb.toString();
-		}
 	}
 
 }

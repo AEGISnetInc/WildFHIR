@@ -108,7 +108,6 @@ public class CodeService {
 		} catch (Exception e) {
 			// Exception caught
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -147,7 +146,6 @@ public class CodeService {
 		} catch (Exception e) {
 			// Exception caught
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -182,7 +180,6 @@ public class CodeService {
 		} catch (Exception e) {
 			// Exception caught
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -226,7 +223,6 @@ public class CodeService {
 		} catch (Exception e) {
 			// Exception caught
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -267,7 +263,6 @@ public class CodeService {
 		} catch (Exception e) {
 			// Exception caught
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -318,7 +313,6 @@ public class CodeService {
 		} catch (Exception e) {
 			// Exception caught
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -371,7 +365,6 @@ public class CodeService {
 		} catch (Exception e) {
 			// Exception caught
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
@@ -424,7 +417,6 @@ public class CodeService {
 		} catch (Exception e) {
 			// Exception caught
 			log.severe(e.getMessage());
-			e.printStackTrace();
 			throw e;
 		}
 
