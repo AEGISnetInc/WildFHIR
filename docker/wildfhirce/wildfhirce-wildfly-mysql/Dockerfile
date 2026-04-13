@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
-# Use lquay.io/wildfly/wildfly:38.0.1.Final-jdk21 image as the base
-FROM quay.io/wildfly/wildfly:38.0.1.Final-jdk21
+# Use quay.io/wildfly/wildfly:39.0.1.Final-2-jdk21 image as the base
+FROM quay.io/wildfly/wildfly:39.0.1.Final-2-jdk21
 
 # Set the JBOSS_HOME env variable
 ENV JBOSS_HOME=/opt/jboss/wildfly
@@ -21,7 +21,7 @@ USER jboss
 
 RUN /opt/jboss/wildfly/bin/add-user.sh admin admin --silent
 
-# Add MySQL 8.0 connector library
+# Add MySQL 9.6.0 connector library
 ADD mysql $JBOSS_HOME/modules/system/layers/base/com/mysql
 
 # Copy standalone conf for start up with JAVA_OPTS settings

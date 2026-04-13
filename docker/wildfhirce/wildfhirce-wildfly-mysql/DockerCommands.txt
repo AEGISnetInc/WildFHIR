@@ -1,5 +1,6 @@
 # -------------------------------------------------------------------------------
-# Build wildfhirce-wildfly image
-# - Named tag v0.6.0
+# Build wildfhirce-wildfly multi-arch image
+# - Build SBOM attestation and a provenance attestation with max mode provenance
+# - Named tag v0.7.0
 # -------------------------------------------------------------------------------
-docker build -t aegisnetinc/wildfhirce-wildfly:v0.6.0 .
+docker buildx build --provenance=true --sbom=true --platform linux/arm64,linux/amd64 -t aegisnetinc/wildfhirce-wildfly:v0.7.0 .
