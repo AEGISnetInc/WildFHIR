@@ -1,8 +1,8 @@
 # -------------------------------------------------------------------------------
-# Set up named compose project wildfhirce-r4-wildfly38-mysql8
+# Set up named compose project wildfhirce-r4-wildfly39-mysql9
 # - This will show up in Docker Desktop
 # -------------------------------------------------------------------------------
-docker compose -p wildfhirce-r4-wildfly38-mysql8 create
+docker compose -p wildfhirce-r4-wildfly39-mysql9 create
 
 =================================================================================
 
@@ -14,11 +14,11 @@ docker network create -d bridge wildfhirce-net
 
 # -------------------------------------------------------------------------------
 # Create and run wildfhirce-mysql image
-# - From tag v0.6.0
+# - From tag v0.7.0
 # - Using the bridge network wildfhirce-net
 # - Expose port 3306 for MySQL Workbench access
 # -------------------------------------------------------------------------------
-docker run --network=wildfhirce-net -itd -p 3306:3306 --name=wildfhircemysql aegisnetinc/wildfhirce-mysql:v0.6.0
+docker run --network=wildfhirce-net -itd -p 3306:3306 --name=wildfhircemysql aegisnetinc/wildfhirce-mysql:v0.7.0
 
 # -------------------------------------------------------------------------------
 # Run wildfhircemysql container
@@ -28,12 +28,12 @@ docker start wildfhircemysql
 
 # -------------------------------------------------------------------------------
 # Create and run wildfhirce-wildfly image
-# - From tag v0.6.0
+# - From tag v0.7.0
 # - Using the bridge network wildfhirce-net
 # - Define WildFHIR environment variable file
 # - Expose ports 8080, 8443, 9990 for browser and RESTful client access
 # -------------------------------------------------------------------------------
-docker run --network=wildfhirce-net -itd -p 8080:8080 -p 8443:8443 -p 9990:9990 --env-file env.list --name=wildfhircewildfly aegisnetinc/wildfhirce-wildfly:v0.6.0
+docker run --network=wildfhirce-net -itd -p 8080:8080 -p 8443:8443 -p 9990:9990 --env-file env.list --name=wildfhircewildfly aegisnetinc/wildfhirce-wildfly:v0.7.0
 
 # -------------------------------------------------------------------------------
 # Run wildfhircewildfly container
