@@ -403,10 +403,10 @@ public class RESTResourceOps {
 					 */
 					if (!requestURL.toString().contains(resourceType)) {
 						requestURL.append("/").append(resourceType).append("/").append(id);
-					}
 
-					if (resourceContainer != null && resourceContainer.getResource() != null) {
-						requestURL.append("/_history/").append(resourceContainer.getResource().getVersionId());
+						if (resourceContainer != null && resourceContainer.getResource() != null) {
+							requestURL.append("/_history/").append(resourceContainer.getResource().getVersionId());
+						}
 					}
 
 					// Construct full request URL with any query parameters
