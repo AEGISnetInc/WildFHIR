@@ -32,6 +32,7 @@
  */
 package net.aegis.fhir.service;
 
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
@@ -55,10 +56,7 @@ import org.hl7.fhir.r4.model.Bundle.BundleType;
 import org.hl7.fhir.r4.model.Bundle.HTTPVerb;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.OperationOutcome;
-import org.hl7.fhir.r4.model.OperationOutcome.IssueSeverity;
-import org.hl7.fhir.r4.model.OperationOutcome.IssueType;
 import org.hl7.fhir.r4.model.Resource;
-import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -118,8 +116,6 @@ public class BatchService {
 
 		ResourceContainer resourceContainer = new ResourceContainer();
 		Bundle bundleResponse = null;
-		Boolean txOutcomeAck = Boolean.valueOf(false);
-		String txOutcomeAckText = null;
 
 		try {
 			resourceContainer.setBundle(bundleResponse);
@@ -514,35 +510,6 @@ public class BatchService {
 					entryCount++;
 				}
 
-				/*
-				 * Check for Nictiz txOutcomeAck to add final OperationOutcome with information issue
-				 * containing txOutcomeAckText text.
-				 */
-				if (txOutcomeAck.booleanValue() == true) {
-					log.fine("===== BatchService - PROCESS TX OUTCOME ACK = TRUE");
-
-					bundleResponseEntry = new BundleEntryComponent();
-					String ooResourceId = UUIDUtil.getUUID(false);
-					bundleResponseEntry.setFullUrl("urn:uuid:" + ooResourceId);
-
-					OperationOutcome finalInfoOO = ServicesUtil.INSTANCE.getOperationOutcomeResource(IssueSeverity.INFORMATION, IssueType.INFORMATIONAL, txOutcomeAckText);
-					finalInfoOO.setId(ooResourceId);
-					finalInfoOO.setLanguage("nl-NL");
-					XhtmlNode ooDiv = finalInfoOO.getText().getDiv();
-					ooDiv.setAttribute("lang", "nl-NL");
-					ooDiv.setAttribute("xml:lang", "nl-NL");
-					bundleResponseEntry.setResource(finalInfoOO);
-
-					BundleEntryResponseComponent bundleEntryResponse = new BundleEntryResponseComponent();
-					bundleEntryResponse.setStatus("200");
-					bundleResponseEntry.setResponse(bundleEntryResponse);
-
-					bundleResponseEntries.add(bundleResponseEntry);
-				}
-				else {
-					log.fine("===== BatchService - SKIP TX OUTCOME ACK = FALSE");
-				}
-
 				bundleResponse.setEntry(bundleResponseEntries);
 			}
 
@@ -727,6 +694,9 @@ public class BatchService {
 							log.fine("     ----- BatchService - setResponseParams - put map for [" + bundleEntry.getFullUrl() + "] with value [" + relativeReference + "]");
 						}
 					}
+
+					// Decode location string
+					location = URLDecoder.decode(location, "UTF-8");
 
 					// FHIR-154 - If location contains _history, remove
 					if (location.contains("/_history")) {
