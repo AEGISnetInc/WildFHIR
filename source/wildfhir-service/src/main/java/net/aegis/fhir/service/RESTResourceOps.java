@@ -173,12 +173,11 @@ public class RESTResourceOps {
 
 					// Get the request URL without the query parameters
 					StringBuffer requestURL = request.getRequestURL();
-					String locationPath = request.getRequestURL().toString();
 
 					/*
 					 * Check for missing resource type if called from batch or transaction
 					 */
-					if (!locationPath.contains(resourceType)) {
+					if (!requestURL.toString().contains(resourceType)) {
 						requestURL.append("/").append(resourceType).append("/").append(id);
 					}
 
@@ -191,18 +190,8 @@ public class RESTResourceOps {
 					if (queryString != null) {
 						requestURL.append("?").append(queryString);
 					}
-					locationPath = requestURL.toString();
 
-					/*
-					 * Check for missing resource type if called from batch or transaction
-					 */
-					if (!locationPath.contains(resourceType)) {
-						locationPath += "/" + resourceType + "/" + id;
-					}
-
-					if (resourceContainer != null && resourceContainer.getResource() != null) {
-						locationPath += "/_history/" + resourceContainer.getResource().getVersionId();
-					}
+					log.fine("Response Location: " + requestURL);
 
 					// Check for valid returned resource instance; i.e. response status of OK
 					if (resourceContainer.getResponseStatus().equals(Status.OK)) {
@@ -313,7 +302,7 @@ public class RESTResourceOps {
 
 									}
 									else {
-										builder = buildResource(locationPath, producesType, resourceContainer, Ops.READ, responseFhirVersion);
+										builder = buildResource(requestURL.toString(), producesType, resourceContainer, Ops.READ, responseFhirVersion);
 									}
 								}
 							}
@@ -327,12 +316,12 @@ public class RESTResourceOps {
 
 						}
 						else {
-							builder = buildResource(locationPath, producesType, resourceContainer, Ops.READ, responseFhirVersion);
+							builder = buildResource(requestURL.toString(), producesType, resourceContainer, Ops.READ, responseFhirVersion);
 						}
 
 					}
 					else {
-						builder = buildResource(locationPath, producesType, resourceContainer, Ops.READ, responseFhirVersion);
+						builder = buildResource(requestURL.toString(), producesType, resourceContainer, Ops.READ, responseFhirVersion);
 					}
 
 				}
@@ -408,12 +397,11 @@ public class RESTResourceOps {
 
 					// Get the request URL without the query parameters
 					StringBuffer requestURL = request.getRequestURL();
-					String locationPath = request.getRequestURL().toString();
 
 					/*
 					 * Check for missing resource type if called from batch or transaction
 					 */
-					if (!locationPath.contains(resourceType)) {
+					if (!requestURL.toString().contains(resourceType)) {
 						requestURL.append("/").append(resourceType).append("/").append(id);
 					}
 
@@ -426,16 +414,10 @@ public class RESTResourceOps {
 					if (queryString != null) {
 						requestURL.append("?").append(queryString);
 					}
-					locationPath = requestURL.toString();
 
-					/*
-					 * Check for missing resource type if called from batch or transaction
-					 */
-					if (!locationPath.contains(resourceType)) {
-						locationPath += "/" + resourceType + "/" + id + "/_history/" + versionId;
-					}
+					log.fine("Response Location: " + requestURL);
 
-					builder = buildResource(locationPath, producesType, resourceContainer, Ops.READ, responseFhirVersion);
+					builder = buildResource(requestURL.toString(), producesType, resourceContainer, Ops.READ, responseFhirVersion);
 				}
 				else {
 					builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
@@ -502,15 +484,14 @@ public class RESTResourceOps {
 
 				// Get the request URL without the query parameters
 				StringBuffer requestURL = request.getRequestURL();
-				String contextPath = request.getRequestURL().toString();
 
 				/*
 				 * Check for missing resource type if called from batch or transaction
 				 */
-				if (!contextPath.contains(resourceType)) {
+				if (!requestURL.toString().contains(resourceType)) {
 					requestURL.append("/").append(resourceType);
 				}
-				contextPath = requestURL.toString();
+				String contextPath = requestURL.toString();
 
 				/*
 				 * Remove resource id if called from update
@@ -2576,7 +2557,7 @@ public class RESTResourceOps {
 	 */
 	private Response.ResponseBuilder buildResource(String locationPath, String producesType, ResourceContainer resourceContainer, Enum<Ops> opsCode, String responseFhirVersion) throws URISyntaxException, Exception {
 
-		log.fine("[START] RESTResourceOps.buildResource()");
+		log.fine("[START] RESTResourceOps.buildResource() - locationPath " + locationPath);
 
 		Response.ResponseBuilder builder;
 		String outcome = "";
@@ -2588,8 +2569,9 @@ public class RESTResourceOps {
 			builder = Response.status(resourceContainer.getResponseStatus());
 
 			if (resourceContainer.getResource() != null || opsCode.equals(Ops.DELETE)) {
-				// Define URI location
-                URI resourceLocation = new URI(URLEncoder.encode(locationPath, StandardCharsets.UTF_8.toString()));
+				// Define URI location with decoded URL
+                URI resourceLocation = new URI(locationPath);
+				log.fine("resourceLocation: " + resourceLocation.toString());
 
 				if (resourceContainer.getResource() != null) {
 					// Get last update date
