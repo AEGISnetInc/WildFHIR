@@ -2476,8 +2476,8 @@ public class RESTResourceOps {
             builder = Response.status(resourceContainer.getResponseStatus()).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 
             if (resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
-                // Define URI location
-                URI resourceLocation = new URI(URLEncoder.encode(locationPath, StandardCharsets.UTF_8.toString()));
+				// Define URI location with decoded URL
+                URI resourceLocation = new URI(locationPath);
                 builder = builder.contentLocation(resourceLocation);
 
                 if (resourceContainer.getBundle() != null) {
