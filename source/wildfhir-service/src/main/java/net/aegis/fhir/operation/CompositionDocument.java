@@ -34,6 +34,8 @@ package net.aegis.fhir.operation;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -299,7 +301,7 @@ public class CompositionDocument extends ResourceOperationProxy {
 		StringBuffer requestURL = request.getRequestURL();
 		String queryString = request.getQueryString();
 		if (queryString != null) {
-			requestURL.append("?").append(queryString);
+			requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
 		}
 		String locationPath = requestURL.toString();
 

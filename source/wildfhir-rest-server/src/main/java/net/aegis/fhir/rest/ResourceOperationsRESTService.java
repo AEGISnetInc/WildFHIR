@@ -36,6 +36,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
 import org.hl7.fhir.r4.formats.IParser.OutputStyle;
@@ -464,7 +466,7 @@ public class ResourceOperationsRESTService {
 					StringBuffer requestURL = request.getRequestURL();
 					String queryString = request.getQueryString();
 					if (queryString != null) {
-						requestURL.append("?").append(queryString);
+						requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
 					}
 					String locationPath = requestURL.toString();
 

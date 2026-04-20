@@ -34,7 +34,9 @@ package net.aegis.fhir.operation;
 
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -167,7 +169,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 		StringBuffer requestURL = request.getRequestURL();
 		String queryString = request.getQueryString();
 		if (queryString != null) {
-			requestURL.append("?").append(queryString);
+			requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
 		}
 		String locationPath = requestURL.toString();
 
