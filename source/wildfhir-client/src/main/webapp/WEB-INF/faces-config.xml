@@ -34,4 +34,10 @@
 		</resource-bundle>
 	</application>
 
+	<factory>
+		<exception-handler-factory>
+			net.aegis.primefaces.view.ViewExpiredExceptionHandlerFactory
+		</exception-handler-factory>
+	</factory>
+
 </faces-config>

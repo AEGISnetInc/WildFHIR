@@ -8,13 +8,31 @@
 		<welcome-file>index.html</welcome-file>
 	</welcome-file-list>
 	<context-param>
-		<param-name>jakarta.faces.FACELETS_SKIP_COMMENTS</param-name>
+		<param-name>jakarta.faces.PARTIAL_STATE_SAVING</param-name>
+		<param-value>true</param-value>
+	</context-param>
+	<context-param>
+		<param-name>javax.faces.FACELETS_SKIP_COMMENTS</param-name>
 		<param-value>true</param-value>
 	</context-param>
 	<context-param>
 		<param-name>primefaces.THEME</param-name>
 		<param-value>glass-x</param-value>
 	</context-param>
+	<!-- Number of views saved per session (increase if users open many tabs) -->
+	<context-param>
+		<param-name>com.sun.faces.numberOfViewsInSession</param-name>
+		<param-value>25</param-value>
+	</context-param>
+	<!-- Logical views within a single view (increase for heavy AJAX usage) -->
+	<context-param>
+		<param-name>com.sun.faces.numberOfLogicalViews</param-name>
+		<param-value>25</param-value>
+	</context-param>
+	<!-- Extend session timeout (seconds) -->
+	<session-config>
+		<session-timeout>300</session-timeout>
+	</session-config>
 	<filter>
 		<filter-name>characterEncodingFilter</filter-name>
 		<filter-class>net.aegis.primefaces.filter.CharacterEncodingFilter</filter-class>
