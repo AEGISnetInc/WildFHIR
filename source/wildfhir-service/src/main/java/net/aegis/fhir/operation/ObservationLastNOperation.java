@@ -34,9 +34,7 @@ package net.aegis.fhir.operation;
 
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
-import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -250,7 +248,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 						if (validCount > 0) {
 							selfUrl.append("&");
 						}
-						selfUrl.append(param.getName()).append("=").append(URLEncoder.encode(validParam[1], StandardCharsets.UTF_8.toString()));
+						selfUrl.append(param.getName()).append("=").append(validParam[1]);
 						validCount++;
 
 						log.fine("      --> Adding " + validParam[0] + " = '" + validParam[1] + "'");

@@ -34,8 +34,6 @@ package net.aegis.fhir.service.client;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -125,7 +123,7 @@ public class ResourceOperationRESTClient implements Serializable {
 			sbOperation.append("$").append(operationName);
 
 			if (pathParameters != null && !pathParameters.isEmpty()) {
-				sbOperation.append("?").append(URLEncoder.encode(pathParameters, StandardCharsets.UTF_8.toString()));
+				sbOperation.append("?").append(pathParameters);
 			}
 
 			client = WebClientHelper.createClientWihtoutHostVerification();
