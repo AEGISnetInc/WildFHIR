@@ -37,7 +37,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.Year;
 import java.util.ArrayList;
 import java.util.Date;
@@ -1846,7 +1848,7 @@ public class ResourceService {
 								if (validCount > 0) {
 									selfUrl.append("&");
 								}
-								selfUrl.append(param.getName()).append("=").append(param.getValue());
+								selfUrl.append(param.getName()).append("=").append(URLEncoder.encode(param.getValue(), StandardCharsets.UTF_8));
 								validCount++;
 
 								log.fine("      --> Adding " + param.getName() + " = '" + param.getValue() + "'");

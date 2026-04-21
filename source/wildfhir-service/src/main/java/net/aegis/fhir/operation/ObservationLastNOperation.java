@@ -250,7 +250,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 						if (validCount > 0) {
 							selfUrl.append("&");
 						}
-						selfUrl.append(param.getName()).append("=").append(validParam[1]);
+						selfUrl.append(param.getName()).append("=").append(URLEncoder.encode(validParam[1], StandardCharsets.UTF_8));
 						validCount++;
 
 						log.fine("      --> Adding " + validParam[0] + " = '" + validParam[1] + "'");
