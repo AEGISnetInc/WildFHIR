@@ -361,7 +361,7 @@ public class ResourceOperationsRESTService {
 		log.fine("resourceOperation(): request.path = " + request.getRequestURL().toString());
 
 		// convert input stream to String
-		String payload = DebugUtil.debugRequest(request, headers, null);
+		String payload = DebugUtil.debugRequest(request, headers, resourceInputStream);
 
 		Response.ResponseBuilder builder = null;
         String contentType = null;
@@ -442,6 +442,7 @@ public class ResourceOperationsRESTService {
 
 					if (inputResource != null && inputResource.getResourceType().equals(org.hl7.fhir.r4.model.ResourceType.Parameters)) {
 						inputParameters = (Parameters) inputResource;
+						payload = null;
 					}
 				}
 
@@ -552,6 +553,8 @@ public class ResourceOperationsRESTService {
 		Response.ResponseBuilder builder;
 		String outcome = "";
 
+		URI locationHeader = new URI(locationPath);
+
 		if (output != null) {
 			log.fine("Output resource type is " + output.getResourceType().name());
 
@@ -566,7 +569,7 @@ public class ResourceOperationsRESTService {
 						log.fine("Build Response - returnedDirective is '" + returnedDirective + "'");
 						// Extract base url from locationPath for Location HTTP header
 						String baseUrl = ServicesUtil.INSTANCE.extractBaseURL(locationPath, "Composition");
-						URI locationHeader = new URI(baseUrl + output.fhirType() + "/" + output.getId());
+						locationHeader = new URI(baseUrl + output.fhirType() + "/" + output.getId());
 
 						builder = Response.status(Response.Status.OK).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion).location(locationHeader);
 					}
@@ -582,7 +585,7 @@ public class ResourceOperationsRESTService {
 					builder = Response.status(Response.Status.CONFLICT).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 				}
 				else {
-					builder = Response.status(Response.Status.OK).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+					builder = Response.status(Response.Status.OK).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion).location(locationHeader);
 				}
 			}
 			else if (operationName.equalsIgnoreCase("immds-forecast")) {
@@ -601,7 +604,7 @@ public class ResourceOperationsRESTService {
 					}
 				}
 				else {
-					builder = Response.status(Response.Status.OK).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+					builder = Response.status(Response.Status.OK).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion).location(locationHeader);
 				}
 			}
 			else if (operationName.equalsIgnoreCase("process-message")) {
@@ -619,18 +622,18 @@ public class ResourceOperationsRESTService {
 						}
 					}
 					if (isOk == true) {
-						builder = Response.status(Response.Status.OK).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+						builder = Response.status(Response.Status.OK).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion).location(locationHeader);
 					}
 					else {
 						builder = Response.status(Response.Status.BAD_REQUEST).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 					}
 				}
 				else {
-					builder = Response.status(Response.Status.OK).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+					builder = Response.status(Response.Status.OK).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion).location(locationHeader);
 				}
 			}
 			else {
-				builder = Response.status(Response.Status.OK).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+				builder = Response.status(Response.Status.OK).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion).location(locationHeader);
 			}
 
 			// Define URI location
@@ -642,10 +645,16 @@ public class ResourceOperationsRESTService {
 
 		}
 		else {
-			// Something went wrong
-			outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.TRANSIENT, "operation failure, no response", null, null, producesType);
+			if (operationName.equalsIgnoreCase("process-message")) {
+				// Special processing for $process-message operation
+				builder = Response.status(Response.Status.OK).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion).location(locationHeader).contentLocation(locationHeader);
+			}
+			else {
+				// Something went wrong
+				outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.TRANSIENT, "operation failure, no response", null, null, producesType);
 
-			builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+				builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+			}
 		}
 
 		return builder;

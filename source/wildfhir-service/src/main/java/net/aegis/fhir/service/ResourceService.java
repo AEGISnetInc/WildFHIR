@@ -3199,7 +3199,7 @@ public class ResourceService {
 							invalidParam[0] = key;
 							invalidParam[1] = invalidParamMessage;
 							invalidParams.add(invalidParam);
-							log.warning("   --> Invalid Param [" + key + "]");
+							log.warning("   --> (" + (resourceType != null ? resourceType : "?") + ") Invalid Param [" + key + "]");
 						}
 					}
 
