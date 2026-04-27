@@ -365,6 +365,7 @@ public class PatientEverything extends ResourceOperationProxy {
 				// Set patient criteria
 				queryParams = new MultivaluedHashMap<String, String>();
 				queryParams.add(lkvb.getValue(), patientCriteria);
+				log.fine("- " + lkvb.getValue() + " = " + patientCriteria);
 
 				// Set date criteria (if defined)
 				if (startDate != null || endDate != null) {
@@ -375,10 +376,12 @@ public class PatientEverything extends ResourceOperationProxy {
 						// Set startDate criteria if defined
 						if (startDateCriteria != null) {
 							queryParams.add(dateCriteria.getValue(), startDateCriteria);
+							log.fine("- " + dateCriteria.getValue() + " = " + startDateCriteria);
 						}
 						// Set endDate criteria if defined
 						if (endDateCriteria != null) {
 							queryParams.add(dateCriteria.getValue(), endDateCriteria);
+							log.fine("- " + dateCriteria.getValue() + " = " + endDateCriteria);
 						}
 					}
 				}

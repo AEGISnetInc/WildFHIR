@@ -48,7 +48,6 @@ public class ResourceType {
 	private static Map<String, List<LabelKeyValueBean>> resourceOperations;
 	private static List<String> resourceTypes;
 	private static List<String> resourceTypesOrdered;
-	private static List<LabelKeyValueBean> commonResourceCriteria;
 	private static List<LabelKeyValueBean> globalResourceCriteria;
 	private static List<LabelKeyValueBean> allGlobalResourceCriteria;
 	private static Map<String, List<LabelKeyValueBean>> resourceTypeCriteria;
@@ -82,10 +81,6 @@ public class ResourceType {
 
 	public static List<String> getSupportedResourceTypes() {
 		return supportedResourceTypes;
-	}
-
-	public static List<LabelKeyValueBean> getCommonCriteria() {
-		return commonResourceCriteria;
 	}
 
 	public static List<LabelKeyValueBean> getGlobalCriteria() {
@@ -598,7 +593,7 @@ public class ResourceType {
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "AllergyIntolerance", "asserter"));
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "Appointment", "actor"));
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "AppointmentResponse", "actor"));
-		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "AuditEvent", "patient"));
+		//compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "AuditEvent", "patient")); // Excluded to reduce content size
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "Basic", "patient"));
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "Basic", "author"));
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "BodyStructure", "patient"));
@@ -636,7 +631,7 @@ public class ResourceType {
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "DeviceUseStatement", "subject"));
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "DiagnosticReport", "subject"));
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "DocumentManifest", "patient"));
-		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "DocumentManifest", "agent"));
+		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "DocumentManifest", "subject"));
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "DocumentManifest", "recipient"));
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "DocumentReference", "subject"));
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "DocumentReference", "author"));
@@ -676,7 +671,7 @@ public class ResourceType {
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "Person", "patient"));
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "Procedure", "patient"));
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "Procedure", "performer"));
-		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "Provenance", "patient"));
+		//compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "Provenance", "patient")); // Excluded to reduce content size
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "QuestionnaireResponse", "subject"));
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "QuestionnaireResponse", "author"));
 		compartmentResourceTypeCriteria.add(new LabelKeyValueBean("Patient", "RelatedPerson", "patient"));
@@ -701,7 +696,7 @@ public class ResourceType {
 		everythingResources.add("Patient");
 
 		/*
-		 * All FHIR resource type search criteria to support $everything operation
+		 * All FHIR resource type date search criteria to support $everything operation
 		 */
 		everythingResourceTypeDateCriteria = new ArrayList<LabelKeyValueBean>();
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "Account", "period"));
@@ -709,9 +704,9 @@ public class ResourceType {
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "AllergyIntolerance", "date"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "Appointment", "date"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "AppointmentResponse", "appointment.date"));
-		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "AuditEvent", "patient"));
+		//everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "AuditEvent", "_lastUpdated")); // Excluded to reduce content size
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "Basic", "created"));
-		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "BodyStructure", ""));
+		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "BodyStructure", "_lastUpdated"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "CarePlan", "date"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "CareTeam", "date"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "ChargeItem", "entered-date"));
@@ -726,12 +721,13 @@ public class ResourceType {
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "Contract", "issued")); // AEGIS
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "Coverage", "period")); // AEGIS
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "CoverageEligibilityRequest", "created"));
-		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "DetectedIssue", "date"));
+		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "CoverageEligibilityResponse", "created"));
+		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "DetectedIssue", "identified"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "DeviceRequest", "event-date"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "DeviceUseStatement", "recorded-on"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "DiagnosticReport", "date"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "DocumentManifest", "created"));
-		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "DocumentReference", "created"));
+		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "DocumentReference", "date"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "Encounter", "date"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "EnrollmentRequest", "created"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "EpisodeOfCare", "date"));
@@ -752,15 +748,16 @@ public class ResourceType {
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "MedicationDispense", "whenprepared"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "MedicationRequest", "authoredon"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "MedicationStatement", "effective"));
+		//everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "MolecularSequence", "")); // No date search parameter
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "NutritionOrder", "datetime"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "Observation", "date"));
-		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "Person", ""));
+		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "Person", "_lastUpdated"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "Procedure", "date"));
 		//everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "Provenance", "recorded")); // Excluded to reduce content size
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "QuestionnaireResponse", "authored"));
-		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "RelatedPerson", ""));
+		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "RelatedPerson", "_lastUpdated"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "RequestGroup", "authored"));
-		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "ResearchSubject", "period"));
+		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "ResearchSubject", "date"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "RiskAssessment", "date"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "Schedule", "date"));
 		everythingResourceTypeDateCriteria.add(new LabelKeyValueBean("date", "ServiceRequest", "authored"));
@@ -1423,43 +1420,41 @@ public class ResourceType {
 		globalResourceCriteria.add(new LabelKeyValueBean("Request that the engine return additional resources", "_revinclude", "", "STRING"));
 		globalResourceCriteria.add(new LabelKeyValueBean("Specify the returned format of the response payload", "_format", "", "STRING"));
 		globalResourceCriteria.add(new LabelKeyValueBean("Return only a portion of the resources", "_summary", "", "STRING"));
-
-		commonResourceCriteria = new ArrayList<LabelKeyValueBean>();
 		// Add Common Search Parameters based on https://hl7.org/fhir/R4/searchparameter-registry.html
-		commonResourceCriteria.add(new LabelKeyValueBean("A server defined search that may match any of the string fields in the Address, including line, city, district, state, country, postalCode, and/or text", "address", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A city specified in an address", "address-city", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-city"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A country specified in an address", "address-country", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-country"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A postalCode specified in an address", "address-postalcode", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-postalcode"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A state specified in an address", "address-state", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-state"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A use code specified in an address", "address-use", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/individual-address-use"));
-		commonResourceCriteria.add(new LabelKeyValueBean("The patient's date of birth", "birthdate", "", "DATE", "http://hl7.org/fhir/SearchParameter/individual-birthdate"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A search by a clinical code", "code", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/clinical-code"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A conformance resource assigned use context", "context", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/conformance-context"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A conformance resource assigned quantity- or range-valued", "context-quantity", "", "QUANTITY", "http://hl7.org/fhir/SearchParameter/conformance-context-quantity"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A conformance resource assigned type of use context", "context-type", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/conformance-context-type"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A conformance resource assigned use context type and quantity- or range-based value", "context-type-quantity", "", "COMPOSITE", "http://hl7.org/fhir/SearchParameter/conformance-context-type-quantity"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A conformance resource assigned use context type and value", "context-type-value", "", "COMPOSITE", "http://hl7.org/fhir/SearchParameter/conformance-context-type-value"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A conformance resource publication date", "date", "", "DATE", "http://hl7.org/fhir/SearchParameter/conformance-date"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A conformance resource description", "description", "", "STRING", "http://hl7.org/fhir/SearchParameter/conformance-description"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A value in an email contact", "email", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/individual-email"));
-		commonResourceCriteria.add(new LabelKeyValueBean("Context of the clinical resource", "encounter", "", "REFERENCE", "http://hl7.org/fhir/SearchParameter/clinical-encounter", "Encounter"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A portion of the family name of the patient", "family", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-family"));
-		commonResourceCriteria.add(new LabelKeyValueBean("Gender of the individual", "gender", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/individual-gender"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A portion of the given name of the individual", "given", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-given"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A business identifier", "identifier", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/clinical-identifier"));
-		commonResourceCriteria.add(new LabelKeyValueBean("Intended jurisdiction for the conformance resource", "jurisdiction", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/conformance-jurisdiction"));
-		commonResourceCriteria.add(new LabelKeyValueBean("Returns uses of this medicine resource", "medication", "", "REFERENCE", "http://hl7.org/fhir/SearchParameter/medications-medication", "Medication"));
-		commonResourceCriteria.add(new LabelKeyValueBean("Computationally friendly name of the conformance resource", "name", "", "STRING", "http://hl7.org/fhir/SearchParameter/conformance-name"));
-		commonResourceCriteria.add(new LabelKeyValueBean("The identity of a subject for the clinical resource", "patient", "", "REFERENCE", "http://hl7.org/fhir/SearchParameter/clinical-patient", "Patient"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A value in a phone contact", "phone", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/individual-phone"));
-		commonResourceCriteria.add(new LabelKeyValueBean("A portion of name using some kind of phonetic matching algorithm", "phonetic", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-phonetic"));
-		commonResourceCriteria.add(new LabelKeyValueBean("Name of the publisher of the conformance resource", "publisher", "", "STRING", "http://hl7.org/fhir/SearchParameter/conformance-publisher"));
-		commonResourceCriteria.add(new LabelKeyValueBean("The current status of the conformance resource", "status", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/conformance-status"));
-		commonResourceCriteria.add(new LabelKeyValueBean("The value in any kind of telecom details", "telecom", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/individual-telecom"));
-		commonResourceCriteria.add(new LabelKeyValueBean("The human-friendly name of the conformance resource", "title", "", "STRING", "http://hl7.org/fhir/SearchParameter/conformance-title"));
-		commonResourceCriteria.add(new LabelKeyValueBean("The kind of clinical resource", "type", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/clinical-type"));
-		commonResourceCriteria.add(new LabelKeyValueBean("The uri that identifies the conformance resource", "url", "", "URI", "http://hl7.org/fhir/SearchParameter/conformance-url"));
-		commonResourceCriteria.add(new LabelKeyValueBean("The business version of the conformance resource", "version", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/conformance-version"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A server defined search that may match any of the string fields in the Address, including line, city, district, state, country, postalCode, and/or text", "address", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A city specified in an address", "address-city", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-city"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A country specified in an address", "address-country", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-country"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A postalCode specified in an address", "address-postalcode", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-postalcode"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A state specified in an address", "address-state", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-address-state"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A use code specified in an address", "address-use", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/individual-address-use"));
+		globalResourceCriteria.add(new LabelKeyValueBean("The patient's date of birth", "birthdate", "", "DATE", "http://hl7.org/fhir/SearchParameter/individual-birthdate"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A search by a clinical code", "code", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/clinical-code"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A conformance resource assigned use context", "context", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/conformance-context"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A conformance resource assigned quantity- or range-valued", "context-quantity", "", "QUANTITY", "http://hl7.org/fhir/SearchParameter/conformance-context-quantity"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A conformance resource assigned type of use context", "context-type", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/conformance-context-type"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A conformance resource assigned use context type and quantity- or range-based value", "context-type-quantity", "", "COMPOSITE", "http://hl7.org/fhir/SearchParameter/conformance-context-type-quantity"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A conformance resource assigned use context type and value", "context-type-value", "", "COMPOSITE", "http://hl7.org/fhir/SearchParameter/conformance-context-type-value"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A conformance resource publication date", "date", "", "DATE", "http://hl7.org/fhir/SearchParameter/conformance-date"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A conformance resource description", "description", "", "STRING", "http://hl7.org/fhir/SearchParameter/conformance-description"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A value in an email contact", "email", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/individual-email"));
+		globalResourceCriteria.add(new LabelKeyValueBean("Context of the clinical resource", "encounter", "", "REFERENCE", "http://hl7.org/fhir/SearchParameter/clinical-encounter", "Encounter"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A portion of the family name of the patient", "family", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-family"));
+		globalResourceCriteria.add(new LabelKeyValueBean("Gender of the individual", "gender", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/individual-gender"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A portion of the given name of the individual", "given", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-given"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A business identifier", "identifier", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/clinical-identifier"));
+		globalResourceCriteria.add(new LabelKeyValueBean("Intended jurisdiction for the conformance resource", "jurisdiction", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/conformance-jurisdiction"));
+		globalResourceCriteria.add(new LabelKeyValueBean("Returns uses of this medicine resource", "medication", "", "REFERENCE", "http://hl7.org/fhir/SearchParameter/medications-medication", "Medication"));
+		globalResourceCriteria.add(new LabelKeyValueBean("Computationally friendly name of the conformance resource", "name", "", "STRING", "http://hl7.org/fhir/SearchParameter/conformance-name"));
+		globalResourceCriteria.add(new LabelKeyValueBean("The identity of a subject for the clinical resource", "patient", "", "REFERENCE", "http://hl7.org/fhir/SearchParameter/clinical-patient", "Patient"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A value in a phone contact", "phone", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/individual-phone"));
+		globalResourceCriteria.add(new LabelKeyValueBean("A portion of name using some kind of phonetic matching algorithm", "phonetic", "", "STRING", "http://hl7.org/fhir/SearchParameter/individual-phonetic"));
+		globalResourceCriteria.add(new LabelKeyValueBean("Name of the publisher of the conformance resource", "publisher", "", "STRING", "http://hl7.org/fhir/SearchParameter/conformance-publisher"));
+		globalResourceCriteria.add(new LabelKeyValueBean("The current status of the conformance resource", "status", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/conformance-status"));
+		globalResourceCriteria.add(new LabelKeyValueBean("The value in any kind of telecom details", "telecom", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/individual-telecom"));
+		globalResourceCriteria.add(new LabelKeyValueBean("The human-friendly name of the conformance resource", "title", "", "STRING", "http://hl7.org/fhir/SearchParameter/conformance-title"));
+		globalResourceCriteria.add(new LabelKeyValueBean("The kind of clinical resource", "type", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/clinical-type"));
+		globalResourceCriteria.add(new LabelKeyValueBean("The uri that identifies the conformance resource", "url", "", "URI", "http://hl7.org/fhir/SearchParameter/conformance-url"));
+		globalResourceCriteria.add(new LabelKeyValueBean("The business version of the conformance resource", "version", "", "TOKEN", "http://hl7.org/fhir/SearchParameter/conformance-version"));
 
 		/*
 		 * All resource type criteria

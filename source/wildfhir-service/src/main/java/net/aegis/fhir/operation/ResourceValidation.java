@@ -204,7 +204,7 @@ public class ResourceValidation extends ResourceOperationProxy {
 		}
 
 		try {
-			if (payload != null) {
+			if (payload != null && resource != null) {
 				// Check for and validate raw payload if present
 
 				// FHIRValidatorClient singleton validate method
@@ -261,7 +261,7 @@ public class ResourceValidation extends ResourceOperationProxy {
 
 					OperationOutcome.OperationOutcomeIssueComponent issue =
 							ServicesUtil.INSTANCE.getOperationOutcomeIssueComponent(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INCOMPLETE,
-									"$validate failed. No [resource] parameter value found. Validation of create mode cannot be performed without a [resource] parameter.", null, null);
+									"$validate failed. No [resource] parameter value found. Validation cannot be performed without a [resource] parameter.", null, null);
 
 					if (issue != null) {
 						rOutcome.setText(null);
