@@ -36,7 +36,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -3220,8 +3219,7 @@ public class ResourceService {
 
 						for (String value : entry.getValue()) {
 
-							// First, decode URL query parameter value
-							value = URLDecoder.decode(value, "UTF-8");
+							// Query parameter value needs to be used as-is; i.e. do not attempt to decode
 
 							// Set single quote escaped string value
 							if (value.contains("'")) {
