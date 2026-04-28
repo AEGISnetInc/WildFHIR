@@ -3137,7 +3137,7 @@ public class ResourceService {
 				for (Entry<String, List<String>> entry : paramSet) {
 
 					String key = entry.getKey();
-					//log.fine("--> Processing search parameter [" + key + "]");
+					log.fine("--> Processing search parameter [" + key + "]");
 
 					boolean isValidSearchParameter = false;
 					String invalidParamMessage = null;
@@ -3145,7 +3145,7 @@ public class ResourceService {
 
 					// Need to check resourceType; if null, then check for special _type parameter
 					if (resourceType != null) {
-						//log.fine("   --> Resource Type is [" + resourceType + "]");
+						log.fine("   --> Resource Type is [" + resourceType + "]");
 						isValidSearchParameter = net.aegis.fhir.model.ResourceType.isSupportedResourceCriteriaType(resourceType, key);
 						if (isValidSearchParameter) {
 							// Determine criteria type
@@ -3161,12 +3161,12 @@ public class ResourceService {
 					}
 					else {
 						if (!typeList.isEmpty()) {
-							//log.fine("   --> Resource Type is null and _type defined");
+							log.fine("   --> Resource Type is null and _type defined");
 							for (String type : typeList) {
-								//log.fine("   --> Processing _type [" + type + "]");
+								log.fine("   --> Processing _type [" + type + "]");
 								isValidSearchParameter = net.aegis.fhir.model.ResourceType.isSupportedResourceCriteriaType(type, key);
 								if (isValidSearchParameter) {
-									//log.fine("      --> Valid parameter '" + key + "' for [" + type + "]");
+									log.fine("      --> Valid parameter '" + key + "' for [" + type + "]");
 									// Determine criteria type
 									criteriaType = net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(type, key);
 
@@ -3182,7 +3182,7 @@ public class ResourceService {
 							}
 						}
 						if (!isValidSearchParameter) {
-							//log.fine("   -->  Resource Type is null and _type not defined; check for global parameter");
+							log.fine("   -->  Resource Type is null and _type not defined; check for global parameter");
 							isValidSearchParameter = net.aegis.fhir.model.ResourceType.isSupportedResourceCriteriaType(null, key);
 							if (criteriaType == null || criteriaType.isEmpty()) {
 								criteriaType = net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(null, key);
@@ -3203,7 +3203,7 @@ public class ResourceService {
 					}
 
 					if (isValidSearchParameter) {
-						//log.fine("   --> Process valid search parameter");
+						log.fine("   --> Process valid search parameter");
 
 						boolean isDateType = (criteriaType.equalsIgnoreCase("DATE") ? true : false);
 						boolean isNumericType = (criteriaType.equalsIgnoreCase("NUMBER") ? true : false);
@@ -3236,7 +3236,7 @@ public class ResourceService {
 							validParam[1] = value;
 							if (validParams != null) {
 								validParams.add(validParam);
-								//log.fine("   --> Valid Param [" + key + "] Value [" + value + "] sqValue [" + sqValue + "]");
+								log.fine("   --> Valid Param [" + key + "] Value [" + value + "] sqValue [" + sqValue + "]");
 							}
 
 							// Next process known, special parameters
@@ -4780,6 +4780,7 @@ public class ResourceService {
 
 				} else {
 					resourcesReturned = resources;
+					log.fine("Total resources returned: " + resources.size());
 				}
 
 				if (bDropTempTable) {
