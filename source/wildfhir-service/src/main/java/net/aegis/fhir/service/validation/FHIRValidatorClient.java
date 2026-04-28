@@ -75,6 +75,7 @@ public class FHIRValidatorClient {
     private static FHIRValidatorClient me;
 
     private static String FHIR_PACKAGES_ENV_VAR = "FHIR_PACKAGES";
+    private static String FHIR_TX_SERVER_ENV_VAR = "FHIR_TX_SERVER";
 
 	private ValidationEngine engine = null;
 
@@ -115,7 +116,14 @@ public class FHIRValidatorClient {
 				loadPackages(fhirPackages);
 			}
 
-			engine.connectToTSServer("http://tx.fhir.org/r4", null, FhirPublication.R4, false);
+			// Check for FHIR terminology server URL via environment variable
+			String fhirTxServer = System.getenv(FHIR_TX_SERVER_ENV_VAR);
+			if (fhirTxServer == null || fhirTxServer.isEmpty()) {
+				fhirTxServer = "http://tx.fhir.org/r4";
+			}
+			log.info("FHIR TX SERVER " + fhirTxServer);
+
+			engine.connectToTSServer(fhirTxServer, null, FhirPublication.R4, false);
 
 			log.info("FHIR R4 v4.0.1 Validation Engine initialization completed in " + ServicesUtil.INSTANCE.getElapsedTime(start));
 		}
