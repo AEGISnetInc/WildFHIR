@@ -296,10 +296,11 @@ public enum ServicesUtil {
 
 				if (request != null) {
 					MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
-					String rawQuery = request.getQueryString();
+					String queryString = request.getQueryString();
 
-					if (rawQuery != null && !rawQuery.isEmpty()) {
-					    for (String pair : rawQuery.split("&")) {
+					if (queryString != null && !queryString.isEmpty()) {
+						queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
+					    for (String pair : queryString.split("&")) {
 					        int idx = pair.indexOf("=");
 					        String key   = idx > 0 ? pair.substring(0, idx) : pair;
 					        String value = idx > 0 ? pair.substring(idx + 1) : "";
@@ -423,10 +424,11 @@ public enum ServicesUtil {
 
 				// Get the query parameters that represent the search criteria
 				MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
-				String rawQuery = request.getQueryString();
+				String queryString = request.getQueryString();
 
-				if (rawQuery != null && !rawQuery.isEmpty()) {
-				    for (String pair : rawQuery.split("&")) {
+				if (queryString != null && !queryString.isEmpty()) {
+					queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
+				    for (String pair : queryString.split("&")) {
 				        int idx = pair.indexOf("=");
 				        String key   = idx > 0 ? pair.substring(0, idx) : pair;
 				        String value = idx > 0 ? pair.substring(idx + 1) : "";
@@ -1374,8 +1376,9 @@ public enum ServicesUtil {
 
 		// Get the query parameters from the Request
 		MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<String, String>();
-		String queryString = URLDecoder.decode(request.getQueryString(), StandardCharsets.UTF_8);
+		String queryString = request.getQueryString();
 		if (queryString != null && !queryString.isEmpty()) {
+			queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
 			for (String pair : queryString.split("&")) {
 				int idx = pair.indexOf("=");
 				String key = idx > 0 ? pair.substring(0, idx) : pair;
