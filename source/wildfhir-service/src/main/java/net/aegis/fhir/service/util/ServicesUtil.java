@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -1373,9 +1374,9 @@ public enum ServicesUtil {
 
 		// Get the query parameters from the Request
 		MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<String, String>();
-		String rawQuery = request.getQueryString();
-		if (rawQuery != null && !rawQuery.isEmpty()) {
-			for (String pair : rawQuery.split("&")) {
+		String queryString = URLDecoder.decode(request.getQueryString(), StandardCharsets.UTF_8);
+		if (queryString != null && !queryString.isEmpty()) {
+			for (String pair : queryString.split("&")) {
 				int idx = pair.indexOf("=");
 				String key = idx > 0 ? pair.substring(0, idx) : pair;
 				String value = idx > 0 ? pair.substring(idx + 1) : "";
