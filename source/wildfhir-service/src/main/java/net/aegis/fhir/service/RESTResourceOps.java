@@ -187,8 +187,9 @@ public class RESTResourceOps {
 					}
 
 					// Construct full request URL with any query parameters
-					String queryString = URLDecoder.decode(request.getQueryString(), StandardCharsets.UTF_8);
+					String queryString = request.getQueryString();
 					if (queryString != null) {
+						queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
 						requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
 					}
 
@@ -411,8 +412,9 @@ public class RESTResourceOps {
 					}
 
 					// Construct full request URL with any query parameters
-					String queryString = URLDecoder.decode(request.getQueryString(), StandardCharsets.UTF_8);
+					String queryString = request.getQueryString();
 					if (queryString != null) {
+						queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
 						requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
 					}
 
@@ -813,8 +815,9 @@ public class RESTResourceOps {
 
 							// Construct full request URL with any query parameters
 							StringBuffer requestURL = request.getRequestURL();
-							String queryString = URLDecoder.decode(request.getQueryString(), StandardCharsets.UTF_8);
+							String queryString = request.getQueryString();
 							if (queryString != null) {
+								queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
 								requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
 							}
 							String locationPath = requestURL.toString();
@@ -1183,8 +1186,9 @@ public class RESTResourceOps {
 
 						// Construct full request URL with any query parameters
 						StringBuffer requestURL = request.getRequestURL();
-						String queryString = URLDecoder.decode(request.getQueryString(), StandardCharsets.UTF_8);
+						String queryString = request.getQueryString();
 						if (queryString != null) {
+							queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
 							requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
 						}
 						String locationPath = requestURL.toString();
@@ -1504,8 +1508,9 @@ public class RESTResourceOps {
 
         		// Construct full request URL with any query parameters
 				StringBuffer requestURL = request.getRequestURL();
-				String queryString = URLDecoder.decode(request.getQueryString(), StandardCharsets.UTF_8);
+				String queryString = request.getQueryString();
 				if (queryString != null) {
+					queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
 					requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
 				}
 				String locationPath = requestURL.toString();
@@ -1799,8 +1804,9 @@ public class RESTResourceOps {
 
 							// Construct full request URL with any query parameters
 							StringBuffer requestURL = request.getRequestURL();
-							String queryString = URLDecoder.decode(request.getQueryString(), StandardCharsets.UTF_8);
+							String queryString = request.getQueryString();
 							if (queryString != null) {
+								queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
 								// Construct ordered parameters for search
 								orderedParams = URLEncodedUtils.parse(queryString, StandardCharsets.UTF_8);
 								for (NameValuePair param : orderedParams) {
@@ -1917,7 +1923,13 @@ public class RESTResourceOps {
 				queryString = ServicesUtil.INSTANCE.extractURLParams(overrideLocationPath);
 			}
 			else {
-				queryString = URLDecoder.decode(request.getQueryString(), StandardCharsets.UTF_8);
+				queryString = request.getQueryString();
+				if (queryString != null) {
+					queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
+				}
+				else {
+					queryString = "";
+				}
 			}
 			log.fine("  queryString = '" + queryString + "'");
 			List<NameValuePair> orderedParams = URLEncodedUtils.parse(queryString, StandardCharsets.UTF_8);
