@@ -3425,7 +3425,7 @@ public class ResourceService {
 										.append(stringEndValue).append("')");
 
 							}
-							else if (key.equals("name") || key.contains(".name")) {
+							else if (key.equals("address") || key.contains(".address") || key.equals("name") || key.contains(".name")) {
 								if (sbCreateTempWhereCriteria.length() > 5) {
 									iExists++;
 									sExists = sExistsBase + iExists;

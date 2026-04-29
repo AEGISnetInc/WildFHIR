@@ -46,6 +46,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.formats.XmlParser;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Device;
+import org.hl7.fhir.r4.model.Device.DeviceDeviceNameComponent;
 import org.hl7.fhir.r4.model.Device.DeviceUdiCarrierComponent;
 import org.hl7.fhir.r4.model.Identifier;
 
@@ -97,6 +98,16 @@ public class ResourcemetadataDevice extends ResourcemetadataProxy {
 			// Add Resource common parameters
             rMetadataChain = this.generateResourcemetadataTagList(resource, device, chainedParameter);
 			resourcemetadataList.addAll(rMetadataChain);
+
+			// device-name : string
+			if (device.hasDeviceName()) {
+				for (DeviceDeviceNameComponent deviceName : device.getDeviceName()) {
+					if (deviceName.hasName()) {
+						rMetadata = generateResourcemetadata(resource, chainedResource, chainedParameter+"device-name", deviceName.getName());
+						resourcemetadataList.add(rMetadata);
+					}
+				}
+			}
 
 			// identifier : token
 			if (device.hasIdentifier()) {
