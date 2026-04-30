@@ -3683,10 +3683,10 @@ public class ResourceService {
 													if (isDateType || isPeriodType) {
 														try {
 															// Recode date string space(s) to plus sign(s)
-															listPrefixValue = utcDateUtil.recodeDateSpace(listPrefixValue);
+															validListValue = utcDateUtil.recodeDateSpace(validListValue);
 
-															if (utcDateUtil.computeSortFormatLength(listPrefixValue) == 12) {
-																listPrefixValue += ":00";
+															if (utcDateUtil.computeSortFormatLength(validListValue) == 12) {
+																validListValue += ":00";
 															}
 
 															DateTimeType dateTimeType = new DateTimeType(validListValue);
