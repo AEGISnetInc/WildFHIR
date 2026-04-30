@@ -36,7 +36,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -3138,7 +3137,7 @@ public class ResourceService {
 				for (Entry<String, List<String>> entry : paramSet) {
 
 					String key = entry.getKey();
-					//log.fine("--> Processing search parameter [" + key + "]");
+					log.fine("--> Processing search parameter [" + key + "]");
 
 					boolean isValidSearchParameter = false;
 					String invalidParamMessage = null;
@@ -3146,7 +3145,7 @@ public class ResourceService {
 
 					// Need to check resourceType; if null, then check for special _type parameter
 					if (resourceType != null) {
-						//log.fine("   --> Resource Type is [" + resourceType + "]");
+						log.fine("   --> Resource Type is [" + resourceType + "]");
 						isValidSearchParameter = net.aegis.fhir.model.ResourceType.isSupportedResourceCriteriaType(resourceType, key);
 						if (isValidSearchParameter) {
 							// Determine criteria type
@@ -3162,12 +3161,12 @@ public class ResourceService {
 					}
 					else {
 						if (!typeList.isEmpty()) {
-							//log.fine("   --> Resource Type is null and _type defined");
+							log.fine("   --> Resource Type is null and _type defined");
 							for (String type : typeList) {
-								//log.fine("   --> Processing _type [" + type + "]");
+								log.fine("   --> Processing _type [" + type + "]");
 								isValidSearchParameter = net.aegis.fhir.model.ResourceType.isSupportedResourceCriteriaType(type, key);
 								if (isValidSearchParameter) {
-									//log.fine("      --> Valid parameter '" + key + "' for [" + type + "]");
+									log.fine("      --> Valid parameter '" + key + "' for [" + type + "]");
 									// Determine criteria type
 									criteriaType = net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(type, key);
 
@@ -3183,7 +3182,7 @@ public class ResourceService {
 							}
 						}
 						if (!isValidSearchParameter) {
-							//log.fine("   -->  Resource Type is null and _type not defined; check for global parameter");
+							log.fine("   -->  Resource Type is null and _type not defined; check for global parameter");
 							isValidSearchParameter = net.aegis.fhir.model.ResourceType.isSupportedResourceCriteriaType(null, key);
 							if (criteriaType == null || criteriaType.isEmpty()) {
 								criteriaType = net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(null, key);
@@ -3199,12 +3198,12 @@ public class ResourceService {
 							invalidParam[0] = key;
 							invalidParam[1] = invalidParamMessage;
 							invalidParams.add(invalidParam);
-							log.warning("   --> Invalid Param [" + key + "]");
+							log.warning("   --> (" + (resourceType != null ? resourceType : "?") + ") Invalid Param [" + key + "]");
 						}
 					}
 
 					if (isValidSearchParameter) {
-						//log.fine("   --> Process valid search parameter");
+						log.fine("   --> Process valid search parameter");
 
 						boolean isDateType = (criteriaType.equalsIgnoreCase("DATE") ? true : false);
 						boolean isNumericType = (criteriaType.equalsIgnoreCase("NUMBER") ? true : false);
@@ -3220,8 +3219,7 @@ public class ResourceService {
 
 						for (String value : entry.getValue()) {
 
-							// First, decode URL query parameter value
-							value = URLDecoder.decode(value, "UTF-8");
+							// Query parameter value needs to be used as-is; i.e. do not attempt to decode
 
 							// Set single quote escaped string value
 							if (value.contains("'")) {
@@ -3238,7 +3236,7 @@ public class ResourceService {
 							validParam[1] = value;
 							if (validParams != null) {
 								validParams.add(validParam);
-								//log.fine("   --> Valid Param [" + key + "] Value [" + value + "] sqValue [" + sqValue + "]");
+								log.fine("   --> Valid Param [" + key + "] Value [" + value + "] sqValue [" + sqValue + "]");
 							}
 
 							// Next process known, special parameters
@@ -3315,6 +3313,9 @@ public class ResourceService {
 									}
 									sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
 								}
+
+								// Recode date string space(s) to plus sign(s)
+								value = utcDateUtil.recodeDateSpace(value);
 
 								DateTimeType dateTimeType = new DateTimeType(value);
 								Date dateValue = dateTimeType.getValue();
@@ -3427,7 +3428,7 @@ public class ResourceService {
 										.append(stringEndValue).append("')");
 
 							}
-							else if (key.equals("name") || key.contains(".name")) {
+							else if (key.equals("address") || key.contains(".address") || key.equals("name") || key.contains(".name")) {
 								if (sbCreateTempWhereCriteria.length() > 5) {
 									iExists++;
 									sExists = sExistsBase + iExists;
@@ -3610,6 +3611,9 @@ public class ResourceService {
 															// if date or period, check for valid date format
 															if (isDateType || isPeriodType) {
 																try {
+																	// Recode date string space(s) to plus sign(s)
+																	listPrefixValue = utcDateUtil.recodeDateSpace(listPrefixValue);
+
 																	if (utcDateUtil.computeSortFormatLength(listPrefixValue) == 12) {
 																		listPrefixValue += ":00";
 																	}
@@ -3678,6 +3682,9 @@ public class ResourceService {
 													// if date or period, check for valid date format
 													if (isDateType || isPeriodType) {
 														try {
+															// Recode date string space(s) to plus sign(s)
+															listPrefixValue = utcDateUtil.recodeDateSpace(listPrefixValue);
+
 															if (utcDateUtil.computeSortFormatLength(listPrefixValue) == 12) {
 																listPrefixValue += ":00";
 															}
@@ -3931,6 +3938,9 @@ public class ResourceService {
 															if (isDateType || isPeriodType) {
 																log.fine("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
 
+																// Recode date string space(s) to plus sign(s)
+																prefixValue = utcDateUtil.recodeDateSpace(prefixValue);
+
 																dateFormatLength = utcDateUtil.computeSortFormatLength(prefixValue);
 																if (dateFormatLength == 12) {
 																	prefixValue += ":00";
@@ -4149,6 +4159,9 @@ public class ResourceService {
 														if (isDateType || isPeriodType) {
 															log.fine("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
 
+															// Recode date string space(s) to plus sign(s)
+															pairValue = utcDateUtil.recodeDateSpace(pairValue);
+
 															dateFormatLength = utcDateUtil.computeSortFormatLength(pairValue);
 															if (dateFormatLength == 12) {
 																pairValue += ":00";
@@ -4240,6 +4253,9 @@ public class ResourceService {
 															 */
 															if (isDateType || isPeriodType) {
 																log.fine("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
+
+																// Recode date string space(s) to plus sign(s)
+																prefixValue = utcDateUtil.recodeDateSpace(prefixValue);
 
 																dateFormatLength = utcDateUtil.computeSortFormatLength(prefixValue);
 																if (dateFormatLength == 12) {
@@ -4454,6 +4470,9 @@ public class ResourceService {
 														 */
 														if (isDateType || isPeriodType) {
 															log.fine("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
+
+															// Recode date string space(s) to plus sign(s)
+															listValue = utcDateUtil.recodeDateSpace(listValue);
 
 															dateFormatLength = utcDateUtil.computeSortFormatLength(listValue);
 															if (dateFormatLength == 12) {
@@ -4782,6 +4801,7 @@ public class ResourceService {
 
 				} else {
 					resourcesReturned = resources;
+					log.fine("Total resources returned: " + resources.size());
 				}
 
 				if (bDropTempTable) {

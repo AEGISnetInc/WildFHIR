@@ -70,6 +70,7 @@ import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
+import org.hl7.fhir.r4.model.UriType;
 import org.primefaces.event.TabChangeEvent;
 
 import net.aegis.fhir.client.ApplicationContext;
@@ -905,7 +906,7 @@ public class ApplicationController implements Serializable {
 				Parameters input = new Parameters();
 	    		ParametersParameterComponent parameter = new ParametersParameterComponent();
 	    		parameter.setName("profile");
-	    		StringType profile = new StringType("http://hl7.org/fhir/StructureDefinition/" + context.getSelectedResourceType());
+	    		UriType profile = new UriType("http://hl7.org/fhir/StructureDefinition/" + context.getSelectedResourceType());
 	    		parameter.setValue(profile);
 	    		input.addParameter(parameter);
 	    		parameter = new ParametersParameterComponent();
@@ -1283,19 +1284,16 @@ public class ApplicationController implements Serializable {
 				resource = jsonP.parse(iResource);
 			}
 
-			if (resource instanceof Parameters) {
-				Parameters parameters = (Parameters)resource;
+			Parameters parameters = null;
+			if (resource != null && resource instanceof Parameters) {
+				parameters = (Parameters)resource;
+			}
 
-				if (formatType.equals("XML")) {
-					response = context.getResourceOperationClient().resourceOperation(parameters, null, context.getSelectedServerURL(), context.getSelectedResourceType(), Constants.FHIR_XML_CONTENT, Constants.FHIR_XML_CONTENT, null, "validate", null, null);
-				}
-				else {
-					response = context.getResourceOperationClient().resourceOperation(parameters, null, context.getSelectedServerURL(), context.getSelectedResourceType(), Constants.FHIR_JSON_CONTENT, Constants.FHIR_JSON_CONTENT, null, "validate", null, null);
-				}
+			if (formatType.equals("XML")) {
+				response = context.getResourceOperationClient().resourceOperation(parameters, resourceString, context.getSelectedServerURL(), context.getSelectedResourceType(), Constants.FHIR_XML_CONTENT, Constants.FHIR_XML_CONTENT, null, "validate", null, null);
 			}
 			else {
-				validateExceptionOutcomeString = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.FATAL, OperationOutcome.IssueType.EXCEPTION, "Validate operation requires input contained in a Parameters resource type.", null, null, formatType.toLowerCase());
-				FacesContext.getCurrentInstance().addMessage("tabView:operationsTabView:validateForm", new FacesMessage(FacesMessage.SEVERITY_ERROR, "Validate operation requires input contained in a Parameters resource type.", "Validate operation requires input contained in a Parameters resource type."));
+				response = context.getResourceOperationClient().resourceOperation(parameters, resourceString, context.getSelectedServerURL(), context.getSelectedResourceType(), Constants.FHIR_JSON_CONTENT, Constants.FHIR_JSON_CONTENT, null, "validate", null, null);
 			}
 		}
 		catch (NumberFormatException e) {
@@ -1661,18 +1659,38 @@ public class ApplicationController implements Serializable {
 	public void everythingShowTemplate(ActionEvent event) {
 		log.fine("[START] ApplicationController.everythingShowTemplate()");
 
+		String formatType = context.getSelectedFormatType();
+
 		StringBuilder sbTemplate = new StringBuilder("");
-		sbTemplate.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n");
-		sbTemplate.append("<Parameters xmlns=\"http://hl7.org/fhir\">\n");
-		sbTemplate.append("  <parameter>\n");
-		sbTemplate.append("    <name value=\"start\"/>\n");
-		sbTemplate.append("    <valueDate value=\"YYYY-MM-DD\"/>\n");
-		sbTemplate.append("  </parameter>\n");
-		sbTemplate.append("  <parameter>\n");
-		sbTemplate.append("    <name value=\"end\"/>\n");
-		sbTemplate.append("    <valueDate value=\"YYYY-MM-DD\"/>\n");
-		sbTemplate.append("  </parameter>\n");
-		sbTemplate.append("</Parameters>");
+
+		if (formatType.equals("XML")) {
+			sbTemplate.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n");
+			sbTemplate.append("<Parameters xmlns=\"http://hl7.org/fhir\">\n");
+			sbTemplate.append("  <parameter>\n");
+			sbTemplate.append("    <name value=\"start\"/>\n");
+			sbTemplate.append("    <valueDate value=\"YYYY-MM-DD\"/>\n");
+			sbTemplate.append("  </parameter>\n");
+			sbTemplate.append("  <parameter>\n");
+			sbTemplate.append("    <name value=\"end\"/>\n");
+			sbTemplate.append("    <valueDate value=\"YYYY-MM-DD\"/>\n");
+			sbTemplate.append("  </parameter>\n");
+			sbTemplate.append("</Parameters>");
+		}
+		else {
+			sbTemplate.append("{\n");
+			sbTemplate.append("  \"resourceType\": \"Parameters\",\n");
+			sbTemplate.append("  \"parameter\": [\n");
+			sbTemplate.append("    {\n");
+			sbTemplate.append("      \"name\": \"start\",\n");
+			sbTemplate.append("      \"valueDate\": \"YYYY-MM-DD\"\n");
+			sbTemplate.append("    },\n");
+			sbTemplate.append("    {\n");
+			sbTemplate.append("      \"name\": \"end\",\n");
+			sbTemplate.append("      \"valueDate\": \"YYYY-MM-DD\"\n");
+			sbTemplate.append("    }\n");
+			sbTemplate.append("  ]\n");
+			sbTemplate.append("}");
+		}
 
 		context.setResourceString(sbTemplate.toString());
 	}
