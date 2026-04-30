@@ -3314,6 +3314,9 @@ public class ResourceService {
 									sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
 								}
 
+								// Recode date string space(s) to plus sign(s)
+								value = utcDateUtil.recodeDateSpace(value);
+
 								DateTimeType dateTimeType = new DateTimeType(value);
 								Date dateValue = dateTimeType.getValue();
 								String stringValue = null;
@@ -3608,6 +3611,9 @@ public class ResourceService {
 															// if date or period, check for valid date format
 															if (isDateType || isPeriodType) {
 																try {
+																	// Recode date string space(s) to plus sign(s)
+																	listPrefixValue = utcDateUtil.recodeDateSpace(listPrefixValue);
+
 																	if (utcDateUtil.computeSortFormatLength(listPrefixValue) == 12) {
 																		listPrefixValue += ":00";
 																	}
@@ -3676,6 +3682,9 @@ public class ResourceService {
 													// if date or period, check for valid date format
 													if (isDateType || isPeriodType) {
 														try {
+															// Recode date string space(s) to plus sign(s)
+															listPrefixValue = utcDateUtil.recodeDateSpace(listPrefixValue);
+
 															if (utcDateUtil.computeSortFormatLength(listPrefixValue) == 12) {
 																listPrefixValue += ":00";
 															}
@@ -3929,6 +3938,9 @@ public class ResourceService {
 															if (isDateType || isPeriodType) {
 																log.fine("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
 
+																// Recode date string space(s) to plus sign(s)
+																prefixValue = utcDateUtil.recodeDateSpace(prefixValue);
+
 																dateFormatLength = utcDateUtil.computeSortFormatLength(prefixValue);
 																if (dateFormatLength == 12) {
 																	prefixValue += ":00";
@@ -4147,6 +4159,9 @@ public class ResourceService {
 														if (isDateType || isPeriodType) {
 															log.fine("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
 
+															// Recode date string space(s) to plus sign(s)
+															pairValue = utcDateUtil.recodeDateSpace(pairValue);
+
 															dateFormatLength = utcDateUtil.computeSortFormatLength(pairValue);
 															if (dateFormatLength == 12) {
 																pairValue += ":00";
@@ -4238,6 +4253,9 @@ public class ResourceService {
 															 */
 															if (isDateType || isPeriodType) {
 																log.fine("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
+
+																// Recode date string space(s) to plus sign(s)
+																prefixValue = utcDateUtil.recodeDateSpace(prefixValue);
 
 																dateFormatLength = utcDateUtil.computeSortFormatLength(prefixValue);
 																if (dateFormatLength == 12) {
@@ -4452,6 +4470,9 @@ public class ResourceService {
 														 */
 														if (isDateType || isPeriodType) {
 															log.fine("isDateType || isPeriodType = " + (isDateType || isPeriodType) + " convert date value to DATETIME_SORT_FORMAT");
+
+															// Recode date string space(s) to plus sign(s)
+															listValue = utcDateUtil.recodeDateSpace(listValue);
 
 															dateFormatLength = utcDateUtil.computeSortFormatLength(listValue);
 															if (dateFormatLength == 12) {

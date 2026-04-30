@@ -775,4 +775,20 @@ public class UTCDateUtil {
 		return formatter.format(date);
 	}
 
+	/**
+	 * Recodes date string with space character(s) replacing space with plus sign
+	 * 
+	 * @param dateString
+	 * @return Recoded date string
+	 */
+	public String recodeDateSpace(String dateString) {
+		if (dateString == null) {
+			return new String();
+		}
+		if (dateString.contains(" ")) {
+			dateString = dateString.replaceAll(" ", "+");
+		}
+		return dateString;
+	}
+
 }
