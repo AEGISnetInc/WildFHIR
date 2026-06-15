@@ -2513,7 +2513,8 @@ public class RESTResourceOps {
                         sResourceSearch = oResourceSearch.toString();
                     }
 
-                    builder = builder.entity(sResourceSearch).header(HttpHeaders.CONTENT_LENGTH, sResourceSearch.getBytes("UTF-8").length);
+                    builder = builder.entity(sResourceSearch).header(HttpHeaders.CONTENT_LENGTH, sResourceSearch.getBytes("UTF-8").length)
+                    		.type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 
                 } else {
                 	// Response status is not OK;; build OperationOutcome response resource
@@ -2534,8 +2535,41 @@ public class RESTResourceOps {
 
                 	String outcome = ServicesUtil.INSTANCE.getOperationOutcome(outcomeIssueSeverity, outcomeIssueType, message, null, null, producesType);
 
-                    builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+                    builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).header(HttpHeaders.CONTENT_LENGTH, outcome.getBytes("UTF-8").length)
+                    		.type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
                 }
+            } else if (resourceContainer.getResponseStatus().equals(Response.Status.FORBIDDEN)) {
+            	// Search query failed with errors; return search generated outcome
+            	if (resourceContainer.getOutcome() != null) {
+                    String sResourceSearch = "";
+
+                    if (producesType.indexOf("xml") >= 0) {
+                        // Convert OperationOutcome to XML
+                    	oResourceSearch = new ByteArrayOutputStream();
+        				XmlParser xmlParser = new XmlParser();
+        				xmlParser.setOutputStyle(OutputStyle.PRETTY);
+        				xmlParser.compose(oResourceSearch, resourceContainer.getOutcome(), true);
+                        sResourceSearch = oResourceSearch.toString();
+                    } else {
+                        // Convert OperationOutcome to JSON
+                        oResourceSearch = new ByteArrayOutputStream();
+                        JsonParser jsonParser = new JsonParser();
+                        jsonParser.setOutputStyle(OutputStyle.PRETTY);
+                        jsonParser.compose(oResourceSearch, resourceContainer.getOutcome());
+                        sResourceSearch = oResourceSearch.toString();
+                    }
+
+                    builder = builder.status(resourceContainer.getResponseStatus()).entity(sResourceSearch).header(HttpHeaders.CONTENT_LENGTH, sResourceSearch.getBytes("UTF-8").length)
+                    		.type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+            	}
+            	else {
+            		// Search query failed with error but no generated outcome was returned 
+                    String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING,
+                    		"Search query processing failed without generating specific errors! Review your search request for any inconsistencies with the FHIR specification.", null, null, producesType);
+
+                    builder = Response.status(resourceContainer.getResponseStatus()).entity(outcome).header(HttpHeaders.CONTENT_LENGTH, outcome.getBytes("UTF-8").length)
+                    		.type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+            	}
             } else {
                 // Something went wrong
             	String message = "Failure processing search.";
@@ -2544,13 +2578,15 @@ public class RESTResourceOps {
             	}
                 String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.TRANSIENT, message, null, null, producesType);
 
-                builder = Response.status(resourceContainer.getResponseStatus()).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+                builder = Response.status(resourceContainer.getResponseStatus()).entity(outcome).header(HttpHeaders.CONTENT_LENGTH, outcome.getBytes("UTF-8").length)
+                		.type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
             }
         } else {
             // Something went wrong
             String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.TRANSIENT, "No response container returned.", null, null, producesType);
 
-            builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+            builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).header(HttpHeaders.CONTENT_LENGTH, outcome.getBytes("UTF-8").length)
+            		.type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
         }
 
         return builder;
