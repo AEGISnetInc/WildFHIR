@@ -35,6 +35,7 @@ package net.aegis.fhir.model;
 import jakarta.ws.rs.core.Response;
 
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.OperationOutcome;
 
 /**
  * Return class used by ResourceService that contains the Resource reference and required status information.
@@ -49,6 +50,8 @@ public class ResourceContainer {
 	private Resource resource;
 
 	private Bundle bundle;
+
+	private OperationOutcome outcome;
 
 	private Response.Status responseStatus;
 
@@ -101,6 +104,20 @@ public class ResourceContainer {
 	 */
 	public void setBundle(Bundle bundle) {
 		this.bundle = bundle;
+	}
+
+	/**
+	 * @return the outcome
+	 */
+	public OperationOutcome getOutcome() {
+		return outcome;
+	}
+
+	/**
+	 * @param outcome the outcome to set
+	 */
+	public void setOutcome(OperationOutcome outcome) {
+		this.outcome = outcome;
 	}
 
 	/**
