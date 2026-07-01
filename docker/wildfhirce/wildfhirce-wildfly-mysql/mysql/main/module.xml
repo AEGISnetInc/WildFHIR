@@ -2,7 +2,7 @@
 
 <module name="com.mysql" xmlns="urn:jboss:module:1.9">
   <resources>
-    <resource-root path="mysql-connector-j-9.6.0.jar"/>
+    <resource-root path="mysql-connector-j-9.7.0.jar"/>
   </resources>
   <dependencies>
     <module name="javax.api"/>

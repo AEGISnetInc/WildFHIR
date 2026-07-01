@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
-# Use the official MySQL 9.6.0 image as a base
-FROM mysql:9.6.0
+# Use the official, latest MySQL 9.x image as a base
+FROM mysql:latest
 
 # Used to gracefully shutdown mysql after each execution
 COPY ./wait_then_shutdown.sh /tmp/wait_then_shutdown.sh
