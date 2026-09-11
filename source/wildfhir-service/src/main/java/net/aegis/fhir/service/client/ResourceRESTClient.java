@@ -57,7 +57,9 @@ import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import net.aegis.fhir.model.Constants;
+import net.aegis.fhir.model.Serverdirectory;
 import net.aegis.fhir.service.CodeService;
+import net.aegis.fhir.service.ServerdirectoryService;
 import net.aegis.fhir.service.util.DebugUtil;
 import net.aegis.fhir.service.util.ServicesUtil;
 import net.aegis.fhir.service.util.WebClientHelper;
@@ -72,20 +74,30 @@ public class ResourceRESTClient implements Serializable {
 
 	private Logger log = Logger.getLogger("ResourceRESTClient");
 
+	private CodeService codeService;
+
+	private OAuthRESTClient oAuthRESTClient;
+
+	private ServerdirectoryService serverDirectoryService;
+
     private String fhirVersion = "; fhirVersion=4.0";
 
 	/**
 	 * Initialize codeService
 	 */
-	public ResourceRESTClient(CodeService codeService) {
+	public ResourceRESTClient(CodeService codeService, ServerdirectoryService serverDirectoryService) {
 		super();
-		if (codeService != null) {
-			try {
-				fhirVersion = "; fhirVersion=" + codeService.getCodeValue("supportedVersions");
-			} catch (Exception e) {
-				fhirVersion = "";
-				e.printStackTrace();
+		this.codeService = codeService;
+		this.serverDirectoryService = serverDirectoryService;
+		this.oAuthRESTClient = new OAuthRESTClient(codeService);
+
+		try {
+			if (codeService != null ) {
+				fhirVersion = "; fhirVersion=" + this.codeService.getCodeValue("supportedVersions");
 			}
+		} catch (Exception e) {
+			fhirVersion = "";
+			e.printStackTrace();
 		}
 	}
 
@@ -149,8 +161,12 @@ public class ResourceRESTClient implements Serializable {
 				targetBuilder = targetBuilder.header(HttpHeaders.IF_NONE_MATCH, ifNoneMatch);
 			}
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			log.fine("Resource read request uri: " + webTarget.getUri());
 
@@ -226,8 +242,12 @@ public class ResourceRESTClient implements Serializable {
 				targetBuilder = targetBuilder.header(HttpHeaders.ACCEPT, "application/fhir+xml" + Constants.CHARSET_UTF8_EXT + fhirVersion);
 			}
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			log.fine("Resource vread request uri: " + webTarget.getUri());
 
@@ -316,8 +336,12 @@ public class ResourceRESTClient implements Serializable {
 				targetBuilder = targetBuilder.header("Prefer", prefer);
 			}
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			log.fine("Resource update request uri: " + webTarget.getUri());
 
@@ -426,8 +450,12 @@ public class ResourceRESTClient implements Serializable {
 				targetBuilder = targetBuilder.header("Prefer", prefer);
 			}
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			log.fine("Resource update request uri: " + webTarget.getUri());
 
@@ -530,8 +558,12 @@ public class ResourceRESTClient implements Serializable {
 				targetBuilder = targetBuilder.header("Prefer", prefer);
 			}
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			log.fine("Resource patch request uri: " + webTarget.getUri());
 
@@ -602,8 +634,12 @@ public class ResourceRESTClient implements Serializable {
 				targetBuilder = targetBuilder.header(HttpHeaders.ACCEPT, "application/fhir+xml" + Constants.CHARSET_UTF8_EXT + fhirVersion);
 			}
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			log.fine("Resource delete request uri: " + webTarget.getUri());
 
@@ -688,8 +724,12 @@ public class ResourceRESTClient implements Serializable {
 				targetBuilder = targetBuilder.header(HttpHeaders.ACCEPT, "application/fhir+xml" + Constants.CHARSET_UTF8_EXT + fhirVersion);
 			}
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			log.fine("Resource history request uri: " + webTarget.getUri());
 
@@ -716,13 +756,14 @@ public class ResourceRESTClient implements Serializable {
 
 	/**
 	 *
+	 * @param baseUrl
 	 * @param historyPageUrl
 	 * @param contentType
 	 * @param headers
 	 * @return {@link Response}
 	 * @throws Exception
 	 */
-	public Response historyPage(String historyPageUrl, String contentType, List<String> headers) throws Exception {
+	public Response historyPage(String baseUrl, String historyPageUrl, String contentType, List<String> headers) throws Exception {
 
 		log.fine("[START] ResourceRESTClient.historyPage() - historyPageUrl: " + historyPageUrl);
 
@@ -745,8 +786,12 @@ public class ResourceRESTClient implements Serializable {
 				targetBuilder = targetBuilder.header(HttpHeaders.ACCEPT, "application/fhir+xml" + Constants.CHARSET_UTF8_EXT + fhirVersion);
 			}
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			log.fine("Resource history request uri: " + webTarget.getUri());
 
@@ -822,8 +867,12 @@ public class ResourceRESTClient implements Serializable {
 				targetBuilder = targetBuilder.header("Prefer", prefer);
 			}
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			log.fine("Resource update request uri: " + webTarget.getUri());
 
@@ -919,8 +968,12 @@ public class ResourceRESTClient implements Serializable {
 				targetBuilder = targetBuilder.header("Prefer", prefer);
 			}
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			log.fine("Resource update request uri: " + webTarget.getUri());
 
@@ -1038,8 +1091,12 @@ public class ResourceRESTClient implements Serializable {
 				targetBuilder = targetBuilder.header(HttpHeaders.ACCEPT, "application/fhir+xml" + Constants.CHARSET_UTF8_EXT + fhirVersion);
 			}
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			log.fine("Resource Search request uri: " + webTarget.getUri());
 
@@ -1140,8 +1197,12 @@ public class ResourceRESTClient implements Serializable {
 						.header(HttpHeaders.ACCEPT, "application/fhir+xml" + Constants.CHARSET_UTF8_EXT + fhirVersion);
 			}
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			log.fine("Resource Search request uri: " + webTarget.getUri());
 
@@ -1173,13 +1234,14 @@ public class ResourceRESTClient implements Serializable {
 
 	/**
 	 *
+	 * @param baseUrl
 	 * @param searchPageUrl
 	 * @param contentType
 	 * @param headers
 	 * @return {@link Response}
 	 * @throws Exception
 	 */
-	public Response searchPage(String searchPageUrl, String contentType, List<String> headers) throws Exception {
+	public Response searchPage(String baseUrl, String searchPageUrl, String contentType, List<String> headers) throws Exception {
 
 		log.fine("[START] ResourceRESTClient.searchPage() - searchPageUrl: " + searchPageUrl);
 
@@ -1202,8 +1264,12 @@ public class ResourceRESTClient implements Serializable {
 				targetBuilder = targetBuilder.header(HttpHeaders.ACCEPT, "application/fhir+xml" + Constants.CHARSET_UTF8_EXT + fhirVersion);
 			}
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			log.fine("Resource search request uri: " + webTarget.getUri());
 
@@ -1249,8 +1315,12 @@ public class ResourceRESTClient implements Serializable {
 			ResteasyWebTarget webTarget = client.target(buildURL(baseUrl, params));
 			Builder targetBuilder = webTarget.request();
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			resourceResponse = targetBuilder.get();
 
@@ -1295,8 +1365,12 @@ public class ResourceRESTClient implements Serializable {
 			ResteasyWebTarget webTarget = client.target(buildURL(baseUrl, params));
 			Builder targetBuilder = webTarget.request();
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			if (payload != null) {
 				if (contentType != null) {
@@ -1308,6 +1382,11 @@ public class ResourceRESTClient implements Serializable {
 			}
 			else {
 				resourceResponse = targetBuilder.post(Entity.text(""));
+			}
+
+			// buffering the response allows for multiple invocations of readEntity(...) on it.
+			if (resourceResponse.hasEntity()) {
+				resourceResponse.bufferEntity();
 			}
 
 			DebugUtil.debugResponse(resourceResponse);

@@ -50,7 +50,9 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 
 import net.aegis.fhir.model.Constants;
+import net.aegis.fhir.model.Serverdirectory;
 import net.aegis.fhir.service.CodeService;
+import net.aegis.fhir.service.ServerdirectoryService;
 import net.aegis.fhir.service.util.DebugUtil;
 import net.aegis.fhir.service.util.WebClientHelper;
 
@@ -64,20 +66,30 @@ public class ResourceOperationRESTClient implements Serializable {
 
 	private Logger log = Logger.getLogger("ResourceOperationRESTClient");
 
+	private CodeService codeService;
+
+	private OAuthRESTClient oAuthRESTClient;
+
+	private ServerdirectoryService serverDirectoryService;
+
     private String fhirVersion = "; fhirVersion=4.0";
 
 	/**
 	 * Initialize codeService
 	 */
-	public ResourceOperationRESTClient(CodeService codeService) {
+	public ResourceOperationRESTClient(CodeService codeService, ServerdirectoryService serverDirectoryService) {
 		super();
-		if (codeService != null) {
-			try {
-				fhirVersion = "; fhirVersion=" + codeService.getCodeValue("supportedVersions");
-			} catch (Exception e) {
-				fhirVersion = "";
-				e.printStackTrace();
+		this.codeService = codeService;
+		this.serverDirectoryService = serverDirectoryService;
+		this.oAuthRESTClient = new OAuthRESTClient(codeService);
+
+		try {
+			if (codeService != null ) {
+				fhirVersion = "; fhirVersion=" + this.codeService.getCodeValue("supportedVersions");
 			}
+		} catch (Exception e) {
+			fhirVersion = "";
+			e.printStackTrace();
 		}
 	}
 
@@ -150,8 +162,12 @@ public class ResourceOperationRESTClient implements Serializable {
 				targetBuilder = targetBuilder.accept(Constants.FHIR_XML_CONTENT + Constants.CHARSET_UTF8_EXT + fhirVersion);
 			}
 
+			// Add OAuth Authorization header if needed
+			Serverdirectory serverdirectory = this.serverDirectoryService.findServerdirectoryByBasePath(baseUrl);
+			List<String> newHeaders = this.oAuthRESTClient.getHeadersWithAuthToken(headers, serverdirectory);
+
 			// Add any additional headers
-			targetBuilder = addHeaders(targetBuilder, headers);
+			targetBuilder = addHeaders(targetBuilder, newHeaders);
 
 			log.fine("Resource operation uri: " + webTarget.getUri());
 

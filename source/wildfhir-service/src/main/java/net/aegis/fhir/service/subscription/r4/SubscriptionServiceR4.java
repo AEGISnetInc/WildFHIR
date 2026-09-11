@@ -52,6 +52,7 @@ import net.aegis.fhir.model.LabelKeyValueBean;
 import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.service.CodeService;
 import net.aegis.fhir.service.ResourceService;
+import net.aegis.fhir.service.ServerdirectoryService;
 import net.aegis.fhir.service.client.ResourceRESTClient;
 import net.aegis.fhir.service.util.ServicesUtil;
 import net.aegis.fhir.service.util.UTCDateUtil;
@@ -73,10 +74,13 @@ public class SubscriptionServiceR4 {
 	private Logger log = Logger.getLogger("SubscriptionServiceR4");
 
     @Inject
-    CodeService codeService;
+    private CodeService codeService;
 
     @Inject
 	private ResourceService resourceService;
+
+    @Inject
+	private ServerdirectoryService serverDirectoryService;
 
 	@Inject
 	private UTCDateUtil utcDateUtil;
@@ -88,7 +92,7 @@ public class SubscriptionServiceR4 {
 	 */
 
 	public SubscriptionServiceR4() throws Exception {
-		this.resourceClient = new ResourceRESTClient(codeService);
+		super();
 	}
 
 	/**
@@ -212,6 +216,7 @@ public class SubscriptionServiceR4 {
 									headers.add(header.asStringValue());
 								}
 
+								this.resourceClient = new ResourceRESTClient(codeService, serverDirectoryService);
 								if (!subscription.getChannel().hasPayload()) {
 									// If subscription.payload mime type is empty; send simple POST to subscription.endpoint
 									response = resourceClient.post(subscription.getChannel().getEndpoint(), null, null, null, headers);

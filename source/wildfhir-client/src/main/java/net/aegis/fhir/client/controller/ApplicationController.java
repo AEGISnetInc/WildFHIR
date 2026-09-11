@@ -540,7 +540,7 @@ public class ApplicationController implements Serializable {
 	 */
 	public void fhirHistoryPage(String historyPageUrl) {
 		log.fine("[START] ApplicationController.fhirHistoryPage()");
-		log.fine("BasePath for FHIR delete: " + context.getSelectedServerURL());
+		log.fine("BasePath for FHIR history page: " + context.getSelectedServerURL());
 
 		String formatType = context.getSelectedFormatType();
 
@@ -550,10 +550,10 @@ public class ApplicationController implements Serializable {
 
 		try {
 			if (formatType.equals("XML")) {
-				response = context.getResourceRESTClient().historyPage(historyPageUrl, Constants.FHIR_XML_CONTENT, null);
+				response = context.getResourceRESTClient().historyPage(context.getSelectedServerURL(), historyPageUrl, Constants.FHIR_XML_CONTENT, null);
 			}
 			else {
-				response = context.getResourceRESTClient().historyPage(historyPageUrl, Constants.FHIR_JSON_CONTENT, null);
+				response = context.getResourceRESTClient().historyPage(context.getSelectedServerURL(), historyPageUrl, Constants.FHIR_JSON_CONTENT, null);
 			}
 		}
 		catch (NumberFormatException e) {
@@ -774,7 +774,7 @@ public class ApplicationController implements Serializable {
 	 */
 	public void fhirSearchPage(String searchPageUrl) {
 		log.fine("[START] ApplicationController.fhirSearchPage()");
-		log.fine("BasePath for FHIR delete: " + context.getSelectedServerURL());
+		log.fine("BasePath for FHIR search page: " + context.getSelectedServerURL());
 
 		String formatType = context.getSelectedFormatType();
 
@@ -784,10 +784,10 @@ public class ApplicationController implements Serializable {
 
 		try {
 			if (formatType.equals("XML")) {
-				response = context.getResourceRESTClient().searchPage(searchPageUrl, Constants.FHIR_XML_CONTENT, null);
+				response = context.getResourceRESTClient().searchPage(context.getSelectedServerURL(), searchPageUrl, Constants.FHIR_XML_CONTENT, null);
 			}
 			else {
-				response = context.getResourceRESTClient().searchPage(searchPageUrl, Constants.FHIR_JSON_CONTENT, null);
+				response = context.getResourceRESTClient().searchPage(context.getSelectedServerURL(), searchPageUrl, Constants.FHIR_JSON_CONTENT, null);
 			}
 		}
 		catch (NumberFormatException e) {
