@@ -193,8 +193,8 @@ public class ApplicationContext implements Serializable {
 	@PostConstruct
 	public void init() {
 		log.fine("[START] - ApplicationContext.init()");
-		this.resourceRESTClient = new ResourceRESTClient(codeService);
-		this.resourceOperationClient = new ResourceOperationRESTClient(codeService);
+		this.resourceRESTClient = new ResourceRESTClient(codeService, serverDirectoryService);
+		this.resourceOperationClient = new ResourceOperationRESTClient(codeService, serverDirectoryService);
 		this.conformanceResourceRESTClient = new ConformanceResourceRESTClient(codeService);
 		this.fhirpathEvaluatorRESTClient = new FHIRPathEvaluatorRESTClient(codeService);
 		this.newServer = new Serverdirectory();

@@ -58,6 +58,7 @@ import net.aegis.fhir.model.ResourceContainer;
 import net.aegis.fhir.service.CodeService;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.ResourcemetadataService;
+import net.aegis.fhir.service.ServerdirectoryService;
 import net.aegis.fhir.service.audit.AuditEventService;
 import net.aegis.fhir.service.client.ResourceRESTClient;
 import net.aegis.fhir.service.provenance.ProvenanceService;
@@ -83,19 +84,22 @@ public class SubscriptionServiceR5 {
 	private Logger log = Logger.getLogger("SubscriptionServiceR5");
 
 	@Inject
-	AuditEventService auditEventService;
+	private AuditEventService auditEventService;
 
     @Inject
-    CodeService codeService;
+    private CodeService codeService;
 
 	@Inject
-    ProvenanceService provenanceService;
+	private ProvenanceService provenanceService;
 
     @Inject
 	private ResourceService resourceService;
 
 	@Inject
-	ResourcemetadataService resourcemetadataService;
+	private ResourcemetadataService resourcemetadataService;
+
+    @Inject
+	private ServerdirectoryService serverDirectoryService;
 
 	@Inject
 	private UTCDateUtil utcDateUtil;
@@ -107,7 +111,7 @@ public class SubscriptionServiceR5 {
 	 */
 
 	public SubscriptionServiceR5() throws Exception {
-		this.resourceClient = new ResourceRESTClient(codeService);
+		super();
 	}
 
 	/**
@@ -234,10 +238,20 @@ public class SubscriptionServiceR5 {
 
 							if (okToPost == true) {
 								// Process HTTP headers if present
+								boolean hasAcceptHeader = false;
 								List<String> headers = new ArrayList<String>();
 								for (StringType header : subscription.getChannel().getHeader()) {
 									headers.add(header.asStringValue());
+									if (header.asStringValue().toLowerCase().contains("accept")) {
+										hasAcceptHeader = true;
+									}
 								}
+								// Set HTTP Accept Header if not already defined in Subscription to defined Subscription.channel.payload
+								if (!hasAcceptHeader && subscription.getChannel().getPayload() != null && !subscription.getChannel().getPayload().isEmpty()) {
+									headers.add("Accept:" + subscription.getChannel().getPayload());
+								}
+
+								this.resourceClient = new ResourceRESTClient(codeService, serverDirectoryService);
 								response = resourceClient.post(subscription.getChannel().getEndpoint(), null, payload, subscription.getChannel().getPayload(), headers);
 
 								result.setRefType(payload);
