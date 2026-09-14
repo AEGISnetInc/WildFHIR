@@ -91,6 +91,14 @@
             </p>
         </div>
     </div>
+	<script type="text/javascript">
+		function toggleBtnIcon(btnElement) {
+			if (btnElement) {
+				// Swap the visual appearance class states explicitly
+				$(btnElement).toggleClass('masked-state unmasked-state');
+			}
+		}
+	</script>
 </h:body>
 </f:view>
 </html>

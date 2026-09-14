@@ -17,7 +17,7 @@
 		<p:toolbar>
 			<f:facet name="right">
 				<p:commandButton value="Define Server" icon="ui-icon-document"
-					onclick="PF('createServerPanel').show()" />
+					onclick="PF('createServerPanel').show();" />
 			</f:facet>
 		</p:toolbar>
 		<p:outputPanel id="serverDataTableWrapper">
@@ -49,7 +49,7 @@
 							icon="ui-icon-pencil"
 							actionListener="#{controller.serverToManage(server)}"
 							update=":tabView:adminTabView:manageServerForm"
-							oncomplete="PF('manageServerPanel').show()"
+							oncomplete="PF('manageServerPanel').show();"
 							rendered="#{server.id > 1}">
 							<f:param name="provider" value="#{provider}" />
 						</p:commandButton>
@@ -65,8 +65,18 @@
 			<h:form id="manageServerForm" prependId="false"
 				style="width:100%;border:none;">
 				<p>
-					<h:outputText value="Update Existing Server"
+					<p:commandLink id="closeUpdateExistingServer"
+						value="Update Existing Server" 
+						type="button"
+						onclick="PF('manageServerPanel').close();" 
 						style="padding:2px;text-decoration:underline;font-weight:bold;font-size:16px;" />
+
+					<!-- Tooltip bound explicitly to the link ID above -->
+					<p:tooltip id="closeUpdateExistingServerTooltip" 
+						for="closeUpdateExistingServer" 
+						value="Click to close this panel and hide the update existing server form." 
+						position="top" 
+						showDelay="300" />
 				</p>
 				<p:panelGrid id="manageServerGridPanel" layout="tabular" columns="2" border="0"
 					cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
@@ -99,7 +109,7 @@
 					<h:outputText value="" />
 
 					<h:outputText value="Grant Type: " />
-					<p:selectOneMenu id="selectedServerOAuthGrantTypeDropdown" required="false" label="Select OAuth Grant Type" value="#{context.selectedServer.oauthGrantType}" maxlength="45" style="width:360px;text-align:left;padding-right:30px;">
+					<p:selectOneMenu id="selectedServerOAuthGrantTypeDropdown" required="false" label="Select OAuth Grant Type" value="#{context.selectedServer.oauthGrantType}" style="width:360px;text-align:left;padding-right:30px;">
 						<f:selectItem itemValue="#{null}" itemLabel="-- Select OAuth Grant Type --         " noSelectionOption="true" />
 						<f:selectItem itemValue="client_credentials" itemLabel="client_credentials" />
 					</p:selectOneMenu>
@@ -108,15 +118,19 @@
 						value="#{context.selectedServer.oauthClientId}" required="false"
 						label="Client Id"
 						maxlength="64" size="60">
-						<f:validateLength minimum="2" />
 					</p:inputText>
 					<h:outputText value="Client Secret: " />
-					<p:inputText id="selectedServerOAuthClientSecret"
-						value="#{context.selectedServer.oauthClientSecret}" required="false"
-						label="Client Id"
-						maxlength="255" size="60">
-						<f:validateLength minimum="2" />
-					</p:inputText>
+					<h:panelGroup layout="block" styleClass="custom-password-container">
+						<p:password id="selectedServerOAuthClientSecret"
+							value="#{context.selectedServer.oauthClientSecret}" required="false"
+							promptLabel="Please enter your client secret" redisplay="true"
+							toggleMask="true"
+							maxlength="255" size="55"
+							widgetVar="updateClientSecret">
+							<!-- Our manually drawn, theme-proof button canvas -->
+							<button type="button" class="custom-toggle-btn masked-state" onclick="PF('updateClientSecret').toggleMask(); toggleBtnIcon(this);"></button>
+						</p:password>
+					</h:panelGroup>
 					<h:outputText value="Scopes: " />
 					<h:inputTextarea id="selectedServerOAuthScope" value="#{context.selectedServer.oauthScope}" cols="50" rows="2" required="false" />
 					<h:outputText value="Auth URL: " />
@@ -126,6 +140,7 @@
 					<h:outputText value="Introspect URL: " />
 					<h:inputTextarea id="selectedServerOAuthIntrospectUrl" value="#{context.selectedServer.oauthIntrospectUrl}" cols="50" rows="2" required="false" />
 
+					<h:outputText value="" />
 					<p:commandButton value="Update Server"
 						actionListener="#{controller.manageServer('existing')}"
 						oncomplete="PF('manageServerPanel').close()"
@@ -144,8 +159,18 @@
 				style="width:100%;border:none;">
 				<p:messages id="createServerFormMessages" />
 				<p>
-					<h:outputText value="Create New Server"
+					<p:commandLink id="closeCreateNewServer"
+						value="Create New Server" 
+						type="button"
+						onclick="PF('createServerPanel').close();" 
 						style="padding:2px;text-decoration:underline;font-weight:bold;font-size:16px;" />
+
+					<!-- Tooltip bound explicitly to the link ID above -->
+					<p:tooltip id="closeCreateNewServerTooltip" 
+						for="closeCreateNewServer" 
+						value="Click to close this panel and hide the create new server form." 
+						position="top" 
+						showDelay="300" />
 				</p>
 				<p:panelGrid id="createServerGridPanel" layout="tabular" columns="2" border="0"
 					cellpadding="5" cellspacing="10" styleClass="borderlessGridPanel">
@@ -179,7 +204,7 @@
 					<h:outputText value="" />
 
 					<h:outputText value="Grant Type: " />
-					<p:selectOneMenu id="newServerOAuthGrantTypeDropdown" required="false" label="Select OAuth Grant Type" value="#{context.newServer.oauthGrantType}" maxlength="45" style="width:360px;text-align:left;padding-right:30px;">
+					<p:selectOneMenu id="newServerOAuthGrantTypeDropdown" required="false" label="Select OAuth Grant Type" value="#{context.newServer.oauthGrantType}" style="width:360px;text-align:left;padding-right:30px;">
 						<f:selectItem itemValue="#{null}" itemLabel="-- Select OAuth Grant Type --         " noSelectionOption="true" />
 						<f:selectItem itemValue="client_credentials" itemLabel="client_credentials" />
 					</p:selectOneMenu>
@@ -188,15 +213,19 @@
 						value="#{context.newServer.oauthClientId}" required="false"
 						label="Client Id"
 						maxlength="64" size="60">
-						<f:validateLength minimum="2" />
 					</p:inputText>
 					<h:outputText value="Client Secret: " />
-					<p:inputText id="newServerOAuthClientSecret"
-						value="#{context.newServer.oauthClientSecret}" required="false"
-						label="Client Id"
-						maxlength="255" size="60">
-						<f:validateLength minimum="2" />
-					</p:inputText>
+					<h:panelGroup layout="block" styleClass="custom-password-container">
+						<p:password id="newServerOAuthClientSecret"
+							value="#{context.newServer.oauthClientSecret}" required="false"
+							promptLabel="Please enter your client secret" redisplay="true"
+							toggleMask="true"
+							maxlength="255" size="55"
+							widgetVar="newClientSecret">
+						</p:password>
+							<!-- Our manually drawn, theme-proof button canvas -->
+							<button type="button" class="custom-toggle-btn masked-state" onclick="PF('newClientSecret').toggleMask(); toggleBtnIcon(this);"></button>
+					</h:panelGroup>
 					<h:outputText value="Scopes: " />
 					<h:inputTextarea id="newServerOAuthScope" value="#{context.newServer.oauthScope}" cols="50" rows="2" required="false" />
 					<h:outputText value="Auth URL: " />
@@ -206,6 +235,7 @@
 					<h:outputText value="Introspect URL: " />
 					<h:inputTextarea id="newServerOAuthIntrospectUrl" value="#{context.newServer.oauthIntrospectUrl}" cols="50" rows="2" required="false" />
 
+					<h:outputText value="" />
 					<p:commandButton value="Create Server"
 						actionListener="#{controller.manageServer('new')}"
 						oncomplete="((args.validationFailed) ? PF('createServerPanel').show() : PF('createServerPanel').close())"
