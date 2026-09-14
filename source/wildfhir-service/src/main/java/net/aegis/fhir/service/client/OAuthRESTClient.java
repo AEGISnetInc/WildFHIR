@@ -86,7 +86,7 @@ public class OAuthRESTClient implements Serializable {
 				+ "\ngrant_type   : " + serverdirectory.getOauthGrantType()
 				+ "\nclient_id    : " + serverdirectory.getOauthClientId()
 				+ "\nclient_secret: " + serverdirectory.getOauthClientSecret()
-				+ "\nscope        : " + serverdirectory.getOauthScope());
+				+ "\nscope        : " + (serverdirectory.getOauthScope() != null ? serverdirectory.getOauthScope() : "null"));
 
 		try {
 			client = WebClientHelper.createClientWihtoutHostVerification();
@@ -101,8 +101,11 @@ public class OAuthRESTClient implements Serializable {
 
 			fOAuthForm.param("grant_type", serverdirectory.getOauthGrantType())
 					.param("client_id", serverdirectory.getOauthClientId())
-					.param("client_secret", serverdirectory.getOauthClientSecret())
-					.param("scope", serverdirectory.getOauthScope());
+					.param("client_secret", serverdirectory.getOauthClientSecret());
+
+			if (serverdirectory.getOauthScope() != null) {
+				fOAuthForm.param("scope", serverdirectory.getOauthScope());
+			}
 
 			resourceResponse = targetBuilder.post(Entity.form(fOAuthForm));
 
