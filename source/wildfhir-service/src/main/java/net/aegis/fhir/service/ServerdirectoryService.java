@@ -174,6 +174,13 @@ public class ServerdirectoryService {
 			serverdirectory.setBasePath(updateServerdirectory.getBasePath());
 			serverdirectory.setLastUser("system");
 			serverdirectory.setLastUpdate(new Date());
+			serverdirectory.setOauthGrantType(updateServerdirectory.getOauthGrantType());
+			serverdirectory.setOauthClientId(updateServerdirectory.getOauthClientId());
+			serverdirectory.setOauthClientSecret(updateServerdirectory.getOauthClientSecret());
+			serverdirectory.setOauthScope(updateServerdirectory.getOauthScope());
+			serverdirectory.setOauthAuthUrl(updateServerdirectory.getOauthAuthUrl());
+			serverdirectory.setOauthTokenUrl(updateServerdirectory.getOauthTokenUrl());
+			serverdirectory.setOauthIntrospectUrl(updateServerdirectory.getOauthIntrospectUrl());
 
 			/*
 			 * TRANSACTION BEGIN

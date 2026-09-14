@@ -140,6 +140,9 @@ public class Serverdirectory implements Serializable {
 	}
 
 	public void setOauthGrantType(String oauthGrantType) {
+		if (oauthGrantType != null && oauthGrantType.isEmpty()) {
+			oauthGrantType = null;
+		}
 		this.oauthGrantType = oauthGrantType;
 	}
 
@@ -148,6 +151,9 @@ public class Serverdirectory implements Serializable {
 	}
 
 	public void setOauthClientId(String oauthClientId) {
+		if (oauthClientId != null && oauthClientId.isEmpty()) {
+			oauthClientId = null;
+		}
 		this.oauthClientId = oauthClientId;
 	}
 
@@ -156,6 +162,9 @@ public class Serverdirectory implements Serializable {
 	}
 
 	public void setOauthClientSecret(String oauthClientSecret) {
+		if (oauthClientId != null && oauthClientId.isEmpty()) {
+			oauthClientId = null;
+		}
 		this.oauthClientSecret = oauthClientSecret;
 	}
 
@@ -164,6 +173,9 @@ public class Serverdirectory implements Serializable {
 	}
 
 	public void setOauthScope(String oauthScope) {
+		if (oauthScope != null && oauthScope.isEmpty()) {
+			oauthScope = null;
+		}
 		this.oauthScope = oauthScope;
 	}
 
@@ -172,6 +184,9 @@ public class Serverdirectory implements Serializable {
 	}
 
 	public void setOauthAuthUrl(String oauthAuthUrl) {
+		if (oauthAuthUrl != null && oauthAuthUrl.isEmpty()) {
+			oauthAuthUrl = null;
+		}
 		this.oauthAuthUrl = oauthAuthUrl;
 	}
 
@@ -180,6 +195,9 @@ public class Serverdirectory implements Serializable {
 	}
 
 	public void setOauthTokenUrl(String oauthTokenUrl) {
+		if (oauthTokenUrl != null && oauthTokenUrl.isEmpty()) {
+			oauthTokenUrl = null;
+		}
 		this.oauthTokenUrl = oauthTokenUrl;
 	}
 
@@ -188,6 +206,9 @@ public class Serverdirectory implements Serializable {
 	}
 
 	public void setOauthIntrospectUrl(String oauthIntrospectUrl) {
+		if (oauthIntrospectUrl != null && oauthIntrospectUrl.isEmpty()) {
+			oauthIntrospectUrl = null;
+		}
 		this.oauthIntrospectUrl = oauthIntrospectUrl;
 	}
 
