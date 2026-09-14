@@ -228,3 +228,62 @@ input {
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+/*  -----  Add theme-proof CSS for password toggle  -------  */
+
+/* Build a strict container boundary box inside the panelGrid cell */
+.custom-password-container {
+    position: relative !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    width: auto !important;
+}
+
+/* Ensure the text entry line handles padding limits safely */
+.custom-password-container .ui-password > input.ui-inputfield {
+    padding-right: 2.5rem !important; /* Reserves empty inner space for the icon */
+    box-sizing: border-box !important;
+}
+
+/* PERMANENTLY HIDE THE BROKEN LEGACY ICON DETACHED BY GLASS-X */
+.custom-password-container .ui-password-toggle {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Format our custom button element to sit inside the right border line */
+.custom-toggle-btn {
+    position: absolute !important;
+    top: 50% !important;
+    right: 0.6rem !important;        /* Locks the element right inside the border edge */
+    transform: translateY(-50%) !important;
+    
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    z-index: 9999 !important;       /* Floats above the text input canvas */
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 18px !important;
+    height: 18px !important;
+    display: inline-block !important;
+}
+
+/* Inject PrimeIcons glyph characters into our custom button framework */
+.custom-toggle-btn.masked-state::before {
+    font-family: 'primeicons' !important;
+    content: "\e966" !important; /* pi-eye-slash glyph code */
+    font-size: 1.1rem !important;
+    color: #444444 !important;
+}
+
+.custom-toggle-btn.unmasked-state::before {
+    font-family: 'primeicons' !important;
+    content: "\e965" !important; /* pi-eye glyph code */
+    font-size: 1.1rem !important;
+    color: #444444 !important;
+}
