@@ -38,6 +38,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.logging.Logger;
 
 import org.hl7.fhir.r4.formats.IParser.OutputStyle;
@@ -71,6 +72,7 @@ import net.aegis.fhir.operation.ResourceOperationProxyObjectFactory;
 import net.aegis.fhir.service.BatchService;
 import net.aegis.fhir.service.CodeService;
 import net.aegis.fhir.service.ConformanceService;
+import net.aegis.fhir.service.OAuthOps;
 import net.aegis.fhir.service.ResourceService;
 import net.aegis.fhir.service.ResourcemetadataService;
 import net.aegis.fhir.service.TransactionService;
@@ -104,6 +106,9 @@ public class ResourceOperationsRESTService {
 
 	@Inject
     CodeService codeService;
+
+    @Inject
+    OAuthOps oAuthOps;
 
 	@Inject
     ProvenanceService provenanceService;
@@ -378,10 +383,43 @@ public class ResourceOperationsRESTService {
         }
 
 		try {
-			// Get the produces type based on the request Accept
+	    	boolean authenticated = true;
+
+	    	// Get the produces type based on the request Accept
 			producesType = ServicesUtil.INSTANCE.getProducesType(headers, request);
 
-			log.fine("producesType = " + producesType);
+			log.fine("ResourceOperationsRESTService.resourceOperation(): producesType = " + producesType);
+
+			// Check for OAuth Server Enabled
+			if (codeService.isSupported("oauthServerEnabled")) {
+
+				// Default authenticated to false in order to catch when no Authorization header is sent
+				authenticated = false;
+				String scope = null;
+				StringBuffer returnMessage = new StringBuffer();
+
+				// Check for Authorization Header(s)
+				List<String> authHeaders = ServicesUtil.INSTANCE.getHttpHeaderList(headers, "Authorization");
+
+				if (authHeaders != null && !authHeaders.isEmpty()) {
+					// Process OAuth2 token to determine access privileges
+					log.fine("ResourceOperationsRESTService.resourceOperation(): Process OAuth2 token to determine access privileges");
+
+					// Get operation authorization scope
+					scope = ResourceType.getOperationOAuthScope(resourceType, operationName);
+					log.fine("ResourceOperationsRESTService.resourceOperation(): Auth scope: " + scope );
+
+					// An Authorization Header was sent; check for valid read scope
+					authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, scope); // SMART v2 based on operation
+				}
+				else {
+					returnMessage.append(" Server authorization enabled but no Authorization token received!");
+				}
+
+				if (authenticated == false) {
+					builder = responseNotAuthorized(producesType, returnMessage, scope, responseFhirVersion);
+				}
+			}
 
 			// Check for valid and supported ResourceType
 			if ((resourceType == null && ResourceType.isSupportedGlobalOperation(operationName)) ||
@@ -732,5 +770,53 @@ public class ResourceOperationsRESTService {
 
 		return builder;
 	}
+
+    /**
+     * @param producesType
+     * @param notAuthMessage
+     * @param returnMessage
+     * @param scope
+     * @param responseFhirVersion
+     * @return <code>Response.ResponseBuilder</code>
+     * @throws Exception
+     * notAuthMessage, returnMessage, scope, responseFhirVersion
+     */
+    private Response.ResponseBuilder responseNotAuthorized(String producesType, StringBuffer returnMessage, String scope, String responseFhirVersion) throws Exception {
+
+        log.fine("[START] RESTResourceOps.responseNotAuthorized()");
+
+    	// Not Authorized response triggered by invalid or unrecognized Authorization token or invalid scope
+
+		StringBuffer notAuthMessage = new StringBuffer();
+        if (scope != null) {
+        	if (scope.equals("c")) {
+        		notAuthMessage.append("OAuth2 - (c)reate scope authorization failed!");
+        	}
+        	else if (scope.equals("r")) {
+        		notAuthMessage.append("OAuth2 - (r)ead scope authorization failed!");
+        	}
+        	else if (scope.equals("u")) {
+        		notAuthMessage.append("OAuth2 - (u)pdate scope authorization failed!");
+        	}
+        	else if (scope.equals("d")) {
+        		notAuthMessage.append("OAuth2 - (d)elete scope authorization failed!");
+        	}
+        	else if (scope.equals("s")) {
+        		notAuthMessage.append("OAuth2 - (s)earch scope authorization failed!");
+        	}
+        }
+        else {
+    		notAuthMessage.append("OAuth2 - undefined operation scope authorization failed!");
+        }
+    	if (returnMessage != null) {
+    		notAuthMessage.append(returnMessage);
+    	}
+
+        String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.SECURITY, notAuthMessage.toString(), null, null, producesType);
+
+        Response.ResponseBuilder builder = Response.status(Response.Status.UNAUTHORIZED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion).header("WWW-Authenticate", "Digest domain=\"WildFHIR\" algorithm=\"token\"");
+
+        return builder;
+    }
 
 }
