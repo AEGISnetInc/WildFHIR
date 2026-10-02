@@ -89,6 +89,12 @@ public class TransactionService {
 
 	private Logger log = Logger.getLogger("TransactionService");
 
+    @Inject
+    CodeService codeService;
+
+    @Inject
+    OAuthOps oAuthOps;
+
 	@Inject
 	RESTResourceOps resourceOps;
 
@@ -119,8 +125,25 @@ public class TransactionService {
 
 		ResourceContainer resourceContainer = new ResourceContainer();
 		Bundle bundleResponse = null;
+		List<String> authHeaders = null;
+    	boolean oAuthCheck = false;
+    	boolean authenticated = true;
+		StringBuffer returnMessage = null;
+		String notAuthMessage = null;
 
 		try {
+			// Check for OAuth Server Enabled
+			if (codeService.isSupported("oauthServerEnabled")) {
+
+				// Check for Authorization Header(s)
+				authHeaders = ServicesUtil.INSTANCE.getHttpHeaderList(headers, "Authorization");
+
+				if (authHeaders != null && !authHeaders.isEmpty()) {
+					// AEGIS Keycloak Auth Server processing handled downstream in batch/transaction logic
+					oAuthCheck = true;
+				}
+			}
+
 			resourceContainer.setBundle(bundleResponse);
 			resourceContainer.setResponseStatus(Response.Status.NOT_IMPLEMENTED);
 			resourceContainer.setMessage("Transaction processing not supported");
@@ -190,17 +213,37 @@ public class TransactionService {
 								String baseUrl = ServicesUtil.INSTANCE.extractBaseURL(urlValue);
 								String resourceType = ResourceType.findValidResourceType(baseUrl);
 
-								// ignore request header params from request elements
-								//requestHeaderParams = getRequestHeaderParams(bundleDeleteEntry);
+								// Process OAuth2 token to determine access privileges
+								authenticated = true;
+								if (oAuthCheck == true) {
 
-								// build url params from url parameters
-								String urlParams = ServicesUtil.INSTANCE.extractURLParams(urlValue);
-								List<NameValuePair> params = URLEncodedUtils.parse(urlParams, Charset.defaultCharset());
-								urlPathParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
+									// An Authorization Header was sent; check for valid read scope
+									returnMessage = null;
+									authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "d"); // SMART v2 delete
 
-								Response deleteResponse = resourceOps.delete(request, headers, urlPathParams, resourceId, resourceType);
+									if (authenticated == false) {
+										notAuthMessage = "OAuth2 - (d)elete scope authorization failed!" +
+												(returnMessage != null ? returnMessage.toString() : "");
+									}
+								}
 
-								setResponseParams(deleteResponse, bundleDeleteEntry, producesType, entryCount, null);
+								if (authenticated == true) {
+									// ignore request header params from request elements
+									//requestHeaderParams = getRequestHeaderParams(bundleDeleteEntry);
+
+									// build url params from url parameters
+									String urlParams = ServicesUtil.INSTANCE.extractURLParams(urlValue);
+									List<NameValuePair> params = URLEncodedUtils.parse(urlParams, Charset.defaultCharset());
+									urlPathParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
+
+									Response deleteResponse = resourceOps.delete(request, headers, urlPathParams, resourceId, resourceType);
+
+									setResponseParams(deleteResponse, bundleDeleteEntry, producesType, entryCount, null);
+								}
+								else {
+									// oAuthCheck failed; report not authorized
+									this.setErrorResponseParams(bundleDeleteEntry, "401", OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.FORBIDDEN, notAuthMessage, null, "Bundle.entry[" + entryCount + "].request.url");
+								}
 							}
 							else {
 								// url is missing; report an error in the outcome
@@ -248,37 +291,57 @@ public class TransactionService {
 										String baseUrl = ServicesUtil.INSTANCE.extractBaseURL(urlValue);
 										String resourceType = ResourceType.findValidResourceType(baseUrl);
 
-										// build request header params from request elements
-										requestHeaderParams = getRequestHeaderParams(bundlePostEntry);
+										// Process OAuth2 token to determine access privileges
+										authenticated = true;
+										if (oAuthCheck == true) {
 
-										// ignore url parameters
-										//String urlParams = ServicesUtil.INSTANCE.extractURLParams(urlValue);
-										//List<NameValuePair> params = URLEncodedUtils.parse(urlParams, Charset.defaultCharset());
-										//urlPathParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
+											// An Authorization Header was sent; check for valid read scope
+											returnMessage = null;
+											authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "c"); // SMART v2 create
 
-										// Check for resource
-										if (bundlePostEntry.hasResource()) {
-											/*
-											 *  Process resource contents to locate any variable references, urn:
-											 *  If all replacements are successful, continue with create; otherwise, skip
-											 *  and try again in the next cycle
-											 */
-											StringBuilder newResourceString = new StringBuilder("");
-											boolean processResult = processVariableReferences(bundlePostEntry.getResource(), postFullUrlMap, contentType, newResourceString);
+											if (authenticated == false) {
+												notAuthMessage = "OAuth2 - (c)reate scope authorization failed!" +
+														(returnMessage != null ? returnMessage.toString() : "");
+											}
+										}
 
-											if (processResult) {
-												Response createResponse = resourceOps.create(request, headers, requestHeaderParams, newResourceString.toString(), resourceType, resourceId);
+										if (authenticated == true) {
+											// build request header params from request elements
+											requestHeaderParams = getRequestHeaderParams(bundlePostEntry);
 
-												setResponseParams(createResponse, bundlePostEntry, producesType, entryCount, postFullUrlMap);
+											// ignore url parameters
+											//String urlParams = ServicesUtil.INSTANCE.extractURLParams(urlValue);
+											//List<NameValuePair> params = URLEncodedUtils.parse(urlParams, Charset.defaultCharset());
+											//urlPathParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
+
+											// Check for resource
+											if (bundlePostEntry.hasResource()) {
+												/*
+												 *  Process resource contents to locate any variable references, urn:
+												 *  If all replacements are successful, continue with create; otherwise, skip
+												 *  and try again in the next cycle
+												 */
+												StringBuilder newResourceString = new StringBuilder("");
+												boolean processResult = processVariableReferences(bundlePostEntry.getResource(), postFullUrlMap, contentType, newResourceString);
+
+												if (processResult) {
+													Response createResponse = resourceOps.create(request, headers, requestHeaderParams, newResourceString.toString(), resourceType, resourceId);
+
+													setResponseParams(createResponse, bundlePostEntry, producesType, entryCount, postFullUrlMap);
+												}
+												else {
+													// variable reference map not found; report a temporary error in the outcome as a placeholder; re-try in the next cycle
+													this.setTempErrorResponseParams(bundlePostEntry, "400", OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTFOUND, "variable resource reference '" + newResourceString.toString() + "' was not resolved in prior Bundle entry operation; required for post operation", null, "Bundle.entry[" + entryCount + "]");
+												}
 											}
 											else {
-												// variable reference map not found; report a temporary error in the outcome as a placeholder; re-try in the next cycle
-												this.setTempErrorResponseParams(bundlePostEntry, "400", OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTFOUND, "variable resource reference '" + newResourceString.toString() + "' was not resolved in prior Bundle entry operation; required for post operation", null, "Bundle.entry[" + entryCount + "]");
+												// resource not found; report an error in the outcome
+												this.setErrorResponseParams(bundlePostEntry, "400", OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INCOMPLETE, "resource not found in Bundle entry; required for post operation", null, "Bundle.entry[" + entryCount + "]");
 											}
 										}
 										else {
-											// resource not found; report an error in the outcome
-											this.setErrorResponseParams(bundlePostEntry, "400", OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INCOMPLETE, "resource not found in Bundle entry; required for post operation", null, "Bundle.entry[" + entryCount + "]");
+											// oAuthCheck failed; report not authorized
+											this.setErrorResponseParams(bundlePostEntry, "401", OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.FORBIDDEN, notAuthMessage, null, "Bundle.entry[" + entryCount + "].request.url");
 										}
 									}
 									else {
@@ -322,37 +385,57 @@ public class TransactionService {
 									String baseUrl = ServicesUtil.INSTANCE.extractBaseURL(urlValue);
 									String resourceType = ResourceType.findValidResourceType(baseUrl);
 
-									// build request header params from request elements
-									requestHeaderParams = getRequestHeaderParams(bundlePutEntry);
+									// Process OAuth2 token to determine access privileges
+									authenticated = true;
+									if (oAuthCheck == true) {
 
-									// build url parameters
-									String urlParams = ServicesUtil.INSTANCE.extractURLParams(urlValue);
-									List<NameValuePair> params = URLEncodedUtils.parse(urlParams, Charset.defaultCharset());
-									urlPathParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
+										// An Authorization Header was sent; check for valid read scope
+										returnMessage = null;
+										authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "u"); // SMART v2 update
 
-									// Check for resource
-									if (bundlePutEntry.hasResource()) {
-										/*
-										 *  Process resource contents to locate any variable references, urn:
-										 *  If all replacements are successful, continue with update; otherwise, skip
-										 *  and try again in the next cycle
-										 */
-										StringBuilder newResourceString = new StringBuilder("");
-										boolean processResult = processVariableReferences(bundlePutEntry.getResource(), postFullUrlMap, contentType, newResourceString);
+										if (authenticated == false) {
+											notAuthMessage = "OAuth2 - (u)pdate scope authorization failed!" +
+													(returnMessage != null ? returnMessage.toString() : "");
+										}
+									}
 
-										if (processResult) {
-											Response updateResponse = resourceOps.update(request, headers, requestHeaderParams, urlPathParams, resourceId, newResourceString.toString(), resourceType);
+									if (authenticated == true) {
+										// build request header params from request elements
+										requestHeaderParams = getRequestHeaderParams(bundlePutEntry);
 
-											setResponseParams(updateResponse, bundlePutEntry, producesType, entryCount, postFullUrlMap);
+										// build url parameters
+										String urlParams = ServicesUtil.INSTANCE.extractURLParams(urlValue);
+										List<NameValuePair> params = URLEncodedUtils.parse(urlParams, Charset.defaultCharset());
+										urlPathParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
+
+										// Check for resource
+										if (bundlePutEntry.hasResource()) {
+											/*
+											 *  Process resource contents to locate any variable references, urn:
+											 *  If all replacements are successful, continue with update; otherwise, skip
+											 *  and try again in the next cycle
+											 */
+											StringBuilder newResourceString = new StringBuilder("");
+											boolean processResult = processVariableReferences(bundlePutEntry.getResource(), postFullUrlMap, contentType, newResourceString);
+
+											if (processResult) {
+												Response updateResponse = resourceOps.update(request, headers, requestHeaderParams, urlPathParams, resourceId, newResourceString.toString(), resourceType);
+
+												setResponseParams(updateResponse, bundlePutEntry, producesType, entryCount, postFullUrlMap);
+											}
+											else {
+												// variable reference map not found; report an error in the outcome
+												this.setTempErrorResponseParams(bundlePutEntry, "400", OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTFOUND, "variable resource reference '" + newResourceString.toString() + "' was not resolved in prior Bundle entry operation; required for put operation", null, "Bundle.entry[" + entryCount + "]");
+											}
 										}
 										else {
-											// variable reference map not found; report an error in the outcome
-											this.setTempErrorResponseParams(bundlePutEntry, "400", OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTFOUND, "variable resource reference '" + newResourceString.toString() + "' was not resolved in prior Bundle entry operation; required for put operation", null, "Bundle.entry[" + entryCount + "]");
+											// resource not found; report an error in the outcome
+											this.setErrorResponseParams(bundlePutEntry, "400", OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INCOMPLETE, "resource not found in Bundle entry; required for put operation", null, "Bundle.entry[" + entryCount + "]");
 										}
 									}
 									else {
-										// resource not found; report an error in the outcome
-										this.setErrorResponseParams(bundlePutEntry, "400", OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INCOMPLETE, "resource not found in Bundle entry; required for put operation", null, "Bundle.entry[" + entryCount + "]");
+										// url is missing; report an error in the outcome
+										this.setErrorResponseParams(bundlePutEntry, "400", OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INCOMPLETE, "request url is missing", null, "Bundle.entry[" + entryCount + "].request.url");
 									}
 								}
 								else {
@@ -403,53 +486,86 @@ public class TransactionService {
 
 								String resourceType = ResourceType.findValidResourceType(baseUrl);
 
-								boolean hasHistoryInPath = baseUrl.contains("_history");
-								String versionId = null;
-								if (hasHistoryInPath == true) {
-									versionId = ServicesUtil.INSTANCE.extractVersionIdFromURL(urlValue);
+								// Process OAuth2 token to determine access privileges
+								authenticated = true;
+								if (oAuthCheck == true) {
+
+									// An Authorization Header was sent; check for valid read scope
+									returnMessage = null;
+
+									// Special case for read/history/search operation; check if instance level via passed in id value
+									if (resourceId != null && !resourceId.isEmpty()) {
+										authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "r"); // SMART v2 read
+									}
+									else {
+										authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "s"); // SMART v2 search
+									}
+
+									if (authenticated == false) {
+										if (resourceId != null && !resourceId.isEmpty()) {
+											notAuthMessage = "OAuth2 - (r)ead scope authorization failed!" +
+													(returnMessage != null ? returnMessage.toString() : "");
+										}
+										else {
+											notAuthMessage = "OAuth2 - (s)earch scope authorization failed!" +
+													(returnMessage != null ? returnMessage.toString() : "");
+										}
+									}
 								}
 
-								// build request header params from request elements
-								requestHeaderParams = getRequestHeaderParams(bundleGetEntry);
+								if (authenticated == true) {
+									boolean hasHistoryInPath = baseUrl.contains("_history");
+									String versionId = null;
+									if (hasHistoryInPath == true) {
+										versionId = ServicesUtil.INSTANCE.extractVersionIdFromURL(urlValue);
+									}
 
-								// build url parameters
-								String urlParams = ServicesUtil.INSTANCE.extractURLParams(urlValue);
-								List<NameValuePair> params = URLEncodedUtils.parse(urlParams, Charset.defaultCharset());
-								urlPathParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
+									// build request header params from request elements
+									requestHeaderParams = getRequestHeaderParams(bundleGetEntry);
 
-								if (bundleGetEntry.hasResource()) {
-									// ignore resource (should this be an error?)
-								}
+									// build url parameters
+									String urlParams = ServicesUtil.INSTANCE.extractURLParams(urlValue);
+									List<NameValuePair> params = URLEncodedUtils.parse(urlParams, Charset.defaultCharset());
+									urlPathParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
 
-								/*
-								 * Determine appropriate FHIR action: history, read, search or vread
-								 */
-								Response getResponse = null;
+									if (bundleGetEntry.hasResource()) {
+										// ignore resource (should this be an error?)
+									}
 
-								if (resourceType != null && resourceId != null && hasHistoryInPath == false) {
-									// Check for read operation
-									getResponse = resourceOps.resourceTypeRead(request, headers, requestHeaderParams, urlPathParams, resourceId, resourceType);
-								}
-								else if (resourceType != null && resourceId != null && hasHistoryInPath == true && versionId != null) {
-									// Check for vread operation
-									getResponse = resourceOps.resourceTypeVRead(request, headers, resourceId, versionId, resourceType);
-								}
-								else if (resourceType != null && hasHistoryInPath == true && versionId == null) {
-									// Check for history operation
-									getResponse = resourceOps.history(request, headers, urlPathParams, resourceId, resourceType);
-								}
-								else if (resourceId == null && hasHistoryInPath == false && versionId == null) {
-									// Check for search operation
-									// Use txLocationPath from transaction bundle entry request
-									getResponse = resourceOps.search(request, headers, urlPathParams, resourceType, null, txLocationPath);
-								}
+									/*
+									 * Determine appropriate FHIR action: history, read, search or vread
+									 */
+									Response getResponse = null;
 
-								if (getResponse != null) {
-									setResponseParams(getResponse, bundleGetEntry, producesType, entryCount, null);
+									if (resourceType != null && resourceId != null && hasHistoryInPath == false) {
+										// Check for read operation
+										getResponse = resourceOps.resourceTypeRead(request, headers, requestHeaderParams, urlPathParams, resourceId, resourceType);
+									}
+									else if (resourceType != null && resourceId != null && hasHistoryInPath == true && versionId != null) {
+										// Check for vread operation
+										getResponse = resourceOps.resourceTypeVRead(request, headers, resourceId, versionId, resourceType);
+									}
+									else if (resourceType != null && hasHistoryInPath == true && versionId == null) {
+										// Check for history operation
+										getResponse = resourceOps.history(request, headers, urlPathParams, resourceId, resourceType);
+									}
+									else if (resourceId == null && hasHistoryInPath == false && versionId == null) {
+										// Check for search operation
+										// Use txLocationPath from transaction bundle entry request
+										getResponse = resourceOps.search(request, headers, urlPathParams, resourceType, null, txLocationPath);
+									}
+
+									if (getResponse != null) {
+										setResponseParams(getResponse, bundleGetEntry, producesType, entryCount, null);
+									}
+									else {
+										// could not determine FHIR action; record in outcome
+										this.setErrorResponseParams(bundleGetEntry, "400", OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.UNKNOWN, "could not determine FHIR get action based on request definition", null, "Bundle.entry[" + entryCount + "].request");
+									}
 								}
 								else {
-									// could not determine FHIR action; record in outcome
-									this.setErrorResponseParams(bundleGetEntry, "400", OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.UNKNOWN, "could not determine FHIR get action based on request definition", null, "Bundle.entry[" + entryCount + "].request");
+									// oAuthCheck failed; report not authorized
+									this.setErrorResponseParams(bundleGetEntry, "401", OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.FORBIDDEN, notAuthMessage, null, "Bundle.entry[" + entryCount + "].request.url");
 								}
 							}
 							else {

@@ -822,7 +822,6 @@ public class ResourceType {
 
 		operationList = new ArrayList<LabelKeyValueBean>();
 		operationList.addAll(baseOperationList);
-		operationList.add(new LabelKeyValueBean("recordDisclosure", "auditevent", "http://hl7.org/fhir/us/consent-management/OperationDefinition/record-disclosure", "write"));
 		resourceOperations.put("AuditEvent", operationList);
 
 		operationList = new ArrayList<LabelKeyValueBean>();
@@ -899,7 +898,7 @@ public class ResourceType {
 
 		operationList = new ArrayList<LabelKeyValueBean>();
 		operationList.addAll(baseOperationList);
-		operationList.add(new LabelKeyValueBean("document", "composition", "http://hl7.org/fhir/OperationDefinition/Composition-document", "read"));
+		operationList.add(new LabelKeyValueBean("document", "composition", "http://hl7.org/fhir/OperationDefinition/Composition-document", "r"));
 		resourceOperations.put("Composition", operationList);
 
 		operationList = new ArrayList<LabelKeyValueBean>();
@@ -912,8 +911,6 @@ public class ResourceType {
 
 		operationList = new ArrayList<LabelKeyValueBean>();
 		operationList.addAll(baseOperationList);
-		operationList.add(new LabelKeyValueBean("fileConsent", "consent", "http://hl7.org/fhir/us/consent-management/OperationDefinition/file-consent", "write"));
-		operationList.add(new LabelKeyValueBean("revokeConsent", "consent", "http://hl7.org/fhir/us/consent-management/OperationDefinition/revoke-consent", "write"));
 		resourceOperations.put("Consent", operationList);
 
 		operationList = new ArrayList<LabelKeyValueBean>();
@@ -1182,7 +1179,7 @@ public class ResourceType {
 
 		operationList = new ArrayList<LabelKeyValueBean>();
 		operationList.addAll(baseOperationList);
-		operationList.add(new LabelKeyValueBean("lastn", "observation", "http://hl7.org/fhir/OperationDefinition/Observation-lastn", "read"));
+		operationList.add(new LabelKeyValueBean("lastn", "observation", "http://hl7.org/fhir/OperationDefinition/Observation-lastn", "r"));
 		resourceOperations.put("Observation", operationList);
 
 		operationList = new ArrayList<LabelKeyValueBean>();
@@ -1211,9 +1208,9 @@ public class ResourceType {
 
 		operationList = new ArrayList<LabelKeyValueBean>();
 		operationList.addAll(baseOperationList);
-		operationList.add(new LabelKeyValueBean("everything", "patient", "http://hl7.org/fhir/OperationDefinition/Patient-everything", "read"));
-		operationList.add(new LabelKeyValueBean("match", "patient", "http://hl7.org/fhir/OperationDefinition/Patient-match", "read"));
-		operationList.add(new LabelKeyValueBean("purge", "patient", "http://wildfhir4.aegis.net/fhir/wildfhir/OperationDefinition/wildfhir-operation-patient-purge", "write"));
+		operationList.add(new LabelKeyValueBean("everything", "patient", "http://hl7.org/fhir/OperationDefinition/Patient-everything", "r"));
+		operationList.add(new LabelKeyValueBean("match", "patient", "http://hl7.org/fhir/OperationDefinition/Patient-match", "r"));
+		operationList.add(new LabelKeyValueBean("purge", "patient", "http://wildfhir4.aegis.net/fhir/wildfhir/OperationDefinition/wildfhir-operation-patient-purge", "d"));
 		resourceOperations.put("Patient", operationList);
 
 		operationList = new ArrayList<LabelKeyValueBean>();
@@ -1322,7 +1319,7 @@ public class ResourceType {
 
 		operationList = new ArrayList<LabelKeyValueBean>();
 		operationList.addAll(baseOperationList);
-		operationList.add(new LabelKeyValueBean("status", "subscription", "http://hl7.org/fhir/uv/subscriptions-backport/OperationDefinition/backport-subscription-status", "read"));
+		operationList.add(new LabelKeyValueBean("status", "subscription", "http://hl7.org/fhir/uv/subscriptions-backport/OperationDefinition/backport-subscription-status", "r"));
 		resourceOperations.put("Subscription", operationList);
 
 		operationList = new ArrayList<LabelKeyValueBean>();

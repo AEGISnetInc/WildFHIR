@@ -107,6 +107,9 @@ public class RESTResourceOps {
     @Inject
     CodeService codeService;
 
+    @Inject
+    OAuthOps oAuthOps;
+
 	@Inject
 	ProvenanceService provenanceService;
 
@@ -149,171 +152,211 @@ public class RESTResourceOps {
         }
 
         try {
+        	boolean authenticated = true;
+
 			// Get the produces type based on the request Accept
 			producesType = ServicesUtil.INSTANCE.getProducesType(headers, request);
 
-			// Check for valid and supported ResourceType
-			if (ResourceType.isValidResourceType(resourceType) && ResourceType.isSupportedResourceType(resourceType)) {
+			// Check for OAuth Server Enabled
+			if (codeService.isSupported("oauthServerEnabled")) {
 
-				// Check for valid FHIR resource id data type compliance
-				if (StringUtils.isValidFhirId(id)) {
+				// Default authenticated to false in order to catch when no Authorization header is sent
+				authenticated = false;
+				String notAuthMessage = "OAuth2 - server authorization enabled!";
 
-					// Get the _summary parameter, if present
-					if (contextQueryParams != null) {
-						_summary = ServicesUtil.INSTANCE.getUriParameter("_summary", contextQueryParams);
+				// Check for Authorization Header(s)
+				List<String> authHeaders = ServicesUtil.INSTANCE.getHttpHeaderList(headers, "Authorization");
+
+				if (authHeaders != null && !authHeaders.isEmpty()) {
+					// Process OAuth2 token to determine access privileges
+
+					// An Authorization Header was sent; check for valid read scope
+					StringBuffer returnMessage = null;
+					authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "r"); // SMART v2 read
+
+					if (authenticated == false) {
+						notAuthMessage = "OAuth2 - (r)ead scope authorization failed!" +
+								(returnMessage != null ? returnMessage.toString() : "");
+						log.fine(notAuthMessage);
 					}
-					if (_summary == null) {
-						_summary = ServicesUtil.INSTANCE.getUriParameter("_summary", request);
-					}
+				}
+				else {
+					notAuthMessage = "OAuth2 - server authorization enabled but no Authorization token received!";
+				}
 
-					log.fine("Resource id: " + id);
+				if (authenticated == false) {
+					builder = responseNotAuthorized(producesType, notAuthMessage, responseFhirVersion);
+				}
+			}
 
-					ResourceContainer resourceContainer = resourceService.read(resourceType, id, _summary);
+        	if (authenticated == true) {
+				// Check for valid and supported ResourceType
+				if (ResourceType.isValidResourceType(resourceType) && ResourceType.isSupportedResourceType(resourceType)) {
 
-					log.fine("Resource status: " + resourceContainer.getResponseStatus().name());
+					// Check for valid FHIR resource id data type compliance
+					if (StringUtils.isValidFhirId(id)) {
 
-					// Get the request URL without the query parameters
-					StringBuffer requestURL = request.getRequestURL();
+						// Get the _summary parameter, if present
+						if (contextQueryParams != null) {
+							_summary = ServicesUtil.INSTANCE.getUriParameter("_summary", contextQueryParams);
+						}
+						if (_summary == null) {
+							_summary = ServicesUtil.INSTANCE.getUriParameter("_summary", request);
+						}
 
-					/*
-					 * Check for missing resource type if called from batch or transaction
-					 */
-					if (!requestURL.toString().contains(resourceType)) {
-						requestURL.append("/").append(resourceType).append("/").append(id);
-					}
+						log.fine("Resource id: " + id);
 
-					if (resourceContainer != null && resourceContainer.getResource() != null) {
-						requestURL.append("/_history/").append(resourceContainer.getResource().getVersionId());
-					}
+						ResourceContainer resourceContainer = resourceService.read(resourceType, id, _summary);
 
-					// Construct full request URL with any query parameters
-					String queryString = request.getQueryString();
-					if (queryString != null) {
-						queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
-						requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
-					}
+						log.fine("Resource status: " + resourceContainer.getResponseStatus().name());
 
-					log.fine("Response Location: " + requestURL);
-
-					// Check for valid returned resource instance; i.e. response status of OK
-					if (resourceContainer.getResponseStatus().equals(Status.OK)) {
+						// Get the request URL without the query parameters
+						StringBuffer requestURL = request.getRequestURL();
 
 						/*
-						 * Check conditional read based on HTTP Headers If-Modified-Since (date-time) and If-None-Match
-						 * (ETag version id)
+						 * Check for missing resource type if called from batch or transaction
 						 */
-						if (requestHeaderParams != null) {
-							ifModifiedSince = ServicesUtil.INSTANCE.getUriParameter(HttpHeaders.IF_MODIFIED_SINCE, requestHeaderParams);
-						}
-						if (ifModifiedSince == null) {
-							ifModifiedSince = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.IF_MODIFIED_SINCE);
-						}
-						if (requestHeaderParams != null) {
-							ifNoneMatch = ServicesUtil.INSTANCE.getUriParameter(HttpHeaders.IF_NONE_MATCH, requestHeaderParams);
-						}
-						if (ifNoneMatch == null) {
-							ifNoneMatch = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.IF_NONE_MATCH);
+						if (!requestURL.toString().contains(resourceType)) {
+							requestURL.append("/").append(resourceType).append("/").append(id);
 						}
 
-						if (ifModifiedSince != null || ifNoneMatch != null) {
-							log.fine("Conditional Read requested - check support level");
+						if (resourceContainer != null && resourceContainer.getResource() != null) {
+							requestURL.append("/_history/").append(resourceContainer.getResource().getVersionId());
+						}
 
-							if (codeService.isValueSupported("conditionalRead", "not-supported")) {
-								outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED, "Unsupported operation - conditional read not implemented.", null, null, producesType);
+						// Construct full request URL with any query parameters
+						String queryString = request.getQueryString();
+						if (queryString != null) {
+							queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
+							requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
+						}
 
-								builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+						log.fine("Response Location: " + requestURL);
+
+						// Check for valid returned resource instance; i.e. response status of OK
+						if (resourceContainer.getResponseStatus().equals(Status.OK)) {
+
+							/*
+							 * Check conditional read based on HTTP Headers If-Modified-Since (date-time) and If-None-Match
+							 * (ETag version id)
+							 */
+							if (requestHeaderParams != null) {
+								ifModifiedSince = ServicesUtil.INSTANCE.getUriParameter(HttpHeaders.IF_MODIFIED_SINCE, requestHeaderParams);
 							}
-							else if (codeService.isValueSupported("conditionalRead", "not-match") || codeService.isValueSupported("conditionalRead", "modified-since") || codeService.isValueSupported("conditionalRead", "full-support")) {
+							if (ifModifiedSince == null) {
+								ifModifiedSince = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.IF_MODIFIED_SINCE);
+							}
+							if (requestHeaderParams != null) {
+								ifNoneMatch = ServicesUtil.INSTANCE.getUriParameter(HttpHeaders.IF_NONE_MATCH, requestHeaderParams);
+							}
+							if (ifNoneMatch == null) {
+								ifNoneMatch = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.IF_NONE_MATCH);
+							}
 
-								if (ifModifiedSince != null && codeService.isValueSupported("conditionalRead", "not-match")) {
-									outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED, "Unsupported conditional read criteria - If-Modified-Since.", null, null, producesType);
+							if (ifModifiedSince != null || ifNoneMatch != null) {
+								log.fine("Conditional Read requested - check support level");
+
+								if (codeService.isValueSupported("conditionalRead", "not-supported")) {
+									outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED, "Unsupported operation - conditional read not implemented.", null, null, producesType);
 
 									builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 								}
-								else if (ifNoneMatch != null && codeService.isValueSupported("conditionalRead", "modified-since")) {
-									outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED, "Unsupported conditional read criteria - If-None-Match.", null, null, producesType);
+								else if (codeService.isValueSupported("conditionalRead", "not-match") || codeService.isValueSupported("conditionalRead", "modified-since") || codeService.isValueSupported("conditionalRead", "full-support")) {
 
-									builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-								}
-								else {
-									boolean notModifiedorMatched = false;
+									if (ifModifiedSince != null && codeService.isValueSupported("conditionalRead", "not-match")) {
+										outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED, "Unsupported conditional read criteria - If-Modified-Since.", null, null, producesType);
 
-									Date modifiedSince = null;
-									if (ifModifiedSince != null) {
-										try {
+										builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+									}
+									else if (ifNoneMatch != null && codeService.isValueSupported("conditionalRead", "modified-since")) {
+										outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED, "Unsupported conditional read criteria - If-None-Match.", null, null, producesType);
+
+										builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+									}
+									else {
+										boolean notModifiedorMatched = false;
+
+										Date modifiedSince = null;
+										if (ifModifiedSince != null) {
 											try {
-												// First try expected HTTP date format
-												modifiedSince = utcDateUtil.parseHTTPDate(ifModifiedSince);
-											}
-											catch (Exception e) {
-												log.severe("Exception parsing If-Modified-Since as HTTP Date. " + e.getMessage());
-											}
-											if (modifiedSince == null) {
 												try {
-													// Next try XML date format; not expected but we'll allow
-													modifiedSince = utcDateUtil.parseXMLDate(ifModifiedSince);
+													// First try expected HTTP date format
+													modifiedSince = utcDateUtil.parseHTTPDate(ifModifiedSince);
 												}
 												catch (Exception e) {
-													log.severe("Exception parsing If-Modified-Since as XML Date. " + e.getMessage());
+													log.severe("Exception parsing If-Modified-Since as HTTP Date. " + e.getMessage());
 												}
-											}
-											if (modifiedSince == null) {
-												// If neither formats worked, default to current date and time
-												modifiedSince = new Date();
-											}
+												if (modifiedSince == null) {
+													try {
+														// Next try XML date format; not expected but we'll allow
+														modifiedSince = utcDateUtil.parseXMLDate(ifModifiedSince);
+													}
+													catch (Exception e) {
+														log.severe("Exception parsing If-Modified-Since as XML Date. " + e.getMessage());
+													}
+												}
+												if (modifiedSince == null) {
+													// If neither formats worked, default to current date and time
+													modifiedSince = new Date();
+												}
 
-											Date lastUpdate = resourceContainer.getResource().getLastUpdate();
+												Date lastUpdate = resourceContainer.getResource().getLastUpdate();
 
-											if (lastUpdate.before(modifiedSince)) {
-												notModifiedorMatched = true;
-											}
-										}
-										catch (Exception e) {
-											log.severe("Exception processing If-Modified-Since date value " + ifModifiedSince + "'. " + e.getMessage());
-										}
-									}
-
-									if (!notModifiedorMatched) {
-
-										if (ifNoneMatch != null) {
-											try {
-												String versionId = resourceContainer.getResource().getVersionId().toString();
-
-												// First check for versionId only
-												if (ifNoneMatch.equals(versionId)) {
+												if (lastUpdate.before(modifiedSince)) {
 													notModifiedorMatched = true;
 												}
-												if (!notModifiedorMatched) {
-													// Next check for weak ETag format W/"vid"
-													versionId = "W/\"" + versionId + "\"";
+											}
+											catch (Exception e) {
+												log.severe("Exception processing If-Modified-Since date value " + ifModifiedSince + "'. " + e.getMessage());
+											}
+										}
+
+										if (!notModifiedorMatched) {
+
+											if (ifNoneMatch != null) {
+												try {
+													String versionId = resourceContainer.getResource().getVersionId().toString();
+
+													// First check for versionId only
 													if (ifNoneMatch.equals(versionId)) {
 														notModifiedorMatched = true;
 													}
+													if (!notModifiedorMatched) {
+														// Next check for weak ETag format W/"vid"
+														versionId = "W/\"" + versionId + "\"";
+														if (ifNoneMatch.equals(versionId)) {
+															notModifiedorMatched = true;
+														}
+													}
+												}
+												catch (Exception e) {
+													log.severe("Exception parsing If-None-Match. " + e.getMessage());
 												}
 											}
-											catch (Exception e) {
-												log.severe("Exception parsing If-None-Match. " + e.getMessage());
-											}
+										}
+
+										if (notModifiedorMatched) {
+											// Conditional read found no modifications or a match; return 304 NOT MODIFIED with no
+											// response contents
+											builder = Response.status(Response.Status.NOT_MODIFIED);
+
+										}
+										else {
+											builder = buildResource(requestURL.toString(), producesType, resourceContainer, Ops.READ, responseFhirVersion);
 										}
 									}
-
-									if (notModifiedorMatched) {
-										// Conditional read found no modifications or a match; return 304 NOT MODIFIED with no
-										// response contents
-										builder = Response.status(Response.Status.NOT_MODIFIED);
-
-									}
-									else {
-										builder = buildResource(requestURL.toString(), producesType, resourceContainer, Ops.READ, responseFhirVersion);
-									}
 								}
+								else {
+									// Support for conditional read not correctly defined so report error in OperationOutcome
+									outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING,
+											"Conditional read failed due to internal configuration error - support not defined properly.", null, null, producesType);
+
+									builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+								}
+
 							}
 							else {
-								// Support for conditional read not correctly defined so report error in OperationOutcome
-								outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING,
-										"Conditional read failed due to internal configuration error - support not defined properly.", null, null, producesType);
-
-								builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+								builder = buildResource(requestURL.toString(), producesType, resourceContainer, Ops.READ, responseFhirVersion);
 							}
 
 						}
@@ -323,18 +366,14 @@ public class RESTResourceOps {
 
 					}
 					else {
-						builder = buildResource(requestURL.toString(), producesType, resourceContainer, Ops.READ, responseFhirVersion);
+						builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
 					}
 
 				}
 				else {
-					builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
+					builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
 				}
-
-			}
-			else {
-				builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
-			}
+        	} //if (authenticated == true)
 
         } catch (Exception e) {
             // Handle generic exceptions
@@ -378,57 +417,93 @@ public class RESTResourceOps {
         }
 
         try {
+        	boolean authenticated = true;
+
 			// Get the produces type based on the request Accept
 			producesType = ServicesUtil.INSTANCE.getProducesType(headers, request);
 
-			// Check for valid and supported ResourceType
-			if (ResourceType.isValidResourceType(resourceType) && ResourceType.isSupportedResourceType(resourceType)) {
+			// Check for OAuth Server Enabled
+			if (codeService.isSupported("oauthServerEnabled")) {
 
-				// Check for valid FHIR resource id data type compliance
-				if (StringUtils.isValidFhirId(id)) {
+				// Default authenticated to false in order to catch when no Authorization header is sent
+				authenticated = false;
+				String notAuthMessage = "OAuth2 - server authorization enabled!";
 
-					// Get the _summary parameter, if present
-					_summary = ServicesUtil.INSTANCE.getUriParameter("_summary", request);
+				// Check for Authorization Header(s)
+				List<String> authHeaders = ServicesUtil.INSTANCE.getHttpHeaderList(headers, "Authorization");
 
-					log.fine("Resource id: " + id);
+				if (authHeaders != null && !authHeaders.isEmpty()) {
+					// Process OAuth2 token to determine access privileges
 
-					Integer iVersionId = Integer.valueOf(versionId);
-					log.fine("Converted version id: " + iVersionId);
+					// An Authorization Header was sent; check for valid read scope
+					StringBuffer returnMessage = null;
+					authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "r"); // SMART v2 read
 
-					ResourceContainer resourceContainer = resourceService.vread(resourceType, id, iVersionId, _summary);
-
-					// Get the request URL without the query parameters
-					StringBuffer requestURL = request.getRequestURL();
-
-					/*
-					 * Check for missing resource type if called from batch or transaction
-					 */
-					if (!requestURL.toString().contains(resourceType)) {
-						requestURL.append("/").append(resourceType).append("/").append(id);
-
-						if (resourceContainer != null && resourceContainer.getResource() != null) {
-							requestURL.append("/_history/").append(resourceContainer.getResource().getVersionId());
-						}
+					if (authenticated == false) {
+						notAuthMessage = "OAuth2 - (r)ead scope authorization failed!" +
+								(returnMessage != null ? returnMessage.toString() : "");
+						log.fine(notAuthMessage);
 					}
-
-					// Construct full request URL with any query parameters
-					String queryString = request.getQueryString();
-					if (queryString != null) {
-						queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
-						requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
-					}
-
-					log.fine("Response Location: " + requestURL);
-
-					builder = buildResource(requestURL.toString(), producesType, resourceContainer, Ops.READ, responseFhirVersion);
 				}
 				else {
-					builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
+					notAuthMessage = "OAuth2 - server authorization enabled but no Authorization token received!";
+				}
+
+				if (authenticated == false) {
+					builder = responseNotAuthorized(producesType, notAuthMessage, responseFhirVersion);
 				}
 			}
-			else {
-				builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
-			}
+
+        	if (authenticated == true) {
+				// Check for valid and supported ResourceType
+				if (ResourceType.isValidResourceType(resourceType) && ResourceType.isSupportedResourceType(resourceType)) {
+
+					// Check for valid FHIR resource id data type compliance
+					if (StringUtils.isValidFhirId(id)) {
+
+						// Get the _summary parameter, if present
+						_summary = ServicesUtil.INSTANCE.getUriParameter("_summary", request);
+
+						log.fine("Resource id: " + id);
+
+						Integer iVersionId = Integer.valueOf(versionId);
+						log.fine("Converted version id: " + iVersionId);
+
+						ResourceContainer resourceContainer = resourceService.vread(resourceType, id, iVersionId, _summary);
+
+						// Get the request URL without the query parameters
+						StringBuffer requestURL = request.getRequestURL();
+
+						/*
+						 * Check for missing resource type if called from batch or transaction
+						 */
+						if (!requestURL.toString().contains(resourceType)) {
+							requestURL.append("/").append(resourceType).append("/").append(id);
+
+							if (resourceContainer != null && resourceContainer.getResource() != null) {
+								requestURL.append("/_history/").append(resourceContainer.getResource().getVersionId());
+							}
+						}
+
+						// Construct full request URL with any query parameters
+						String queryString = request.getQueryString();
+						if (queryString != null) {
+							queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
+							requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
+						}
+
+						log.fine("Response Location: " + requestURL);
+
+						builder = buildResource(requestURL.toString(), producesType, resourceContainer, Ops.READ, responseFhirVersion);
+					}
+					else {
+						builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
+					}
+				}
+				else {
+					builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
+				}
+        	} //if (authenticated == true)
 
         } catch (Exception e) {
             // Handle generic exceptions
@@ -477,227 +552,259 @@ public class RESTResourceOps {
         }
 
 		try {
+			boolean authenticated = true;
+
 			// Get the produces type based on the request Accept
 			producesType = ServicesUtil.INSTANCE.getProducesType(headers, request);
 
-			// Get the content type based on the request Content-Type
-			contentType = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.CONTENT_TYPE);
+			// Check for OAuth Server Enabled
+			if (codeService.isSupported("oauthServerEnabled")) {
 
-			if (contentType != null && !contentType.equals(MediaType.APPLICATION_OCTET_STREAM)) {
+				// Default authenticated to false in order to catch when no Authorization header is sent
+				authenticated = false;
+				String notAuthMessage = "OAuth2 - server authorization enabled!";
 
-				// Get the request URL without the query parameters
-				StringBuffer requestURL = request.getRequestURL();
+				// Check for Authorization Header(s)
+				List<String> authHeaders = ServicesUtil.INSTANCE.getHttpHeaderList(headers, "Authorization");
 
-				/*
-				 * Check for missing resource type if called from batch or transaction
-				 */
-				if (!requestURL.toString().contains(resourceType)) {
-					requestURL.append("/").append(resourceType);
+				if (authHeaders != null && !authHeaders.isEmpty()) {
+					// Process OAuth2 token to determine access privileges
+
+					// An Authorization Header was sent; check for valid read scope
+					StringBuffer returnMessage = null;
+					authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "c"); // SMART v2 create
+
+					if (authenticated == false) {
+						notAuthMessage = "OAuth2 - (c)reate scope authorization failed!" +
+								(returnMessage != null ? returnMessage.toString() : "");
+						log.fine(notAuthMessage);
+					}
 				}
-				String contextPath = requestURL.toString();
+				else {
+					notAuthMessage = "OAuth2 - server authorization enabled but no Authorization token received!";
+				}
 
-				/*
-				 * Remove resource id if called from update
-				 */
-				contextPath = ServicesUtil.INSTANCE.extractBaseURL(contextPath, resourceType) + resourceType;
+				if (authenticated == false) {
+					builder = responseNotAuthorized(producesType, notAuthMessage, responseFhirVersion);
+				}
+			}
 
-				StringBuilder sbLocationPath = new StringBuilder(contextPath);
+        	if (authenticated == true) {
+				// Get the content type based on the request Content-Type
+				contentType = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.CONTENT_TYPE);
 
-				// Check for valid and supported ResourceType
-				if (ResourceType.isValidResourceType(resourceType) && ResourceType.isSupportedResourceType(resourceType)) {
+				if (contentType != null && !contentType.equals(MediaType.APPLICATION_OCTET_STREAM)) {
 
-					// Instantiate the Resource; this is the first, simple validation of the resource
-					Resource resource = this.convertToR4Resource(contentType, resourceType, payload);
+					// Get the request URL without the query parameters
+					StringBuffer requestURL = request.getRequestURL();
 
-					// Check okToCreate; if false, then create validation failed
-					if (okToCreate) {
-						/*
-						 * Conditional Create based on HTTP Header If-None-Exist
-						 */
-						if (requestHeaderParams != null) {
-							ifNoneExist = ServicesUtil.INSTANCE.getUriParameter("If-None-Exist", requestHeaderParams);
-						}
-						if (ifNoneExist == null) {
-							ifNoneExist = ServicesUtil.INSTANCE.getHttpHeader(headers, "If-None-Exist");
-						}
+					/*
+					 * Check for missing resource type if called from batch or transaction
+					 */
+					if (!requestURL.toString().contains(resourceType)) {
+						requestURL.append("/").append(resourceType);
+					}
+					String contextPath = requestURL.toString();
 
-						if (ifNoneExist != null) {
+					/*
+					 * Remove resource id if called from update
+					 */
+					contextPath = ServicesUtil.INSTANCE.extractBaseURL(contextPath, resourceType) + resourceType;
 
-							if (codeService.isSupported("conditionalCreate")) {
-								log.fine("Conditional Create requested and supported - start search");
+					StringBuilder sbLocationPath = new StringBuilder(contextPath);
 
-								// Convert If-None-Exist into queryParams map
-								List<NameValuePair> params = URLEncodedUtils.parse(ifNoneExist, Charset.defaultCharset());
-								MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
+					// Check for valid and supported ResourceType
+					if (ResourceType.isValidResourceType(resourceType) && ResourceType.isSupportedResourceType(resourceType)) {
 
-								// Execute search as defined in If-None-Exist header
+						// Instantiate the Resource; this is the first, simple validation of the resource
+						Resource resource = this.convertToR4Resource(contentType, resourceType, payload);
 
-								// Construct full request URL with If-None-Exist header query parameters
-								requestURL = request.getRequestURL();
-								requestURL.append("?").append(ifNoneExist);
-								String locationPath = requestURL.toString();
+						// Check okToCreate; if false, then create validation failed
+						if (okToCreate) {
+							/*
+							 * Conditional Create based on HTTP Header If-None-Exist
+							 */
+							if (requestHeaderParams != null) {
+								ifNoneExist = ServicesUtil.INSTANCE.getUriParameter("If-None-Exist", requestHeaderParams);
+							}
+							if (ifNoneExist == null) {
+								ifNoneExist = ServicesUtil.INSTANCE.getHttpHeader(headers, "If-None-Exist");
+							}
 
-								ResourceContainer searchContainer = resourceService.search(queryParams, null, null, resourceType, locationPath, null, null, null, false);
+							if (ifNoneExist != null) {
 
-								if (searchContainer != null && searchContainer.getResponseStatus().equals(Status.OK) && searchContainer.getBundle() != null) {
+								if (codeService.isSupported("conditionalCreate")) {
+									log.fine("Conditional Create requested and supported - start search");
 
-									Bundle searchBundle = searchContainer.getBundle();
-									if (!searchBundle.hasEntry()) {
-										// If search returns zero records, process create
-										okToCreate = true;
-									}
-									else if (searchBundle.getEntry().size() == 1) {
-										// Check for OperationOutcome; if found, ok to create
-										if (searchBundle.getEntryFirstRep().getResource().getResourceType().equals(org.hl7.fhir.r4.model.ResourceType.OperationOutcome)) {
+									// Convert If-None-Exist into queryParams map
+									List<NameValuePair> params = URLEncodedUtils.parse(ifNoneExist, Charset.defaultCharset());
+									MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.listNameValuePairToMultivaluedMapString(params);
+
+									// Execute search as defined in If-None-Exist header
+
+									// Construct full request URL with If-None-Exist header query parameters
+									requestURL = request.getRequestURL();
+									requestURL.append("?").append(ifNoneExist);
+									String locationPath = requestURL.toString();
+
+									ResourceContainer searchContainer = resourceService.search(queryParams, null, null, resourceType, locationPath, null, null, null, false);
+
+									if (searchContainer != null && searchContainer.getResponseStatus().equals(Status.OK) && searchContainer.getBundle() != null) {
+
+										Bundle searchBundle = searchContainer.getBundle();
+										if (!searchBundle.hasEntry()) {
+											// If search returns zero records, process create
 											okToCreate = true;
 										}
-										else {
-											// Else if search returns one record (match), return OK (200) with informational outcome
-											String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL,
-													"Conditional create If-None-Exist criteria found matching resource; no operation performed.", null, null, producesType);
-
-											sbLocationPath.append("/").append(searchBundle.getEntry().get(0).getResource().getId());
-											sbLocationPath.append("/_history/").append(searchBundle.getEntry().get(0).getResource().getMeta().getVersionId());
-											URI resourceLocation = new URI(sbLocationPath.toString());
-
-											// Get last update date
-											Date lastUpdate = searchBundle.getEntry().get(0).getResource().getMeta().getLastUpdated();
-											log.fine("Last Update Date: " + lastUpdate);
-
-											String sLastUpdate = null;
-											if (lastUpdate != null) {
-												sLastUpdate = utcDateUtil.formatUTCDateOffset(lastUpdate);
-												log.fine("Last Update UTC Date: " + sLastUpdate);
+										else if (searchBundle.getEntry().size() == 1) {
+											// Check for OperationOutcome; if found, ok to create
+											if (searchBundle.getEntryFirstRep().getResource().getResourceType().equals(org.hl7.fhir.r4.model.ResourceType.OperationOutcome)) {
+												okToCreate = true;
 											}
+											else {
+												// Else if search returns one record (match), return OK (200) with informational outcome
+												String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL,
+														"Conditional create If-None-Exist criteria found matching resource; no operation performed.", null, null, producesType);
 
-											// ETag to hold the resource version id String eTagVersion = "W/\"" + searchBundle.getEntry().get(0).getResource().getMeta().getVersionId() + "\"";
-											String eTagVersion = searchBundle.getEntry().get(0).getResource().getMeta().getVersionId();
-											EntityTag eTag = new EntityTag(eTagVersion, true);
+												sbLocationPath.append("/").append(searchBundle.getEntry().get(0).getResource().getId());
+												sbLocationPath.append("/_history/").append(searchBundle.getEntry().get(0).getResource().getMeta().getVersionId());
+												URI resourceLocation = new URI(sbLocationPath.toString());
 
-											builder = Response.status(Response.Status.OK).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+												// Get last update date
+												Date lastUpdate = searchBundle.getEntry().get(0).getResource().getMeta().getLastUpdated();
+												log.fine("Last Update Date: " + lastUpdate);
 
-											builder = builder.tag(eTag).contentLocation(resourceLocation).location(resourceLocation).header("Last-Modified", sLastUpdate);
+												String sLastUpdate = null;
+												if (lastUpdate != null) {
+													sLastUpdate = utcDateUtil.formatUTCDateOffset(lastUpdate);
+													log.fine("Last Update UTC Date: " + sLastUpdate);
+												}
+
+												// ETag to hold the resource version id String eTagVersion = "W/\"" + searchBundle.getEntry().get(0).getResource().getMeta().getVersionId() + "\"";
+												String eTagVersion = searchBundle.getEntry().get(0).getResource().getMeta().getVersionId();
+												EntityTag eTag = new EntityTag(eTagVersion, true);
+
+												builder = Response.status(Response.Status.OK).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+
+												builder = builder.tag(eTag).contentLocation(resourceLocation).location(resourceLocation).header("Last-Modified", sLastUpdate);
+
+												okToCreate = false;
+											}
+										}
+										else {
+											// Else (more than one record found - multiple matches) return Precondition Failed (412)
+											String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING,
+													"Conditional create could not be exected. If-None-Exist criteria found multiple matching resources; no operation performed.", null, null, producesType);
+
+											builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 
 											okToCreate = false;
 										}
 									}
 									else {
-										// Else (more than one record found - multiple matches) return Precondition Failed (412)
-										String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING,
-												"Conditional create could not be exected. If-None-Exist criteria found multiple matching resources; no operation performed.", null, null, producesType);
+										// Search has failed so report error in OperationOutcome
+										String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional create failed due to processing errors with If-None-Exist.",
+												ifNoneExist, null, producesType);
 
-										builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+										builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 
 										okToCreate = false;
 									}
 								}
 								else {
-									// Search has failed so report error in OperationOutcome
-									String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional create failed due to processing errors with If-None-Exist.",
-											ifNoneExist, null, producesType);
+									log.fine("Conditional Create requested and not supported - return bad request");
+
+									// Conditional Create is not supported; report error in OperationOutcome
+									String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional create of If-None-Exist is not supported.", ifNoneExist, null, producesType);
 
 									builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 
 									okToCreate = false;
 								}
-
-							}
-							else {
-								log.fine("Conditional Create requested and not supported - return bad request");
-
-								// Conditional Create is not supported; report error in OperationOutcome
-								String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional create of If-None-Exist is not supported.", ifNoneExist, null, producesType);
-
-								builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-
-								okToCreate = false;
 							}
 
-						}
+							if (okToCreate) {
 
-						if (okToCreate) {
+								// Check for no existing text narrative
+								if (resource instanceof DomainResource) {
+									DomainResource dResource = (DomainResource) resource;
 
-							// Check for no existing text narrative
-							if (resource instanceof DomainResource) {
-								DomainResource dResource = (DomainResource) resource;
-
-								if (!dResource.hasText()) {
-									// Use RI NarrativeGenerator
-									FHIRNarrativeGeneratorClient.instance().generate(dResource);
+									if (!dResource.hasText()) {
+										// Use RI NarrativeGenerator
+										FHIRNarrativeGeneratorClient.instance().generate(dResource);
+									}
 								}
-							}
 
-							// Convert the Resource to XML byte[]
-							ByteArrayOutputStream oResource = new ByteArrayOutputStream();
-							XmlParser xmlParser = new XmlParser();
-							xmlParser.setOutputStyle(OutputStyle.PRETTY);
-							xmlParser.compose(oResource, resource, true);
-							byte[] bResource = oResource.toByteArray();
+								// Convert the Resource to XML byte[]
+								ByteArrayOutputStream oResource = new ByteArrayOutputStream();
+								XmlParser xmlParser = new XmlParser();
+								xmlParser.setOutputStyle(OutputStyle.PRETTY);
+								xmlParser.compose(oResource, resource, true);
+								byte[] bResource = oResource.toByteArray();
 
-							// Initialize a Resource to be created
-							net.aegis.fhir.model.Resource newResource = new net.aegis.fhir.model.Resource();
-							newResource.setResourceType(resourceType);
-							newResource.setResourceContents(bResource);
+								// Initialize a Resource to be created
+								net.aegis.fhir.model.Resource newResource = new net.aegis.fhir.model.Resource();
+								newResource.setResourceType(resourceType);
+								newResource.setResourceContents(bResource);
 
-							ResourceContainer resourceContainer = resourceService.create(newResource, resourceId, request.getRequestURL().toString());
+								ResourceContainer resourceContainer = resourceService.create(newResource, resourceId, request.getRequestURL().toString());
 
-							if (resourceId == null) {
-								sbLocationPath.append("/").append(resourceContainer.getResource().getResourceId());
-							}
-							else {
-								sbLocationPath.append("/").append(resourceId);
-							}
-							sbLocationPath.append("/_history/").append(resourceContainer.getResource().getVersionId());
-
-							/*
-							 * Honor Prefer HTTP Header first. If not defined, use configuration setting createResponsePayload
-							 * Return preference minimal, representation (WildFHIR default) or OperationOutcome
-							 */
-							prefer = ServicesUtil.INSTANCE.getHttpHeader(headers, "Prefer");
-							if (prefer == null) {
-								prefer = codeService.getCodeValue("createResponsePayload");
-							}
-
-							if (prefer != null && prefer.indexOf("minimal") >= 0) {
-								// Return content preference set to minimal; remove resource contents
-								resourceContainer.getResource().setResourceContents(null);
-							}
-							else if ((prefer != null && prefer.indexOf("OperationOutcome") >= 0)) {
-								// Return content preference set to OperationOutcome; generate XML OperationOutcome resource contents
-								String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL, resourceContainer.getResource().getResourceType()
-										+ " resource created with resource id " + resourceContainer.getResource().getResourceId() + ".", null, null);
-
-								resourceContainer.getResource().setResourceContents(outcome.getBytes());
-							}
-
-							/*
-							 * Subscription Framework - check for Subscription resource type successfully created
-							 * if yes and SF enabled, create initial SubscriptionStatus
-							 */
-							if (codeService.isSupported("subscriptionServiceEnabled")) {
-								if (resourceType.equals("Subscription") && resourceContainer.getResponseStatus().equals(Response.Status.CREATED)) {
-									// Create initial SubscriptionStatus for Subscription
-									this.initialSubscriptionStatus(resource, resourceContainer.getResource().getResourceId());
+								if (resourceId == null) {
+									sbLocationPath.append("/").append(resourceContainer.getResource().getResourceId());
 								}
+								else {
+									sbLocationPath.append("/").append(resourceId);
+								}
+								sbLocationPath.append("/_history/").append(resourceContainer.getResource().getVersionId());
+
+								/*
+								 * Honor Prefer HTTP Header first. If not defined, use configuration setting createResponsePayload
+								 * Return preference minimal, representation (WildFHIR default) or OperationOutcome
+								 */
+								prefer = ServicesUtil.INSTANCE.getHttpHeader(headers, "Prefer");
+								if (prefer == null) {
+									prefer = codeService.getCodeValue("createResponsePayload");
+								}
+
+								if (prefer != null && prefer.indexOf("minimal") >= 0) {
+									// Return content preference set to minimal; remove resource contents
+									resourceContainer.getResource().setResourceContents(null);
+								}
+								else if ((prefer != null && prefer.indexOf("OperationOutcome") >= 0)) {
+									// Return content preference set to OperationOutcome; generate XML OperationOutcome resource contents
+									String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL, resourceContainer.getResource().getResourceType()
+											+ " resource created with resource id " + resourceContainer.getResource().getResourceId() + ".", null, null);
+
+									resourceContainer.getResource().setResourceContents(outcome.getBytes());
+								}
+
+								/*
+								 * Subscription Framework - check for Subscription resource type successfully created
+								 * if yes and SF enabled, create initial SubscriptionStatus
+								 */
+								if (codeService.isSupported("subscriptionServiceEnabled")) {
+									if (resourceType.equals("Subscription") && resourceContainer.getResponseStatus().equals(Response.Status.CREATED)) {
+										// Create initial SubscriptionStatus for Subscription
+										this.initialSubscriptionStatus(resource, resourceContainer.getResource().getResourceId());
+									}
+								}
+
+								builder = buildResource(sbLocationPath.toString(), producesType, resourceContainer, Ops.CREATE, responseFhirVersion);
 							}
-
-							builder = buildResource(sbLocationPath.toString(), producesType, resourceContainer, Ops.CREATE, responseFhirVersion);
 						}
-
+					}
+					else {
+						builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
 					}
 
 				}
 				else {
-					builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
+					// Request Content-Type was empty or set to MediaType.APPLICATION_OCTET_STREAM, report error "415 (Unsupported Media Type)"
+					String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, "The required request Content-Type mime type is not defined or not supported.", "HTTP Header Content-Type", null, producesType);
+
+					builder = Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 				}
-
-			}
-			else {
-				// Request Content-Type was empty or set to MediaType.APPLICATION_OCTET_STREAM, report error "415 (Unsupported Media Type)"
-				String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, "The required request Content-Type mime type is not defined or not supported.", "HTTP Header Content-Type", null, producesType);
-
-				builder = Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-			}
+        	} //if (authenticated == true)
 
         } catch (JsonSyntaxException jse) {
             String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.EXCEPTION, "Resource syntax or data is incorrect or invalid, and cannot be used to create a new resource. " + jse.getMessage(), null, null, producesType);
@@ -766,312 +873,201 @@ public class RESTResourceOps {
         }
 
         try {
-        	// Get the content type based on the request Content-Type
-			contentType = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.CONTENT_TYPE);
+			boolean authenticated = true;
 
-			if (contentType != null && !contentType.equals(MediaType.APPLICATION_OCTET_STREAM)) {
-				// Get the produces type based on the request Accept
-				producesType = ServicesUtil.INSTANCE.getProducesType(headers, request);
+			// Get the produces type based on the request Accept
+			producesType = ServicesUtil.INSTANCE.getProducesType(headers, request);
 
-				// Check for valid and supported ResourceType
-				if (ResourceType.isValidResourceType(resourceType) && ResourceType.isSupportedResourceType(resourceType)) {
+			// Check for OAuth Server Enabled
+			if (codeService.isSupported("oauthServerEnabled")) {
 
-					// Get the query parameters that represent the search criteria if any
+				// Default authenticated to false in order to catch when no Authorization header is sent
+				authenticated = false;
+				String notAuthMessage = "OAuth2 - server authorization enabled!";
 
-					MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
+				// Check for Authorization Header(s)
+				List<String> authHeaders = ServicesUtil.INSTANCE.getHttpHeaderList(headers, "Authorization");
 
-					if (contextQueryParams != null) {
-						queryParams.putAll(contextQueryParams);
+				if (authHeaders != null && !authHeaders.isEmpty()) {
+					// Process OAuth2 token to determine access privileges
+
+					// An Authorization Header was sent; check for valid read scope
+					StringBuffer returnMessage = null;
+					authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "u"); // SMART v2 update
+
+					if (authenticated == false) {
+						notAuthMessage = "OAuth2 - (u)pdate scope authorization failed!" +
+								(returnMessage != null ? returnMessage.toString() : "");
+						log.fine(notAuthMessage);
 					}
+				}
+				else {
+					notAuthMessage = "OAuth2 - server authorization enabled but no Authorization token received!";
+				}
 
-					boolean isConditional = false;
-					boolean okToCreate = false;
-					boolean okToUpdate = true;
+				if (authenticated == false) {
+					builder = responseNotAuthorized(producesType, notAuthMessage, responseFhirVersion);
+				}
+			}
 
-					/*
-					 * Conditional Update based on no resource id and URI parameters
-					 */
-					if (id == null && queryParams != null && !queryParams.isEmpty()) {
+        	if (authenticated == true) {
+	        	// Get the content type based on the request Content-Type
+				contentType = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.CONTENT_TYPE);
 
-						// If one query parameter present, check for '_format'
-						if (queryParams.size() == 1) {
+				if (contentType != null && !contentType.equals(MediaType.APPLICATION_OCTET_STREAM)) {
+					// Check for valid and supported ResourceType
+					if (ResourceType.isValidResourceType(resourceType) && ResourceType.isSupportedResourceType(resourceType)) {
 
-							// If not '_format', then perform conditional update logic
-							if (!queryParams.containsKey("_format")) {
+						// Get the query parameters that represent the search criteria if any
+						MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
+
+						if (contextQueryParams != null) {
+							queryParams.putAll(contextQueryParams);
+						}
+
+						boolean isConditional = false;
+						boolean okToCreate = false;
+						boolean okToUpdate = true;
+
+						/*
+						 * Conditional Update based on no resource id and URI parameters
+						 */
+						if (id == null && queryParams != null && !queryParams.isEmpty()) {
+
+							// If one query parameter present, check for '_format'
+							if (queryParams.size() == 1) {
+
+								// If not '_format', then perform conditional update logic
+								if (!queryParams.containsKey("_format")) {
+									isConditional = true;
+								}
+							}
+							else {
 								isConditional = true;
 							}
 						}
-						else {
-							isConditional = true;
-						}
-					}
 
-					if (isConditional) {
+						if (isConditional) {
 
-						if (codeService.isSupported("conditionalUpdate")) {
-							log.fine("Conditional Update requested and supported - start search");
+							if (codeService.isSupported("conditionalUpdate")) {
+								log.fine("Conditional Update requested and supported - start search");
 
-							// Execute search as defined in the request uri parameters
+								// Execute search as defined in the request uri parameters
 
-							// Construct full request URL with any query parameters
-							StringBuffer requestURL = request.getRequestURL();
-							String queryString = request.getQueryString();
-							if (queryString != null) {
-								queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
-								requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
-							}
-							String locationPath = requestURL.toString();
-
-							ResourceContainer searchContainer = resourceService.search(queryParams, null, null, resourceType, locationPath, null, null, null, false);
-
-							if (searchContainer != null && searchContainer.getResponseStatus().equals(Status.OK) && searchContainer.getBundle() != null) {
-
-								Bundle searchBundle = searchContainer.getBundle();
-								if (!searchBundle.hasEntry()) {
-									// If no matches, execute create by setting okToCreate = true and okToUpdate = true
-									id = null;
-									okToCreate = true;
-									okToUpdate = true;
+								// Construct full request URL with any query parameters
+								StringBuffer requestURL = request.getRequestURL();
+								String queryString = request.getQueryString();
+								if (queryString != null) {
+									queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
+									requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
 								}
-								else if (searchBundle.getEntry().size() == 1) {
+								String locationPath = requestURL.toString();
 
-									// Check for OperationOutcome; if found, ok to create, update
-									if (searchBundle.getEntryFirstRep().getResource().getResourceType().equals(org.hl7.fhir.r4.model.ResourceType.OperationOutcome)) {
+								ResourceContainer searchContainer = resourceService.search(queryParams, null, null, resourceType, locationPath, null, null, null, false);
+
+								if (searchContainer != null && searchContainer.getResponseStatus().equals(Status.OK) && searchContainer.getBundle() != null) {
+
+									Bundle searchBundle = searchContainer.getBundle();
+									if (!searchBundle.hasEntry()) {
+										// If no matches, execute create by setting okToCreate = true and okToUpdate = true
 										id = null;
 										okToCreate = true;
 										okToUpdate = true;
 									}
-									else {
-										// If one match, perform update against matched resource by setting id to matched resource id
-										id = searchBundle.getEntry().get(0).getResource().getId();
-										okToUpdate = true;
-									}
+									else if (searchBundle.getEntry().size() == 1) {
 
+										// Check for OperationOutcome; if found, ok to create, update
+										if (searchBundle.getEntryFirstRep().getResource().getResourceType().equals(org.hl7.fhir.r4.model.ResourceType.OperationOutcome)) {
+											id = null;
+											okToCreate = true;
+											okToUpdate = true;
+										}
+										else {
+											// If one match, perform update against matched resource by setting id to matched resource id
+											id = searchBundle.getEntry().get(0).getResource().getId();
+											okToUpdate = true;
+										}
+									}
+									else {
+										// If multiple matches, return precondition failed error criteria was not selective enough
+										String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional update failed due to query parameters not selective enough.", null,
+												null, producesType);
+
+										builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+
+										okToUpdate = false;
+									}
 								}
 								else {
-									// If multiple matches, return precondition failed error criteria was not selective enough
-									String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional update failed due to query parameters not selective enough.", null,
+									// Search has failed so report error in OperationOutcome
+									String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional update failed due to processing errors with query parameters.", null,
 											null, producesType);
 
-									builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+									builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 
 									okToUpdate = false;
 								}
 							}
 							else {
-								// Search has failed so report error in OperationOutcome
-								String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional update failed due to processing errors with query parameters.", null,
-										null, producesType);
+								log.fine("Conditional Update requested and not supported - return bad request");
+
+								// Conditional Update is not supported; report error in OperationOutcome
+								String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional update based on query parameters is not supported.",
+										"Conditional update based on query parameters is not supported.", null, producesType);
 
 								builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 
+								okToCreate = false;
 								okToUpdate = false;
 							}
 						}
-						else {
-							log.fine("Conditional Update requested and not supported - return bad request");
 
-							// Conditional Update is not supported; report error in OperationOutcome
-							String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional update based on query parameters is not supported.",
-									"Conditional update based on query parameters is not supported.", null, producesType);
+						if (okToUpdate) {
+							log.fine("Resource id: " + id);
 
-							builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+							// Check okToCreate based on conditional update
+							if (okToCreate) {
 
-							okToCreate = false;
-							okToUpdate = false;
-						}
-					}
-
-					if (okToUpdate) {
-						log.fine("Resource id: " + id);
-
-						// Check okToCreate based on conditional update
-						if (okToCreate) {
-
-							// Call create logic and RETURN
-							return this.create(request, headers, null, payload, resourceType, id);
-
-						}
-						// Else, check for valid FHIR resource id data type compliance
-						else if (id != null && StringUtils.isValidFhirId(id)) {
-
-							// Instantiate the Resource; this is the first, simple validation of the resource
-							Resource resource = this.convertToR4Resource(contentType, resourceType, payload);
-
-							// Attempt to read current version of the resource
-							resourceContainer = resourceService.read(resourceType, id, null);
-
-							/*
-							 * If current version of the resource does not exist, perform create using the provided id value
-							 */
-							if (resourceContainer == null || resourceContainer.getResource() == null || !resourceContainer.getResponseStatus().equals(Status.OK)) {
-
-								// Verify that the resource payload contains an id element
-								if (resource.hasId() && resource.getId().equals(id)) {
-
-									// Remove resource id for create logic
-									resource.setIdBase(null);
-
-									String resourcePayload = null;
-
-									if (contentType.indexOf("xml") >= 0) {
-										// Convert Resource to XML string
-										oResource = new ByteArrayOutputStream();
-										xmlP.compose(oResource, resource);
-										resourcePayload = oResource.toString();
-									}
-									else {
-										// Convert Resource to JSON string
-										oResource = new ByteArrayOutputStream();
-										jsonP.compose(oResource, resource);
-										resourcePayload = oResource.toString();
-									}
-
-									// Call create logic and RETURN
-									return this.create(request, headers, null, resourcePayload, resourceType, id);
-								}
-								else {
-									// resource id not found or ids do not match, return 400 (Bad Request) with OperationOutcome
-									String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.CONFLICT,
-											"Resource contents invalid! The request body SHALL be a Resource with an id element that has an identical value to the [id] in the URL.", null, null, producesType);
-
-									builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-								}
-
+								// Call create logic and RETURN
+								return this.create(request, headers, null, payload, resourceType, id);
 							}
-							else {
-								/*
-								 * Manage resource contention based on HTTP Header If-Match
-								 */
-								/*
-								 * Conditional Create based on HTTP Header If-None-Exist
-								 */
-								if (requestHeaderParams != null) {
-									ifMatch = ServicesUtil.INSTANCE.getUriParameter(HttpHeaders.IF_MATCH, requestHeaderParams);
-								}
-								if (ifMatch == null) {
-									ifMatch = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.IF_MATCH);
-								}
-								boolean matched = true;
+							// Else, check for valid FHIR resource id data type compliance
+							else if (id != null && StringUtils.isValidFhirId(id)) {
 
-								if (ifMatch != null) {
-									try {
-										if (resourceContainer != null && resourceContainer.getResource() != null) {
-											String versionId = resourceContainer.getResource().getVersionId().toString();
-											String matchVersionId = "";
+								// Instantiate the Resource; this is the first, simple validation of the resource
+								Resource resource = this.convertToR4Resource(contentType, resourceType, payload);
 
-											// First check for versionId only
-											if (!ifMatch.equals(versionId)) {
-												matched = false;
-											}
-											if (!matched) {
-												// Next check for "vid" (extra quotes to allow for clients that do not send correct weak ETag format)
-												matchVersionId = "\"" + versionId + "\"";
-												if (ifMatch.equals(matchVersionId)) {
-													matched = true;
-												}
-											}
-											if (!matched) {
-												// Next check for valid weak ETag format W/"vid"
-												matchVersionId = "W/\"" + versionId + "\"";
-												log.fine("ifMatch: " + ifMatch + "; Generated Weak ETag to match: " + matchVersionId);
-												if (ifMatch.equals(matchVersionId)) {
-													matched = true;
-												}
-											}
-											if (!matched) {
-												// Next check for weak ETag format "W/"vid"" (extra quotes to allow for clients that do not send correct weak ETag format)
-												matchVersionId = "\"W/\"" + versionId + "\"\"";
-												log.fine("ifMatch: " + ifMatch + "; Generated Weak ETag to match: " + matchVersionId);
-												if (ifMatch.equals(matchVersionId)) {
-													matched = true;
-												}
-											}
+								// Attempt to read current version of the resource
+								resourceContainer = resourceService.read(resourceType, id, null);
+
+								/*
+								 * If current version of the resource does not exist, perform create using the provided id value
+								 */
+								if (resourceContainer == null || resourceContainer.getResource() == null || !resourceContainer.getResponseStatus().equals(Status.OK)) {
+
+									// Verify that the resource payload contains an id element
+									if (resource.hasId() && resource.getId().equals(id)) {
+
+										// Remove resource id for create logic
+										resource.setIdBase(null);
+
+										String resourcePayload = null;
+
+										if (contentType.indexOf("xml") >= 0) {
+											// Convert Resource to XML string
+											oResource = new ByteArrayOutputStream();
+											xmlP.compose(oResource, resource);
+											resourcePayload = oResource.toString();
 										}
 										else {
-											matched = false;
-										}
-									}
-									catch (Exception e) {
-										log.severe("Exception parsing If-Match. " + e.getMessage());
-									}
-								}
-
-								if (matched) {
-									// Check for conditional update
-									if (isConditional) {
-										// Set resource id
-										resource.setId(id);
-									}
-
-									// Check for resource.id
-									if (resource.hasId() && resource.getId().equals(id)) {
-										// Check for no existing text narrative
-										if (resource instanceof DomainResource) {
-											DomainResource dResource = (DomainResource) resource;
-
-											if (!dResource.hasText()) {
-												// Use Cached NarrativeGeneratorClient
-												FHIRNarrativeGeneratorClient.instance().generate(dResource);
-											}
+											// Convert Resource to JSON string
+											oResource = new ByteArrayOutputStream();
+											jsonP.compose(oResource, resource);
+											resourcePayload = oResource.toString();
 										}
 
-										// Convert the Resource to XML byte[]
-										oResource = new ByteArrayOutputStream();
-										xmlP.setOutputStyle(OutputStyle.PRETTY);
-										xmlP.compose(oResource, resource, true);
-										byte[] bResource = oResource.toByteArray();
-
-										// Initialize a Resource to be updated
-										net.aegis.fhir.model.Resource updateResource = new net.aegis.fhir.model.Resource();
-										updateResource.setResourceType(resourceType);
-										updateResource.setResourceContents(bResource);
-
-										String locationPath = request.getRequestURL().toString();
-
-										/*
-										 * Check for missing resource type if called from batch or transaction
-										 */
-										if (!locationPath.contains(resourceType)) {
-											locationPath += "/" + resourceType + "/" + id;
-										}
-
-										resourceContainer = resourceService.update(id, updateResource, locationPath);
-
-										if (resourceContainer != null && resourceContainer.getResource() != null) {
-											locationPath += "/_history/" + resourceContainer.getResource().getVersionId();
-										}
-
-										/*
-										 * Honor Prefer HTTP Header if defined
-										 * Return preference minimal, representation (WildFHIR default) or OperationOutcome
-										 */
-										prefer = ServicesUtil.INSTANCE.getHttpHeader(headers, "Prefer");
-
-										if (prefer != null && prefer.indexOf("minimal") >= 0) {
-											// Return content preference set to minimal; remove resource contents
-											resourceContainer.getResource().setResourceContents(null);
-										}
-										else if ((prefer != null && prefer.indexOf("OperationOutcome") >= 0)) {
-											// Return content preference set to OperationOutcome; generate XML OperationOutcome resource contents
-											String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL,
-													resourceContainer.getResource().getResourceType() + " resource updated with resource id " + resourceContainer.getResource().getResourceId() + ".", null, null);
-
-											resourceContainer.getResource().setResourceContents(outcome.getBytes());
-										}
-
-										/*
-										 * Subscription Framework - check for Subscription resource type successfully updated
-										 * if yes and SF enabled, create new SubscriptionStatus
-										 */
-										if (codeService.isSupported("subscriptionServiceEnabled")) {
-											if (resourceType.equals("Subscription") && resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
-												// Create new SubscriptionStatus for Subscription
-												this.updateSubscriptionStatus(resource, resourceContainer.getResource().getResourceId());
-											}
-										}
-
-										builder = buildResource(locationPath, producesType, resourceContainer, Ops.UPDATE, responseFhirVersion);
+										// Call create logic and RETURN
+										return this.create(request, headers, null, resourcePayload, resourceType, id);
 									}
 									else {
 										// resource id not found or ids do not match, return 400 (Bad Request) with OperationOutcome
@@ -1082,32 +1078,175 @@ public class RESTResourceOps {
 									}
 								}
 								else {
-									String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.CONFLICT, "Resource contention detected! Resource version mis-match.", null, null, producesType);
+									/*
+									 * Manage resource contention based on HTTP Header If-Match
+									 */
+									/*
+									 * Conditional Create based on HTTP Header If-None-Exist
+									 */
+									if (requestHeaderParams != null) {
+										ifMatch = ServicesUtil.INSTANCE.getUriParameter(HttpHeaders.IF_MATCH, requestHeaderParams);
+									}
+									if (ifMatch == null) {
+										ifMatch = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.IF_MATCH);
+									}
+									boolean matched = true;
 
-									builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+									if (ifMatch != null) {
+										try {
+											if (resourceContainer != null && resourceContainer.getResource() != null) {
+												String versionId = resourceContainer.getResource().getVersionId().toString();
+												String matchVersionId = "";
+	
+												// First check for versionId only
+												if (!ifMatch.equals(versionId)) {
+													matched = false;
+												}
+												if (!matched) {
+													// Next check for "vid" (extra quotes to allow for clients that do not send correct weak ETag format)
+													matchVersionId = "\"" + versionId + "\"";
+													if (ifMatch.equals(matchVersionId)) {
+														matched = true;
+													}
+												}
+												if (!matched) {
+													// Next check for valid weak ETag format W/"vid"
+													matchVersionId = "W/\"" + versionId + "\"";
+													log.fine("ifMatch: " + ifMatch + "; Generated Weak ETag to match: " + matchVersionId);
+													if (ifMatch.equals(matchVersionId)) {
+														matched = true;
+													}
+												}
+												if (!matched) {
+													// Next check for weak ETag format "W/"vid"" (extra quotes to allow for clients that do not send correct weak ETag format)
+													matchVersionId = "\"W/\"" + versionId + "\"\"";
+													log.fine("ifMatch: " + ifMatch + "; Generated Weak ETag to match: " + matchVersionId);
+													if (ifMatch.equals(matchVersionId)) {
+														matched = true;
+													}
+												}
+											}
+											else {
+												matched = false;
+											}
+										}
+										catch (Exception e) {
+											log.severe("Exception parsing If-Match. " + e.getMessage());
+										}
+									}
+
+									if (matched) {
+										// Check for conditional update
+										if (isConditional) {
+											// Set resource id
+											resource.setId(id);
+										}
+
+										// Check for resource.id
+										if (resource.hasId() && resource.getId().equals(id)) {
+											// Check for no existing text narrative
+											if (resource instanceof DomainResource) {
+												DomainResource dResource = (DomainResource) resource;
+
+												if (!dResource.hasText()) {
+													// Use Cached NarrativeGeneratorClient
+													FHIRNarrativeGeneratorClient.instance().generate(dResource);
+												}
+											}
+
+											// Convert the Resource to XML byte[]
+											oResource = new ByteArrayOutputStream();
+											xmlP.setOutputStyle(OutputStyle.PRETTY);
+											xmlP.compose(oResource, resource, true);
+											byte[] bResource = oResource.toByteArray();
+
+											// Initialize a Resource to be updated
+											net.aegis.fhir.model.Resource updateResource = new net.aegis.fhir.model.Resource();
+											updateResource.setResourceType(resourceType);
+											updateResource.setResourceContents(bResource);
+
+											String locationPath = request.getRequestURL().toString();
+
+											/*
+											 * Check for missing resource type if called from batch or transaction
+											 */
+											if (!locationPath.contains(resourceType)) {
+												locationPath += "/" + resourceType + "/" + id;
+											}
+
+											resourceContainer = resourceService.update(id, updateResource, locationPath);
+
+											if (resourceContainer != null && resourceContainer.getResource() != null) {
+												locationPath += "/_history/" + resourceContainer.getResource().getVersionId();
+											}
+
+											/*
+											 * Honor Prefer HTTP Header if defined
+											 * Return preference minimal, representation (WildFHIR default) or OperationOutcome
+											 */
+											prefer = ServicesUtil.INSTANCE.getHttpHeader(headers, "Prefer");
+
+											if (prefer != null && prefer.indexOf("minimal") >= 0) {
+												// Return content preference set to minimal; remove resource contents
+												resourceContainer.getResource().setResourceContents(null);
+											}
+											else if ((prefer != null && prefer.indexOf("OperationOutcome") >= 0)) {
+												// Return content preference set to OperationOutcome; generate XML OperationOutcome resource contents
+												String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL,
+														resourceContainer.getResource().getResourceType() + " resource updated with resource id " + resourceContainer.getResource().getResourceId() + ".", null, null);
+	
+												resourceContainer.getResource().setResourceContents(outcome.getBytes());
+											}
+
+											/*
+											 * Subscription Framework - check for Subscription resource type successfully updated
+											 * if yes and SF enabled, create new SubscriptionStatus
+											 */
+											if (codeService.isSupported("subscriptionServiceEnabled")) {
+												if (resourceType.equals("Subscription") && resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
+													// Create new SubscriptionStatus for Subscription
+													this.updateSubscriptionStatus(resource, resourceContainer.getResource().getResourceId());
+												}
+											}
+
+											builder = buildResource(locationPath, producesType, resourceContainer, Ops.UPDATE, responseFhirVersion);
+										}
+										else {
+											// resource id not found or ids do not match, return 400 (Bad Request) with OperationOutcome
+											String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.CONFLICT,
+													"Resource contents invalid! The request body SHALL be a Resource with an id element that has an identical value to the [id] in the URL.", null, null, producesType);
+
+											builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+										}
+									}
+									else {
+										String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.CONFLICT, "Resource contention detected! Resource version mis-match.", null, null, producesType);
+
+										builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+									}
 								}
 							}
-						}
+							else {
+								builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
+							}
+						} //if (okToUpdate)
 						else {
-							builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
+							String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.CONFLICT, "Resource contention detected! Conditional update criteria was not selective enough.", null, null, producesType);
+
+							builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 						}
-					} //if (okToUpdate)
+					} // if valid and supported ResourceType
 					else {
-						String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.CONFLICT, "Resource contention detected! Conditional update criteria was not selective enough.", null, null, producesType);
-
-						builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+						builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
 					}
-				} // if valid and supported ResourceType
-				else {
-					builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
 				}
-			}
-			else {
-				// Request Content-Type was empty or set to MediaType.APPLICATION_OCTET_STREAM, report error "415 (Unsupported Media Type)"
-				String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, "The required request Content-Type mime type is not defined or not supported.", null, "HTTP Header Content-Type", producesType);
+				else {
+					// Request Content-Type was empty or set to MediaType.APPLICATION_OCTET_STREAM, report error "415 (Unsupported Media Type)"
+					String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, "The required request Content-Type mime type is not defined or not supported.", null, "HTTP Header Content-Type", producesType);
 
-				builder = Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-			}
+					builder = Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+				}
+        	} //if (authenticated == true)
 
         } catch (JsonSyntaxException jse) {
             String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.EXCEPTION, "Resource syntax or data is incorrect or invalid, and cannot be used to create a new resource. " + jse.getMessage(), null, null, producesType);
@@ -1171,278 +1310,307 @@ public class RESTResourceOps {
         }
 
         try {
-			// Get the content type based on the request Content-Type
-			contentType = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.CONTENT_TYPE);
+			boolean authenticated = true;
 
-			if (contentType != null && !contentType.equals(MediaType.APPLICATION_OCTET_STREAM)) {
-				// Get the produces type based on the request Accept
-				producesType = ServicesUtil.INSTANCE.getProducesType(headers, request);
+			// Get the produces type based on the request Accept
+			producesType = ServicesUtil.INSTANCE.getProducesType(headers, request);
 
-				// Check for valid and supported ResourceType
-				if (ResourceType.isValidResourceType(resourceType) && ResourceType.isSupportedResourceType(resourceType)) {
+			// Check for OAuth Server Enabled
+			if (codeService.isSupported("oauthServerEnabled")) {
 
-					// Additional special check for unsupported resource type Binary
-					if (!resourceType.equals("Binary")) {
+				// Default authenticated to false in order to catch when no Authorization header is sent
+				authenticated = false;
+				String notAuthMessage = "OAuth2 - server authorization enabled!";
 
-						// Construct full request URL with any query parameters
-						StringBuffer requestURL = request.getRequestURL();
-						String queryString = request.getQueryString();
-						if (queryString != null) {
-							queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
-							requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
-						}
-						String locationPath = requestURL.toString();
+				// Check for Authorization Header(s)
+				List<String> authHeaders = ServicesUtil.INSTANCE.getHttpHeaderList(headers, "Authorization");
 
-						// Get the query parameters that represent the search criteria if any
-						MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
+				if (authHeaders != null && !authHeaders.isEmpty()) {
+					// Process OAuth2 token to determine access privileges
 
-						boolean isConditional = false;
-						boolean okToPatch = true;
+					// An Authorization Header was sent; check for valid read scope
+					StringBuffer returnMessage = null;
+					authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "u"); // SMART v2 update
 
-						/*
-						 * Conditional Update based on no resource id and URI parameters
-						 */
-						if (id == null && queryParams != null && !queryParams.isEmpty()) {
+					if (authenticated == false) {
+						notAuthMessage = "OAuth2 - (u)pdate scope authorization failed!" +
+								(returnMessage != null ? returnMessage.toString() : "");
+						log.fine(notAuthMessage);
+					}
+				}
+				else {
+					notAuthMessage = "OAuth2 - server authorization enabled but no Authorization token received!";
+				}
 
-							// If one query parameter present, check for '_format'
-							if (queryParams.size() == 1) {
+				if (authenticated == false) {
+					builder = responseNotAuthorized(producesType, notAuthMessage, responseFhirVersion);
+				}
+			}
 
-								// If not '_format', then perform conditional update logic
-								if (!queryParams.containsKey("_format")) {
+        	if (authenticated == true) {
+				// Get the content type based on the request Content-Type
+				contentType = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.CONTENT_TYPE);
+
+				if (contentType != null && !contentType.equals(MediaType.APPLICATION_OCTET_STREAM)) {
+					// Check for valid and supported ResourceType
+					if (ResourceType.isValidResourceType(resourceType) && ResourceType.isSupportedResourceType(resourceType)) {
+
+						// Additional special check for unsupported resource type Binary
+						if (!resourceType.equals("Binary")) {
+
+							// Construct full request URL with any query parameters
+							StringBuffer requestURL = request.getRequestURL();
+							String queryString = request.getQueryString();
+							if (queryString != null) {
+								queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
+								requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
+							}
+							String locationPath = requestURL.toString();
+
+							// Get the query parameters that represent the search criteria if any
+							MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
+
+							boolean isConditional = false;
+							boolean okToPatch = true;
+
+							/*
+							 * Conditional Update based on no resource id and URI parameters
+							 */
+							if (id == null && queryParams != null && !queryParams.isEmpty()) {
+
+								// If one query parameter present, check for '_format'
+								if (queryParams.size() == 1) {
+
+									// If not '_format', then perform conditional update logic
+									if (!queryParams.containsKey("_format")) {
+										isConditional = true;
+									}
+								}
+								else {
 									isConditional = true;
 								}
 							}
-							else {
-								isConditional = true;
-							}
-						}
 
-						if (isConditional == true) {
+							if (isConditional == true) {
+								if (codeService.isSupported("conditionalUpdate")) {
+									log.fine("Conditional Patch Update requested and supported - start search");
 
-							if (codeService.isSupported("conditionalUpdate")) {
-								log.fine("Conditional Patch Update requested and supported - start search");
+									// Execute search as defined in the request uri parameters
+									ResourceContainer searchContainer = resourceService.search(queryParams, null, null, resourceType, locationPath, null, null, null, false);
 
-								// Execute search as defined in the request uri parameters
-								ResourceContainer searchContainer = resourceService.search(queryParams, null, null, resourceType, locationPath, null, null, null, false);
+									if (searchContainer != null && searchContainer.getResponseStatus().equals(Status.OK) && searchContainer.getBundle() != null) {
+										Bundle searchBundle = searchContainer.getBundle();
+										if (!searchBundle.hasEntry()) {
+											// If no matches, execute create by setting okToCreate = true and okToUpdate = true
+											String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.NOTFOUND, "Conditional patch update failed due to esource to patch does not exist.", null, locationPath, producesType);
 
-								if (searchContainer != null && searchContainer.getResponseStatus().equals(Status.OK) && searchContainer.getBundle() != null) {
+											builder = Response.status(Response.Status.NOT_FOUND).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 
-									Bundle searchBundle = searchContainer.getBundle();
-									if (!searchBundle.hasEntry()) {
-										// If no matches, execute create by setting okToCreate = true and okToUpdate = true
-										String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.NOTFOUND, "Conditional patch update failed due to esource to patch does not exist.", null, locationPath, producesType);
+											okToPatch = false;
+										}
+										else if (searchBundle.getEntry().size() == 1) {
+											// If one match, perform update against matched resource by setting id to matched resource id
+											id = searchBundle.getEntry().get(0).getResource().getId();
+											okToPatch = true;
+										}
+										else {
+											// If multiple matches, return precondition failed error criteria was not selective enough
+											String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional patch update failed due to query parameters not selective enough.", null,
+													null, producesType);
 
-										builder = Response.status(Response.Status.NOT_FOUND).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+											builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 
-										okToPatch = false;
-									}
-									else if (searchBundle.getEntry().size() == 1) {
-
-										// If one match, perform update against matched resource by setting id to matched resource id
-										id = searchBundle.getEntry().get(0).getResource().getId();
-										okToPatch = true;
-
+											okToPatch = false;
+										}
 									}
 									else {
-										// If multiple matches, return precondition failed error criteria was not selective enough
-										String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional patch update failed due to query parameters not selective enough.", null,
+										// Search has failed so report error in OperationOutcome
+										String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional update failed due to processing errors with query parameters.", null,
 												null, producesType);
 
-										builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+										builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 
 										okToPatch = false;
 									}
 								}
 								else {
-									// Search has failed so report error in OperationOutcome
-									String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional update failed due to processing errors with query parameters.", null,
-											null, producesType);
+									log.fine("Conditional Update requested and not supported - return bad request");
+
+									// Conditional Update is not supported; report error in OperationOutcome
+									String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional update based on query parameters is not supported.",
+											"Conditional update based on query parameters is not supported.", null, producesType);
 
 									builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 
 									okToPatch = false;
 								}
 							}
-							else {
-								log.fine("Conditional Update requested and not supported - return bad request");
 
-								// Conditional Update is not supported; report error in OperationOutcome
-								String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional update based on query parameters is not supported.",
-										"Conditional update based on query parameters is not supported.", null, producesType);
+							if (okToPatch) {
+								log.fine("Patch Resource id: " + id);
 
-								builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+								// Check for valid FHIR resource id data type compliance
+								if (id != null && StringUtils.isValidFhirId(id)) {
+									// Attempt to read current version of the resource
+									resourceContainer = resourceService.read(resourceType, id, null);
 
-								okToPatch = false;
-							}
-						}
-
-						if (okToPatch) {
-							log.fine("Patch Resource id: " + id);
-
-							// Check for valid FHIR resource id data type compliance
-							if (id != null && StringUtils.isValidFhirId(id)) {
-
-								// Attempt to read current version of the resource
-								resourceContainer = resourceService.read(resourceType, id, null);
-
-								/*
-								 * If current version of the resource does not exist, return not found
-								 */
-								if (resourceContainer == null || resourceContainer.getResource() == null || !resourceContainer.getResponseStatus().equals(Status.OK)) {
-
-									// OperationOutcome for resource contents
-									String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.NOTFOUND, "Resource to patch does not exist.", null, locationPath, producesType);
-
-									builder = Response.status(Response.Status.NOT_FOUND).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-								}
-								else {
 									/*
-									 * Check for Version Aware Update based on HTTP Header If-Match
+									 * If current version of the resource does not exist, return not found
 									 */
-									boolean matched = true;
+									if (resourceContainer == null || resourceContainer.getResource() == null || !resourceContainer.getResponseStatus().equals(Status.OK)) {
 
-									ifMatch = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.IF_MATCH);
+										// OperationOutcome for resource contents
+										String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.NOTFOUND, "Resource to patch does not exist.", null, locationPath, producesType);
 
-									if (ifMatch != null) {
-										try {
-											if (resourceContainer != null && resourceContainer.getResource() != null) {
-												String versionId = resourceContainer.getResource().getVersionId().toString();
-												String matchVersionId = "";
-
-												// First check for versionId only
-												if (!ifMatch.equals(versionId)) {
-													matched = false;
-												}
-												if (!matched) {
-													// Next check for "vid" (extra quotes to allow for clients that do not send correct weak ETag format)
-													matchVersionId = "\"" + versionId + "\"";
-													log.fine("ifMatch: " + ifMatch + "; vid to match: " + matchVersionId);
-													if (ifMatch.equals(matchVersionId)) {
-														matched = true;
-													}
-												}
-												if (!matched) {
-													// Next check for valid weak ETag format W/"vid"
-													matchVersionId = "W/\"" + versionId + "\"";
-													log.fine("ifMatch: " + ifMatch + "; Generated Weak ETag to match: " + matchVersionId);
-													if (ifMatch.equals(matchVersionId)) {
-														matched = true;
-													}
-												}
-												if (!matched) {
-													// Next check for weak ETag format "W/"vid"" (extra quotes to allow for clients that do not send correct weak ETag format)
-													matchVersionId = "\"W/\"" + versionId + "\"\"";
-													log.fine("ifMatch: " + ifMatch + "; Generated Weak ETag to match: " + matchVersionId);
-													if (ifMatch.equals(matchVersionId)) {
-														matched = true;
-													}
-												}
-											}
-											else {
-												matched = false;
-											}
-										}
-										catch (Exception e) {
-											log.severe("Exception parsing If-Match. " + e.getMessage());
-										}
-									}
-
-									if (matched) {
-
-										// Convert input stream to String - should be a JSON Patch formatted string
-										String payload = IOUtils.toString(resourceInputStream, "UTF-8");
-
-										// Call JSON or XML patch logic based on the Content-Type
-										if (contentType == null || contentType.indexOf("xml") >= 0) {
-											// Check XML payload for <Parameters> tag
-											if (payload.contains("<Parameters")) {
-												resourceContainer = new ResourceContainer();
-												resourceContainer.setResponseStatus(Status.NOT_IMPLEMENTED);
-												resourceContainer.setMessage("FHIRPath PATCH not implemented for content-type '" + contentType + "'!");
-											}
-											else {
-												log.fine("Calling XML Patch based on Content-Type of " + contentType);
-												resourceContainer = resourceService.xmlPatch(payload, resourceContainer, request.getRequestURL().toString());
-											}
-										}
-										else {
-											// Check JSON payload for resourceType attribute
-											if (payload.contains("resourceType")) {
-												resourceContainer = new ResourceContainer();
-												resourceContainer.setResponseStatus(Status.NOT_IMPLEMENTED);
-												resourceContainer.setMessage("FHIRPath PATCH not implemented for content-type '" + contentType + "'!");
-											}
-											else {
-												log.fine("Calling JSON Patch based on Content-Type of " + contentType);
-												resourceContainer = resourceService.jsonPatch(payload, resourceContainer, request.getRequestURL().toString());
-											}
-										}
-
-										// Check for error or exception
-										if (resourceContainer == null || resourceContainer.getResource() == null || !resourceContainer.getResponseStatus().equals(Status.OK)) {
-
-											// OperationOutcome for resource contents
-											String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.EXCEPTION, resourceContainer.getMessage(), null, locationPath, producesType);
-
-											builder = Response.status(resourceContainer.getResponseStatus()).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-										}
-										else {
-											// Generate location path with new reference url to the updated resource
-											locationPath = request.getRequestURL().toString();
-											if (resourceContainer != null && resourceContainer.getResource() != null) {
-												locationPath += "/_history/" + resourceContainer.getResource().getVersionId();
-											}
-
-											/*
-											 * Return preference minimal or representation
-											 */
-											prefer = ServicesUtil.INSTANCE.getHttpHeader(headers, "Prefer");
-
-											if (prefer != null && prefer.indexOf("minimal") >= 0) {
-												// Return content preference set to minimal; return information OperationOutcome
-												String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL, resourceContainer.getResource().getResourceType()
-														+ " resource patched with resource id " + resourceContainer.getResource().getResourceId() + ".", null, producesType);
-
-												resourceContainer.getResource().setResourceContents(outcome.getBytes());
-											}
-
-											builder = buildResource(locationPath, producesType, resourceContainer, Ops.UPDATE, responseFhirVersion);
-										}
-
+										builder = Response.status(Response.Status.NOT_FOUND).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 									}
 									else {
-										String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.CONFLICT, "Resource contention detected! Resource version mis-match.", null, null, producesType);
+										/*
+										 * Check for Version Aware Update based on HTTP Header If-Match
+										 */
+										boolean matched = true;
 
-										builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+										ifMatch = ServicesUtil.INSTANCE.getHttpHeader(headers, HttpHeaders.IF_MATCH);
+
+										if (ifMatch != null) {
+											try {
+												if (resourceContainer != null && resourceContainer.getResource() != null) {
+													String versionId = resourceContainer.getResource().getVersionId().toString();
+													String matchVersionId = "";
+	
+													// First check for versionId only
+													if (!ifMatch.equals(versionId)) {
+														matched = false;
+													}
+													if (!matched) {
+														// Next check for "vid" (extra quotes to allow for clients that do not send correct weak ETag format)
+														matchVersionId = "\"" + versionId + "\"";
+														log.fine("ifMatch: " + ifMatch + "; vid to match: " + matchVersionId);
+														if (ifMatch.equals(matchVersionId)) {
+															matched = true;
+														}
+													}
+													if (!matched) {
+														// Next check for valid weak ETag format W/"vid"
+														matchVersionId = "W/\"" + versionId + "\"";
+														log.fine("ifMatch: " + ifMatch + "; Generated Weak ETag to match: " + matchVersionId);
+														if (ifMatch.equals(matchVersionId)) {
+															matched = true;
+														}
+													}
+													if (!matched) {
+														// Next check for weak ETag format "W/"vid"" (extra quotes to allow for clients that do not send correct weak ETag format)
+														matchVersionId = "\"W/\"" + versionId + "\"\"";
+														log.fine("ifMatch: " + ifMatch + "; Generated Weak ETag to match: " + matchVersionId);
+														if (ifMatch.equals(matchVersionId)) {
+															matched = true;
+														}
+													}
+												}
+												else {
+													matched = false;
+												}
+											}
+											catch (Exception e) {
+												log.severe("Exception parsing If-Match. " + e.getMessage());
+											}
+										}
+
+										if (matched) {
+											// Convert input stream to String - should be a JSON Patch formatted string
+											String payload = IOUtils.toString(resourceInputStream, "UTF-8");
+
+											// Call JSON or XML patch logic based on the Content-Type
+											if (contentType == null || contentType.indexOf("xml") >= 0) {
+												// Check XML payload for <Parameters> tag
+												if (payload.contains("<Parameters")) {
+													resourceContainer = new ResourceContainer();
+													resourceContainer.setResponseStatus(Status.NOT_IMPLEMENTED);
+													resourceContainer.setMessage("FHIRPath PATCH not implemented for content-type '" + contentType + "'!");
+												}
+												else {
+													log.fine("Calling XML Patch based on Content-Type of " + contentType);
+													resourceContainer = resourceService.xmlPatch(payload, resourceContainer, request.getRequestURL().toString());
+												}
+											}
+											else {
+												// Check JSON payload for resourceType attribute
+												if (payload.contains("resourceType")) {
+													resourceContainer = new ResourceContainer();
+													resourceContainer.setResponseStatus(Status.NOT_IMPLEMENTED);
+													resourceContainer.setMessage("FHIRPath PATCH not implemented for content-type '" + contentType + "'!");
+												}
+												else {
+													log.fine("Calling JSON Patch based on Content-Type of " + contentType);
+													resourceContainer = resourceService.jsonPatch(payload, resourceContainer, request.getRequestURL().toString());
+												}
+											}
+
+											// Check for error or exception
+											if (resourceContainer == null || resourceContainer.getResource() == null || !resourceContainer.getResponseStatus().equals(Status.OK)) {
+
+												// OperationOutcome for resource contents
+												String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.EXCEPTION, resourceContainer.getMessage(), null, locationPath, producesType);
+
+												builder = Response.status(resourceContainer.getResponseStatus()).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+											}
+											else {
+												// Generate location path with new reference url to the updated resource
+												locationPath = request.getRequestURL().toString();
+												if (resourceContainer != null && resourceContainer.getResource() != null) {
+													locationPath += "/_history/" + resourceContainer.getResource().getVersionId();
+												}
+
+												/*
+												 * Return preference minimal or representation
+												 */
+												prefer = ServicesUtil.INSTANCE.getHttpHeader(headers, "Prefer");
+
+												if (prefer != null && prefer.indexOf("minimal") >= 0) {
+													// Return content preference set to minimal; return information OperationOutcome
+													String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL, resourceContainer.getResource().getResourceType()
+															+ " resource patched with resource id " + resourceContainer.getResource().getResourceId() + ".", null, producesType);
+
+													resourceContainer.getResource().setResourceContents(outcome.getBytes());
+												}
+
+												builder = buildResource(locationPath, producesType, resourceContainer, Ops.UPDATE, responseFhirVersion);
+											}
+										}
+										else {
+											String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.CONFLICT, "Resource contention detected! Resource version mis-match.", null, null, producesType);
+
+											builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+										}
 									}
+								}
+								else {
+									builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
 								}
 							}
 							else {
-								builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
+								String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.CONFLICT, "Resource contention detected! Conditional patch update criteria was not selective enough.", null, null, producesType);
+
+								builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 							}
 						}
 						else {
-							String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.CONFLICT, "Resource contention detected! Conditional patch update criteria was not selective enough.", null, null, producesType);
+					        String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.TRANSIENT, "Invalid resource type! Binary patch operation not supported.", null, null, producesType);
 
-							builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+					        builder = Response.status(Response.Status.NOT_FOUND).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 						}
 					}
 					else {
-				        String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.TRANSIENT, "Invalid resource type! Binary patch operation not supported.", null, null, producesType);
-
-				        builder = Response.status(Response.Status.NOT_FOUND).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+						builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
 					}
 				}
 				else {
-					builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
-				}
-			}
-			else {
-				// Request Content-Type was empty or set to MediaType.APPLICATION_OCTET_STREAM, report error "415 (Unsupported Media Type)"
-				String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, "The required request Content-Type mime type is not defined or not supported.", null, "HTTP Header Content-Type", producesType);
+					// Request Content-Type was empty or set to MediaType.APPLICATION_OCTET_STREAM, report error "415 (Unsupported Media Type)"
+					String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, "The required request Content-Type mime type is not defined or not supported.", null, "HTTP Header Content-Type", producesType);
 
-				builder = Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-			}
+					builder = Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+				}
+        	} //if (authenticated == true)
 
         } catch (JsonSyntaxException jse) {
             String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.EXCEPTION, jse.getMessage(), null, null, producesType);
@@ -1500,187 +1668,222 @@ public class RESTResourceOps {
         }
 
 		try {
+			boolean authenticated = true;
+
 			// Get the produces type based on the request Accept
 			producesType = ServicesUtil.INSTANCE.getProducesType(headers, request);
 
-			// Check for valid and supported ResourceType
-			if (ResourceType.isValidResourceType(resourceType) && ResourceType.isSupportedResourceType(resourceType)) {
+			// Check for OAuth Server Enabled
+			if (codeService.isSupported("oauthServerEnabled")) {
 
-        		// Construct full request URL with any query parameters
-				StringBuffer requestURL = request.getRequestURL();
-				String queryString = request.getQueryString();
-				if (queryString != null) {
-					queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
-					requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
-				}
-				String locationPath = requestURL.toString();
+				// Default authenticated to false in order to catch when no Authorization header is sent
+				authenticated = false;
+				String notAuthMessage = "OAuth2 - server authorization enabled!";
 
-				// Get the query parameters that represent the search criteria if any
-				MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
+				// Check for Authorization Header(s)
+				List<String> authHeaders = ServicesUtil.INSTANCE.getHttpHeaderList(headers, "Authorization");
 
-				if (contextQueryParams != null) {
-					queryParams.putAll(contextQueryParams);
-				}
+				if (authHeaders != null && !authHeaders.isEmpty()) {
+					// Process OAuth2 token to determine access privileges
 
-				boolean isConditional = false;
-				boolean okToDelete = true;
-				boolean multipleDelete = false;
-				Bundle searchBundle = null;
+					// An Authorization Header was sent; check for valid read scope
+					StringBuffer returnMessage = null;
+					authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "d"); // SMART v2 delete
 
-				/*
-				 * Conditional Delete based on no resource id and URI parameters
-				 */
-				if (id == null && queryParams != null && !queryParams.isEmpty()) {
-
-					// If one query parameter present, check for '_format'
-					if (queryParams.size() == 1) {
-
-						// If not '_format', then perform conditional update logic
-						if (!queryParams.containsKey("_format")) {
-							isConditional = true;
-						}
-					}
-					else {
-						isConditional = true;
+					if (authenticated == false) {
+						notAuthMessage = "OAuth2 - (d)elete scope authorization failed!" +
+								(returnMessage != null ? returnMessage.toString() : "");
+						log.fine(notAuthMessage);
 					}
 				}
+				else {
+					notAuthMessage = "OAuth2 - server authorization enabled but no Authorization token received!";
+				}
 
-				if (isConditional) {
-					log.fine("Conditional Delete requested - start search");
+				if (authenticated == false) {
+					builder = responseNotAuthorized(producesType, notAuthMessage, responseFhirVersion);
+				}
+			}
 
-					if (codeService.isValueSupported("conditionalDelete", "not-supported")) {
-						log.fine("Conditional Delete not supported!");
+        	if (authenticated == true) {
+				// Check for valid and supported ResourceType
+				if (ResourceType.isValidResourceType(resourceType) && ResourceType.isSupportedResourceType(resourceType)) {
 
-						outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED, "Unsupported operation - conditional delete not implemented.", null, null, producesType);
-
-						builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-
-						okToDelete = false;
+	        		// Construct full request URL with any query parameters
+					StringBuffer requestURL = request.getRequestURL();
+					String queryString = request.getQueryString();
+					if (queryString != null) {
+						queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
+						requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
 					}
-					else if (codeService.isValueSupported("conditionalDelete", "single") || codeService.isValueSupported("conditionalDelete", "multiple")) {
-						log.fine("Conditional Delete is supported!");
+					String locationPath = requestURL.toString();
 
-						// Execute search as defined in the request uri parameters
-						ResourceContainer searchContainer = resourceService.search(queryParams, null, null, resourceType, locationPath, null, null, null, false);
+					// Get the query parameters that represent the search criteria if any
+					MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
 
-						if (searchContainer != null && searchContainer.getResponseStatus().equals(Status.OK) && searchContainer.getBundle() != null) {
-							log.fine("Conditional Delete search successful.");
+					if (contextQueryParams != null) {
+						queryParams.putAll(contextQueryParams);
+					}
 
-							searchBundle = searchContainer.getBundle();
-							if (!searchBundle.hasEntry()) {
-								log.fine("Conditional Delete search returned no matches!");
+					boolean isConditional = false;
+					boolean okToDelete = true;
+					boolean multipleDelete = false;
+					Bundle searchBundle = null;
 
-								// If no matches, return not found failed error criteria did not match any resources
-								outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.WARNING, OperationOutcome.IssueType.PROCESSING, "Conditional delete failed due to no match based on the query parameters.", null,
-										null, producesType);
+					/*
+					 * Conditional Delete based on no resource id and URI parameters
+					 */
+					if (id == null && queryParams != null && !queryParams.isEmpty()) {
 
-								builder = Response.status(Response.Status.OK).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+						// If one query parameter present, check for '_format'
+						if (queryParams.size() == 1) {
 
-								okToDelete = false;
-							}
-							else if (searchBundle.getEntry().size() == 1) {
-								log.fine("Conditional Delete search returned one match.");
-
-								// If one match, perform delete against matched resource by setting id to matched
-								// resource id
-								id = searchBundle.getEntry().get(0).getResource().getId();
-								okToDelete = true;
-							}
-							else {
-								log.fine("Conditional Delete search returned multiple matches.");
-
-								if (codeService.isValueSupported("conditionalDelete", "multiple")) {
-									multipleDelete = true;
-								}
-								else {
-									// If multiple matches, return precondition failed error criteria was not selective
-									// enough
-									outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING,
-											"Conditional delete failed due to query parameters not selective enough. Deletion of multiple resources not supported.", null, null, producesType);
-
-									builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-
-									okToDelete = false;
-								}
+							// If not '_format', then perform conditional update logic
+							if (!queryParams.containsKey("_format")) {
+								isConditional = true;
 							}
 						}
 						else {
-							// Search has failed so report error in OperationOutcome
-							outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional delete failed due to processing errors with query parameters.", null,
-									null, producesType);
+							isConditional = true;
+						}
+					}
+
+					if (isConditional) {
+						log.fine("Conditional Delete requested - start search");
+
+						if (codeService.isValueSupported("conditionalDelete", "not-supported")) {
+							log.fine("Conditional Delete not supported!");
+
+							outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED, "Unsupported operation - conditional delete not implemented.", null, null, producesType);
+
+							builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+
+							okToDelete = false;
+						}
+						else if (codeService.isValueSupported("conditionalDelete", "single") || codeService.isValueSupported("conditionalDelete", "multiple")) {
+							log.fine("Conditional Delete is supported!");
+
+							// Execute search as defined in the request uri parameters
+							ResourceContainer searchContainer = resourceService.search(queryParams, null, null, resourceType, locationPath, null, null, null, false);
+
+							if (searchContainer != null && searchContainer.getResponseStatus().equals(Status.OK) && searchContainer.getBundle() != null) {
+								log.fine("Conditional Delete search successful.");
+
+								searchBundle = searchContainer.getBundle();
+								if (!searchBundle.hasEntry()) {
+									log.fine("Conditional Delete search returned no matches!");
+
+									// If no matches, return not found failed error criteria did not match any resources
+									outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.WARNING, OperationOutcome.IssueType.PROCESSING, "Conditional delete failed due to no match based on the query parameters.", null,
+											null, producesType);
+
+									builder = Response.status(Response.Status.OK).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+
+									okToDelete = false;
+								}
+								else if (searchBundle.getEntry().size() == 1) {
+									log.fine("Conditional Delete search returned one match.");
+
+									// If one match, perform delete against matched resource by setting id to matched
+									// resource id
+									id = searchBundle.getEntry().get(0).getResource().getId();
+									okToDelete = true;
+								}
+								else {
+									log.fine("Conditional Delete search returned multiple matches.");
+
+									if (codeService.isValueSupported("conditionalDelete", "multiple")) {
+										multipleDelete = true;
+									}
+									else {
+										// If multiple matches, return precondition failed error criteria was not selective enough
+										outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING,
+												"Conditional delete failed due to query parameters not selective enough. Deletion of multiple resources not supported.", null, null, producesType);
+
+										builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+
+										okToDelete = false;
+									}
+								}
+							}
+							else {
+								// Search has failed so report error in OperationOutcome
+								outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional delete failed due to processing errors with query parameters.", null,
+										null, producesType);
+
+								builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+
+								okToDelete = false;
+							}
+						}
+						else {
+							// Support for conditional delete not correctly defined so report error in OperationOutcome
+							outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING,
+									"Conditional delete failed due to internal configuration error - support not defined properly.", null, null, producesType);
 
 							builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 
 							okToDelete = false;
 						}
 					}
-					else {
-						// Support for conditional delete not correctly defined so report error in OperationOutcome
-						outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING,
-								"Conditional delete failed due to internal configuration error - support not defined properly.", null, null, producesType);
 
-						builder = Response.status(Response.Status.BAD_REQUEST).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+					if (okToDelete) {
+						if (multipleDelete) {
+							log.fine("Ok to Delete - mutiple delete");
 
-						okToDelete = false;
-					}
-				}
+							// All the searchBundle entries must be deleted successfully. If not, report an error in OperationOutcome
 
-				if (okToDelete) {
-					if (multipleDelete) {
-						log.fine("Ok to Delete - mutiple delete");
-
-						// All the searchBundle entries must be deleted successfully. If not, report an error in OperationOutcome
-
-						List<String> resourceIds = new ArrayList<String>();
-						for (BundleEntryComponent entry : searchBundle.getEntry()) {
-							resourceIds.add(entry.getResource().getId());
-						}
-
-						ResourceContainer resourceContainer = resourceService.deleteMultiple(resourceType, resourceIds);
-
-						if (resourceContainer != null) {
-							// if resourceContainer is not null, delete happened, finish processing
-							if (resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
-								outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL, "Conditional delete successfully deleted all matching " + resourceType
-										+ " resources based on the query parameters.", null, null, producesType);
-
-								builder = Response.status(Response.Status.OK).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+							List<String> resourceIds = new ArrayList<String>();
+							for (BundleEntryComponent entry : searchBundle.getEntry()) {
+								resourceIds.add(entry.getResource().getId());
 							}
-							else {
-								outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional delete failure! " + resourceContainer.getMessage(), null, null, producesType);
 
-								builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-							}
-						}
-					}
-					else {
-						log.fine("Ok to Delete - single delete; Resource id: " + id);
-
-						// Check for valid FHIR resource id data type compliance
-						if (id != null && StringUtils.isValidFhirId(id)) {
-
-							ResourceContainer resourceContainer = resourceService.delete(resourceType, id);
+							ResourceContainer resourceContainer = resourceService.deleteMultiple(resourceType, resourceIds);
 
 							if (resourceContainer != null) {
 								// if resourceContainer is not null, delete happened, finish processing
-								locationPath = request.getRequestURL().toString();
-								if (resourceContainer != null && resourceContainer.getResource() != null) {
-									locationPath += "/_history/" + resourceContainer.getResource().getVersionId();
-								}
+								if (resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
+									outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL, "Conditional delete successfully deleted all matching " + resourceType
+											+ " resources based on the query parameters.", null, null, producesType);
 
-								builder = buildResource(locationPath, producesType, resourceContainer, Ops.DELETE, responseFhirVersion);
+									builder = Response.status(Response.Status.OK).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+								}
+								else {
+									outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, "Conditional delete failure! " + resourceContainer.getMessage(), null, null, producesType);
+
+									builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+								}
 							}
 						}
 						else {
-							builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
+							log.fine("Ok to Delete - single delete; Resource id: " + id);
+
+							// Check for valid FHIR resource id data type compliance
+							if (id != null && StringUtils.isValidFhirId(id)) {
+
+								ResourceContainer resourceContainer = resourceService.delete(resourceType, id);
+
+								if (resourceContainer != null) {
+									// if resourceContainer is not null, delete happened, finish processing
+									locationPath = request.getRequestURL().toString();
+									if (resourceContainer != null && resourceContainer.getResource() != null) {
+										locationPath += "/_history/" + resourceContainer.getResource().getVersionId();
+									}
+
+									builder = buildResource(locationPath, producesType, resourceContainer, Ops.DELETE, responseFhirVersion);
+								}
+							}
+							else {
+								builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
+							}
 						}
 					}
+					// else not needed as responses for okToDelete = false already built
 				}
-				// else not needed as responses for okToDelete = false already built
-			}
-			else {
-				builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
-			}
+				else {
+					builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
+				}
+        	} //if (authenticated == true)
 		}
 		catch (Exception e) {
 			// Handle generic exceptions
@@ -1729,115 +1932,149 @@ public class RESTResourceOps {
         }
 
         try {
+        	boolean authenticated = true;
+
 			// Get the produces type based on the request Accept
 			producesType = ServicesUtil.INSTANCE.getProducesType(headers, request);
 
-			// Check for valid and supported Compartment
-        	boolean isCompartmentValid = false;
+			// Check for OAuth Server Enabled
+			if (codeService.isSupported("oauthServerEnabled")) {
 
-        	if (compartment == null
-					|| (ResourceType.isValidCompartment(compartment)
-							&& ResourceType.isSupportedCompartment(compartment))) {
+				// Default authenticated to false in order to catch when no Authorization header is sent
+				authenticated = false;
+				String notAuthMessage = "OAuth2 - server authorization enabled!";
 
-        		isCompartmentValid = true;
-        	}
+				// Check for Authorization Header(s)
+				List<String> authHeaders = ServicesUtil.INSTANCE.getHttpHeaderList(headers, "Authorization");
 
-        	// Check for valid and supported ResourceType
-        	boolean isResourceTypeValid = false;
+				if (authHeaders != null && !authHeaders.isEmpty()) {
+					// Process OAuth2 token to determine access privileges
 
-        	if (resourceType == null
-					|| (ResourceType.isValidResourceType(resourceType)
-							&& ResourceType.isSupportedResourceType(resourceType))) {
+					// An Authorization Header was sent; check for valid read scope
+					StringBuffer returnMessage = null;
+					authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "s"); // SMART v2 search
 
-        		isResourceTypeValid = true;
-        	}
-
-        	if (isCompartmentValid) {
-
-        		if (isResourceTypeValid) {
-
-					// Check for valid FHIR resource id data type compliance
-					if (StringUtils.isValidFhirId(id)) {
-
-						// Get the query parameters that represent the search criteria
-						MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
-
-						// Add compartment reference to search criteria query parameter
-						List<String> criteriaNames = ResourceType.findCompartmentResourceTypeCriteria(compartment, resourceType);
-						if (criteriaNames != null && !criteriaNames.isEmpty()) {
-							for (String criteriaName : criteriaNames) {
-								queryParams.add("COMPARTMENT-" + criteriaName, compartment + "/" + id);
-							}
-
-							// Get the count parameter if present
-							countString = ServicesUtil.INSTANCE.getUriParameter("_count", request);
-
-							if (countString != null) {
-								try {
-									countInteger = Integer.valueOf(countString);
-									log.fine("history count = " + countString);
-								}
-								catch (Exception e) {
-									log.severe("Exception parsing _count parameter to Integer! " + e.getMessage());
-									countInteger = null;
-								}
-							}
-
-							// Get the _summary parameter if present
-							summaryString = ServicesUtil.INSTANCE.getUriParameter("_summary", request);
-
-							// Get the page parameter if present
-							pageString = ServicesUtil.INSTANCE.getUriParameter("page", request);
-
-							if (pageString != null) {
-								try {
-									pageInteger = Integer.valueOf(pageString);
-									log.fine("page number = " + pageString);
-								}
-								catch (Exception e) {
-									log.severe("Exception parsing page parameter to Integer! " + e.getMessage());
-									pageInteger = null;
-								}
-							}
-
-							List<NameValuePair> orderedParams = null;
-
-							// Construct full request URL with any query parameters
-							StringBuffer requestURL = request.getRequestURL();
-							String queryString = request.getQueryString();
-							if (queryString != null) {
-								queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
-								// Construct ordered parameters for search
-								orderedParams = URLEncodedUtils.parse(queryString, StandardCharsets.UTF_8);
-								for (NameValuePair param : orderedParams) {
-									log.fine("  param.name = '" + param.getName() + "'; param.value = '" + param.getValue() + "'");
-								}
-
-								requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
-							}
-							String locationPath = requestURL.toString();
-
-							resourceContainer = resourceService.search(queryParams, null, orderedParams, resourceType, locationPath, countInteger, pageInteger, summaryString, true);
-
-							builder = responseBundle(producesType, resourceContainer, locationPath, responseFhirVersion);
-						}
-						else {
-					   		String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, "No search criteria name mapping found for Compartment and Resource Type!", null, null, producesType);
-
-					   		builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-						}
-					}
-					else {
-						builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
+					if (authenticated == false) {
+						notAuthMessage = "OAuth2 - (s)earch scope authorization failed!" +
+								(returnMessage != null ? returnMessage.toString() : "");
+						log.fine(notAuthMessage);
 					}
 				}
 				else {
-					builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
+					notAuthMessage = "OAuth2 - server authorization enabled but no Authorization token received!";
+				}
+
+				if (authenticated == false) {
+					builder = responseNotAuthorized(producesType, notAuthMessage, responseFhirVersion);
 				}
 			}
-			else {
-				builder = responseInvalidCompartment(producesType, resourceType, responseFhirVersion);
-			}
+
+        	if (authenticated == true) {
+				// Check for valid and supported Compartment
+	        	boolean isCompartmentValid = false;
+
+	        	if (compartment == null
+						|| (ResourceType.isValidCompartment(compartment)
+								&& ResourceType.isSupportedCompartment(compartment))) {
+
+	        		isCompartmentValid = true;
+	        	}
+
+	        	// Check for valid and supported ResourceType
+	        	boolean isResourceTypeValid = false;
+
+	        	if (resourceType == null
+						|| (ResourceType.isValidResourceType(resourceType)
+								&& ResourceType.isSupportedResourceType(resourceType))) {
+
+	        		isResourceTypeValid = true;
+	        	}
+
+        		if (isCompartmentValid) {
+        			if (isResourceTypeValid) {
+						// Check for valid FHIR resource id data type compliance
+						if (StringUtils.isValidFhirId(id)) {
+
+							// Get the query parameters that represent the search criteria
+							MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
+
+							// Add compartment reference to search criteria query parameter
+							List<String> criteriaNames = ResourceType.findCompartmentResourceTypeCriteria(compartment, resourceType);
+							if (criteriaNames != null && !criteriaNames.isEmpty()) {
+								for (String criteriaName : criteriaNames) {
+									queryParams.add("COMPARTMENT-" + criteriaName, compartment + "/" + id);
+								}
+
+								// Get the count parameter if present
+								countString = ServicesUtil.INSTANCE.getUriParameter("_count", request);
+
+								if (countString != null) {
+									try {
+										countInteger = Integer.valueOf(countString);
+										log.fine("history count = " + countString);
+									}
+									catch (Exception e) {
+										log.severe("Exception parsing _count parameter to Integer! " + e.getMessage());
+										countInteger = null;
+									}
+								}
+
+								// Get the _summary parameter if present
+								summaryString = ServicesUtil.INSTANCE.getUriParameter("_summary", request);
+
+								// Get the page parameter if present
+								pageString = ServicesUtil.INSTANCE.getUriParameter("page", request);
+
+								if (pageString != null) {
+									try {
+										pageInteger = Integer.valueOf(pageString);
+										log.fine("page number = " + pageString);
+									}
+									catch (Exception e) {
+										log.severe("Exception parsing page parameter to Integer! " + e.getMessage());
+										pageInteger = null;
+									}
+								}
+
+								List<NameValuePair> orderedParams = null;
+
+								// Construct full request URL with any query parameters
+								StringBuffer requestURL = request.getRequestURL();
+								String queryString = request.getQueryString();
+								if (queryString != null) {
+									queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
+									// Construct ordered parameters for search
+									orderedParams = URLEncodedUtils.parse(queryString, StandardCharsets.UTF_8);
+									for (NameValuePair param : orderedParams) {
+										log.fine("  param.name = '" + param.getName() + "'; param.value = '" + param.getValue() + "'");
+									}
+
+									requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
+								}
+								String locationPath = requestURL.toString();
+
+								resourceContainer = resourceService.search(queryParams, null, orderedParams, resourceType, locationPath, countInteger, pageInteger, summaryString, true);
+
+								builder = responseBundle(producesType, resourceContainer, locationPath, responseFhirVersion);
+							}
+							else {
+						   		String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, "No search criteria name mapping found for Compartment and Resource Type!", null, null, producesType);
+
+						   		builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+							}
+						}
+						else {
+							builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
+						}
+					}
+					else {
+						builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
+					}
+				}
+				else {
+					builder = responseInvalidCompartment(producesType, resourceType, responseFhirVersion);
+				}
+        	} //if (authenticated == true)
 
         } catch (Exception e) {
             // Handle generic exceptions
@@ -1917,7 +2154,6 @@ public class RESTResourceOps {
         }
 
         try {
-			//String queryString = context.getRequestUri().getQuery();
 			String queryString = null;
 			if (overrideLocationPath != null) {
 				queryString = ServicesUtil.INSTANCE.extractURLParams(overrideLocationPath);
@@ -1939,108 +2175,143 @@ public class RESTResourceOps {
 				}
 			}
 
+        	boolean authenticated = true;
+
         	// Get the produces type based on the request Accept or _format parameter
 			producesType = ServicesUtil.INSTANCE.getProducesType(headers, request, formParams);
 
-    		// Check for valid and supported ResourceType
-        	boolean isResourceTypeValid = false;
+			// Check for OAuth Server Enabled
+			if (codeService.isSupported("oauthServerEnabled")) {
 
-        	if (resourceType == null
-        			|| (ResourceType.isValidResourceType(resourceType)
-					&& ResourceType.isSupportedResourceType(resourceType))) {
+				// Default authenticated to false in order to catch when no Authorization header is sent
+				authenticated = false;
+				String notAuthMessage = "OAuth2 - server authorization enabled!";
 
-        		isResourceTypeValid = true;
-        	}
+				// Check for Authorization Header(s)
+				List<String> authHeaders = ServicesUtil.INSTANCE.getHttpHeaderList(headers, "Authorization");
 
-    		if (isResourceTypeValid) {
+				if (authHeaders != null && !authHeaders.isEmpty()) {
+					// Process OAuth2 token to determine access privileges
 
-				// Get the query parameters that represent the search criteria
-				MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
+					// An Authorization Header was sent; check for valid read scope
+					StringBuffer returnMessage = null;
+					authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "s", orderedParams); // SMART v2 search
 
-				if (contextQueryParams != null) {
-					queryParams.putAll(contextQueryParams);
-				}
-
-				// Get the _count parameter if present
-				countString = ServicesUtil.INSTANCE.getUriParameter("_count", queryParams);
-				if (countString == null && formParams != null) {
-					countString = ServicesUtil.INSTANCE.getUriParameter("_count", formParams);
-				}
-
-				if (countString != null) {
-					try {
-						countInteger = Integer.valueOf(countString);
-						log.fine("search count = " + countString);
+					if (authenticated == false) {
+						notAuthMessage = "OAuth2 - (s)earch scope authorization failed!" +
+								(returnMessage != null ? returnMessage.toString() : "");
+						log.fine(notAuthMessage);
 					}
-					catch (Exception e) {
-						log.severe("Exception parsing _count parameter to Integer! " + e.getMessage());
-						countInteger = null;
-					}
-				}
-
-				// Get the _summary parameter if present
-				summaryString = ServicesUtil.INSTANCE.getUriParameter("_summary", queryParams);
-				if (summaryString == null && formParams != null) {
-					summaryString = ServicesUtil.INSTANCE.getUriParameter("_summary", formParams);
-				}
-
-				// Get the page parameter if present
-				pageString = ServicesUtil.INSTANCE.getUriParameter("page", queryParams);
-				if (pageString == null && formParams != null) {
-					pageString = ServicesUtil.INSTANCE.getUriParameter("page", formParams);
-				}
-
-				if (pageString != null) {
-					try {
-						pageInteger = Integer.valueOf(pageString);
-						log.fine("page number = " + pageString);
-					}
-					catch (Exception e) {
-						log.severe("Exception parsing page parameter to Integer! " + e.getMessage());
-						pageInteger = null;
-					}
-				}
-
-				// Get the _include parameter if present
-				includeString = ServicesUtil.INSTANCE.getUriParameter("_include", queryParams);
-				if (includeString == null && formParams != null) {
-					includeString = ServicesUtil.INSTANCE.getUriParameter("_include", formParams);
-				}
-
-				// Get the _revinclude parameter if present
-				revincludeString = ServicesUtil.INSTANCE.getUriParameter("_revinclude", queryParams);
-				if (revincludeString == null && formParams != null) {
-					revincludeString = ServicesUtil.INSTANCE.getUriParameter("_revinclude", formParams);
-				}
-
-				String locationPath = null;
-				if (overrideLocationPath != null) {
-					locationPath = overrideLocationPath;
 				}
 				else {
-					StringBuffer requestURL = request.getRequestURL();
-					if (queryString != null) {
-						requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
+					notAuthMessage = "OAuth2 - server authorization enabled but no Authorization token received!";
+				}
+
+				if (authenticated == false) {
+					builder = responseNotAuthorized(producesType, notAuthMessage, responseFhirVersion);
+				}
+			}
+
+        	if (authenticated == true) {
+	    		// Check for valid and supported ResourceType
+	        	boolean isResourceTypeValid = false;
+
+	        	if (resourceType == null
+	        			|| (ResourceType.isValidResourceType(resourceType)
+						&& ResourceType.isSupportedResourceType(resourceType))) {
+
+	        		isResourceTypeValid = true;
+	        	}
+
+	    		if (isResourceTypeValid) {
+					// Get the query parameters that represent the search criteria
+					MultivaluedMap<String, String> queryParams = ServicesUtil.INSTANCE.parseRequestQuery(request);
+
+					if (contextQueryParams != null) {
+						queryParams.putAll(contextQueryParams);
 					}
-					locationPath = requestURL.toString();
-				}
 
-				// Check for invalid parameter combination of _summary=text and _include or _revinclude present
-				if (summaryString != null && summaryString.equals("text") && (includeString != null || revincludeString != null)) {
-		            String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED,
-		            		"Invalid search parameter combination! _summary=text not allowed with _include or _revinclude.", null, locationPath, producesType);
+					// Get the _count parameter if present
+					countString = ServicesUtil.INSTANCE.getUriParameter("_count", queryParams);
+					if (countString == null && formParams != null) {
+						countString = ServicesUtil.INSTANCE.getUriParameter("_count", formParams);
+					}
 
-		            builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
-				}
-				else {
-					ResourceContainer resourceContainer = resourceService.search(queryParams, formParams, orderedParams, resourceType, locationPath, countInteger, pageInteger, summaryString, false);
+					if (countString != null) {
+						try {
+							countInteger = Integer.valueOf(countString);
+							log.fine("search count = " + countString);
+						}
+						catch (Exception e) {
+							log.severe("Exception parsing _count parameter to Integer! " + e.getMessage());
+							countInteger = null;
+						}
+					}
 
-					builder = responseBundle(producesType, resourceContainer, locationPath, responseFhirVersion);
+					// Get the _summary parameter if present
+					summaryString = ServicesUtil.INSTANCE.getUriParameter("_summary", queryParams);
+					if (summaryString == null && formParams != null) {
+						summaryString = ServicesUtil.INSTANCE.getUriParameter("_summary", formParams);
+					}
+
+					// Get the page parameter if present
+					pageString = ServicesUtil.INSTANCE.getUriParameter("page", queryParams);
+					if (pageString == null && formParams != null) {
+						pageString = ServicesUtil.INSTANCE.getUriParameter("page", formParams);
+					}
+
+					if (pageString != null) {
+						try {
+							pageInteger = Integer.valueOf(pageString);
+							log.fine("page number = " + pageString);
+						}
+						catch (Exception e) {
+							log.severe("Exception parsing page parameter to Integer! " + e.getMessage());
+							pageInteger = null;
+						}
+					}
+
+					// Get the _include parameter if present
+					includeString = ServicesUtil.INSTANCE.getUriParameter("_include", queryParams);
+					if (includeString == null && formParams != null) {
+						includeString = ServicesUtil.INSTANCE.getUriParameter("_include", formParams);
+					}
+
+					// Get the _revinclude parameter if present
+					revincludeString = ServicesUtil.INSTANCE.getUriParameter("_revinclude", queryParams);
+					if (revincludeString == null && formParams != null) {
+						revincludeString = ServicesUtil.INSTANCE.getUriParameter("_revinclude", formParams);
+					}
+
+					String locationPath = null;
+					if (overrideLocationPath != null) {
+						locationPath = overrideLocationPath;
+					}
+					else {
+						StringBuffer requestURL = request.getRequestURL();
+						if (queryString != null) {
+							requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
+						}
+						locationPath = requestURL.toString();
+					}
+
+					// Check for invalid parameter combination of _summary=text and _include or _revinclude present
+					if (summaryString != null && summaryString.equals("text") && (includeString != null || revincludeString != null)) {
+			            String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED,
+			            		"Invalid search parameter combination! _summary=text not allowed with _include or _revinclude.", null, locationPath, producesType);
+
+			            builder = Response.status(Response.Status.PRECONDITION_FAILED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+					}
+					else {
+						ResourceContainer resourceContainer = resourceService.search(queryParams, formParams, orderedParams, resourceType, locationPath, countInteger, pageInteger, summaryString, false);
+
+						builder = responseBundle(producesType, resourceContainer, locationPath, responseFhirVersion);
+					}
 				}
-			}
-    		else {
-				builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
-			}
+	    		else {
+					builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
+				}
+    		} //if (authenticated == true)
 
         } catch (Exception e) {
             // Handle generic exceptions
@@ -2089,126 +2360,168 @@ public class RESTResourceOps {
         }
 
 		try {
+        	boolean authenticated = true;
+
 			// Get the produces type based on the request Accept
 			producesType = ServicesUtil.INSTANCE.getProducesType(headers, request);
 
-			// Check for valid and supported ResourceType
-			boolean isResourceTypeValid = false;
+			// Check for OAuth Server Enabled
+			if (codeService.isSupported("oauthServerEnabled")) {
 
-			if (resourceType == null || (ResourceType.isValidResourceType(resourceType) && ResourceType.isSupportedResourceType(resourceType))) {
+				// Default authenticated to false in order to catch when no Authorization header is sent
+				authenticated = false;
+				String notAuthMessage = "OAuth2 - server authorization enabled!";
 
-				isResourceTypeValid = true;
-			}
+				// Check for Authorization Header(s)
+				List<String> authHeaders = ServicesUtil.INSTANCE.getHttpHeaderList(headers, "Authorization");
 
-			if (isResourceTypeValid) {
+				if (authHeaders != null && !authHeaders.isEmpty()) {
+					// Process OAuth2 token to determine access privileges
 
-				// Check for valid FHIR resource id data type compliance
-				if (id == null || (id != null && StringUtils.isValidFhirId(id))) {
+					// An Authorization Header was sent; check for valid read scope
+					StringBuffer returnMessage = null;
 
-					StringBuffer sbLogMsg = new StringBuffer("History Type is ");
-					if (resourceType != null && id != null) {
-						sbLogMsg.append(" Instance - Resource Type: ").append(resourceType).append("; Resource Id: ").append(id);
-					}
-					else if (resourceType != null && id == null) {
-						sbLogMsg.append(" Resource - Resource Type: ").append(resourceType);
+					// Special case for history operation; check if instance level via passed in id value
+					if (id != null && !id.isEmpty()) {
+						authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "r"); // SMART v2 read
+						notAuthMessage = "OAuth2 - history (s)earch scope authorization failed!";
 					}
 					else {
-						sbLogMsg.append(" Global");
-					}
-					log.fine(sbLogMsg.toString());
-
-					// Get the count and since parameters if present
-					if (contextQueryParams != null) {
-						countString = ServicesUtil.INSTANCE.getUriParameter("_count", contextQueryParams);
-					}
-					if (countString == null) {
-						countString = ServicesUtil.INSTANCE.getUriParameter("_count", request);
-					}
-					if (contextQueryParams != null) {
-						sinceString = ServicesUtil.INSTANCE.getUriParameter("_since", contextQueryParams);
-					}
-					if (sinceString == null) {
-						sinceString = ServicesUtil.INSTANCE.getUriParameter("_since", request);
+						authenticated = oAuthOps.isMappedAuthTokenScopes(returnMessage, authHeaders.get(0), resourceType, "s"); // SMART v2 search
+						notAuthMessage = "OAuth2 - history (r)ead scope authorization failed!";
 					}
 
-					if (countString != null) {
-						try {
-							countInteger = Integer.valueOf(countString);
-							log.fine("history count = " + countString);
-						}
-						catch (Exception e) {
-							log.severe("Exception parsing _count parameter to Integer! " + e.getMessage());
-							countInteger = null;
-						}
-					}
-					if (sinceString != null) {
-						try {
-							sinceDate = utcDateUtil.parseXMLDate(sinceString);
-							log.fine("history since = " + sinceString);
-						}
-						catch (Exception e) {
-							log.severe("Exception parsing _since parameter to UTC Date! " + e.getMessage());
-							sinceDate = null;
-						}
-					}
-
-					// Get the page parameter if present
-					if (contextQueryParams != null) {
-						pageString = ServicesUtil.INSTANCE.getUriParameter("page", contextQueryParams);
-					}
-					if (pageString == null) {
-						pageString = ServicesUtil.INSTANCE.getUriParameter("page", request);
-					}
-
-					if (pageString != null) {
-						try {
-							pageInteger = Integer.valueOf(pageString);
-							log.fine("page number = " + pageString);
-						}
-						catch (Exception e) {
-							log.severe("Exception parsing page parameter to Integer! " + e.getMessage());
-							pageInteger = null;
-						}
-					}
-
-					// Get the summary parameter if present
-					if (contextQueryParams != null) {
-						summaryString = ServicesUtil.INSTANCE.getUriParameter("_summary", contextQueryParams);
-					}
-					if (pageString == null) {
-						summaryString = ServicesUtil.INSTANCE.getUriParameter("_summary", request);
-					}
-					log.fine("summary = " + (summaryString != null ? summaryString : "null"));
-
-					// Construct full request URL with any query parameters
-					StringBuffer requestURL = request.getRequestURL();
-					String queryString = request.getQueryString();
-					if (queryString != null) {
-						requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
-					}
-					String locationPath = requestURL.toString();
-
-					ResourceContainer resourceContainer = resourceService.history(id, countInteger, sinceDate, pageInteger, summaryString, locationPath, resourceType);
-
-					if (resourceContainer != null && resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
-
-						builder = responseBundle(producesType, resourceContainer, locationPath, responseFhirVersion);
-					}
-					else {
-						// No resource found; build OperationOutcome response resource
-						String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.NOTFOUND, "No resource found.", null, null, producesType);
-
-						builder = Response.status(Response.Status.NOT_FOUND).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+					if (authenticated == false) {
+						notAuthMessage += (returnMessage != null ? returnMessage.toString() : "");
+						log.fine(notAuthMessage);
 					}
 				}
 				else {
-					builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
+					notAuthMessage = "OAuth2 - server authorization enabled but no Authorization token received!";
+				}
+
+				if (authenticated == false) {
+					builder = responseNotAuthorized(producesType, notAuthMessage, responseFhirVersion);
 				}
 			}
-			else {
-				builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
+
+        	if (authenticated == true) {
+				// Check for valid and supported ResourceType
+				boolean isResourceTypeValid = false;
+
+				if (resourceType == null || (ResourceType.isValidResourceType(resourceType) && ResourceType.isSupportedResourceType(resourceType))) {
+					isResourceTypeValid = true;
+				}
+
+				if (isResourceTypeValid) {
+					// Check for valid FHIR resource id data type compliance
+					if (id == null || (id != null && StringUtils.isValidFhirId(id))) {
+
+						StringBuffer sbLogMsg = new StringBuffer("History Type is ");
+						if (resourceType != null && id != null) {
+							sbLogMsg.append(" Instance - Resource Type: ").append(resourceType).append("; Resource Id: ").append(id);
+						}
+						else if (resourceType != null && id == null) {
+							sbLogMsg.append(" Resource - Resource Type: ").append(resourceType);
+						}
+						else {
+							sbLogMsg.append(" Global");
+						}
+						log.fine(sbLogMsg.toString());
+
+						// Get the count and since parameters if present
+						if (contextQueryParams != null) {
+							countString = ServicesUtil.INSTANCE.getUriParameter("_count", contextQueryParams);
+						}
+						if (countString == null) {
+							countString = ServicesUtil.INSTANCE.getUriParameter("_count", request);
+						}
+						if (contextQueryParams != null) {
+							sinceString = ServicesUtil.INSTANCE.getUriParameter("_since", contextQueryParams);
+						}
+						if (sinceString == null) {
+							sinceString = ServicesUtil.INSTANCE.getUriParameter("_since", request);
+						}
+
+						if (countString != null) {
+							try {
+								countInteger = Integer.valueOf(countString);
+								log.fine("history count = " + countString);
+							}
+							catch (Exception e) {
+								log.severe("Exception parsing _count parameter to Integer! " + e.getMessage());
+								countInteger = null;
+							}
+						}
+						if (sinceString != null) {
+							try {
+								sinceDate = utcDateUtil.parseXMLDate(sinceString);
+								log.fine("history since = " + sinceString);
+							}
+							catch (Exception e) {
+								log.severe("Exception parsing _since parameter to UTC Date! " + e.getMessage());
+								sinceDate = null;
+							}
+						}
+
+						// Get the page parameter if present
+						if (contextQueryParams != null) {
+							pageString = ServicesUtil.INSTANCE.getUriParameter("page", contextQueryParams);
+						}
+						if (pageString == null) {
+							pageString = ServicesUtil.INSTANCE.getUriParameter("page", request);
+						}
+
+						if (pageString != null) {
+							try {
+								pageInteger = Integer.valueOf(pageString);
+								log.fine("page number = " + pageString);
+							}
+							catch (Exception e) {
+								log.severe("Exception parsing page parameter to Integer! " + e.getMessage());
+								pageInteger = null;
+							}
+						}
+
+						// Get the summary parameter if present
+						if (contextQueryParams != null) {
+							summaryString = ServicesUtil.INSTANCE.getUriParameter("_summary", contextQueryParams);
+						}
+						if (pageString == null) {
+							summaryString = ServicesUtil.INSTANCE.getUriParameter("_summary", request);
+						}
+						log.fine("summary = " + (summaryString != null ? summaryString : "null"));
+
+						// Construct full request URL with any query parameters
+						StringBuffer requestURL = request.getRequestURL();
+						String queryString = request.getQueryString();
+						if (queryString != null) {
+							requestURL.append("?").append(URLEncoder.encode(queryString, StandardCharsets.UTF_8));
+						}
+						String locationPath = requestURL.toString();
+
+						ResourceContainer resourceContainer = resourceService.history(id, countInteger, sinceDate, pageInteger, summaryString, locationPath, resourceType);
+
+						if (resourceContainer != null && resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
+
+							builder = responseBundle(producesType, resourceContainer, locationPath, responseFhirVersion);
+						}
+						else {
+							// No resource found; build OperationOutcome response resource
+							String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.NOTFOUND, "No resource found.", null, null, producesType);
+
+							builder = Response.status(Response.Status.NOT_FOUND).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+						}
+					}
+					else {
+						builder = responseInvalidResourceId(producesType, resourceType, id, responseFhirVersion);
+					}
+				}
+				else {
+					builder = responseInvalidResourceType(producesType, resourceType, responseFhirVersion);
+				}
 			}
-		}
+		} //if (authenticated == true)
 		catch (Exception e) {
 			// Handle generic exceptions
 			String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.FATAL, OperationOutcome.IssueType.EXCEPTION, e.getMessage(), null, null, producesType);
@@ -2821,6 +3134,25 @@ public class RESTResourceOps {
         String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.TRANSIENT, message, null, null, producesType);
 
         Response.ResponseBuilder builder = Response.status(Response.Status.NOT_FOUND).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
+
+        return builder;
+    }
+
+    /**
+     * @param producesType
+     * @param message
+     * @param responseFhirVersion
+     * @return <code>Response.ResponseBuilder</code>
+     * @throws Exception
+     */
+    private Response.ResponseBuilder responseNotAuthorized(String producesType, String message, String responseFhirVersion) throws Exception {
+
+        log.fine("[START] RESTResourceOps.responseNotAuthorized()");
+
+    	// Not Authorized response triggered by invalid or unrecognized Authorization token
+        String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.SECURITY, "User authentication failed." + ((message != null && !message.isEmpty()) ? " " + message : ""), null, null, producesType);
+
+        Response.ResponseBuilder builder = Response.status(Response.Status.UNAUTHORIZED).entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion).header("WWW-Authenticate", "Digest domain=\"WildFHIR\" algorithm=\"token\"");
 
         return builder;
     }
