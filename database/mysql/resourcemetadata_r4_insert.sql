@@ -2,7 +2,7 @@
 -- Query: SELECT * FROM wildfhirr4.resourcemetadata
 -- Date: 2024-10-02 17:44
 */
-INSERT INTO wildfhirr4.resourcemetadata (id,resourceJoinId,paramName,paramType,paramValue,systemValue,codeValue,textValue,paramValueU,textValueU) VALUES
+INSERT INTO wildfhirr4.resourcemetadata (id,resourcejoinid,paramname,paramtype,paramvalue,systemvalue,codevalue,textvalue,paramvalueu,textvalueu) VALUES
 (1,1,'_security','tag','HTEST','http://terminology.hl7.org/CodeSystem/v3-ActReason','test health data',NULL,'HTEST',NULL),
 (2,1,'_id','TOKEN','example',NULL,NULL,NULL,'EXAMPLE',NULL),
 (3,1,'_lastUpdated','DATE','20241002214112',NULL,'20241002174112',NULL,'20241002214112',NULL),
