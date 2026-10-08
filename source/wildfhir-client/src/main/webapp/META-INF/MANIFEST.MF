@@ -5,29 +5,29 @@ Class-Path: jakarta.activation-api-2.1.4.jar angus-activation-2.0.3.jar
  ntime-4.1.2.jar commons-collections4-4.5.0.jar commons-lang3-3.20.0.jar
   joda-time-2.12.5.jar guava-32.0.1-jre.jar failureaccess-1.0.3.jar gson
  -2.10.1.jar commons-compress-1.27.1.jar commons-io-2.17.0.jar primeface
- s-15.0.12-jakarta.jar all-themes-1.0.10.jar wildfhir-service-0.8.0.jar 
+ s-15.0.12-jakarta.jar all-themes-1.0.10.jar wildfhir-service-0.8.1.jar 
  nimbus-jose-jwt-10.0.2.jar okhttp-5.3.2.jar kotlin-stdlib-2.2.21.jar an
  notations-13.0.jar okio-3.16.4.jar okio-jvm-3.16.4.jar logging-intercep
  tor-5.3.2.jar okhttp-jvm-5.3.2.jar commons-jcs-core-2.0-beta-1.jar comm
- ons-logging-1.2.jar ucum-1.0.10.jar mysql-connector-j-9.7.0.jar protobu
- f-java-4.31.1.jar commonmark-0.21.0.jar commonmark-ext-gfm-tables-0.21.
- 0.jar txtmark-0.13.jar zjsonpatch-0.4.11.jar jackson-databind-2.20.1.ja
- r jackson-annotations-2.20.jar jackson-core-2.21.1.jar xml-patch-0.3.1.
- jar jdom2-2.0.6.1.jar org.hl7.fhir.r5-6.9.12.jar org.hl7.fhir.utilities
- -6.9.12.jar hapi-fhir-base-8.10.0.jar jackson-datatype-jsr310-2.20.1.ja
- r commons-text-1.10.0.jar slf4j-api-2.0.3.jar jcl-over-slf4j-2.0.17.jar
-  jsr305-3.0.2.jar opentelemetry-api-1.60.1.jar opentelemetry-context-1.
- 60.1.jar opentelemetry-common-1.60.1.jar opentelemetry-instrumentation-
- annotations-2.27.0.jar icu4j-78.1.jar commons-net-3.9.0.jar Saxon-HE-13
- .0.jar xmlresolver-6.0.23.jar xmlresolver-6.0.23-data.jar org.eclipse.j
- git-7.4.0.202509020913-r.jar JavaEWAH-1.2.3.jar plantuml-mit-1.2026.1.j
- ar org.hl7.fhir.r4-6.9.12.jar org.hl7.fhir.convertors-6.9.12.jar org.hl
- 7.fhir.dstu2-6.9.12.jar org.hl7.fhir.dstu2016may-6.9.12.jar xpp3-1.1.6.
- jar jakarta-regexp-1.4.jar org.hl7.fhir.dstu3-6.9.12.jar org.hl7.fhir.d
- stu3.support-6.9.12.jar org.hl7.fhir.r4b-6.9.12.jar org.hl7.fhir.model-
- 6.9.12.jar org.hl7.fhir.support-6.9.12.jar sqlite-jdbc-3.53.2.0.jar org
- .hl7.fhir.validation-6.9.12.jar thymeleaf-3.1.5.RELEASE.jar ognl-3.3.4.
- jar javassist-3.29.0-GA.jar attoparser-2.0.7.RELEASE.jar unbescape-1.1.
- 6.RELEASE.jar xmlsec-3.0.6.jar woodstox-core-7.0.0.jar stax2-api-4.2.2.
- jar log4j-core-2.25.3.jar log4j-api-2.23.1.jar
+ ons-logging-1.2.jar ucum-1.0.10.jar postgresql-42.7.8.jar checker-qual-
+ 3.49.5.jar commonmark-0.21.0.jar commonmark-ext-gfm-tables-0.21.0.jar t
+ xtmark-0.13.jar zjsonpatch-0.4.11.jar jackson-databind-2.20.1.jar jacks
+ on-annotations-2.20.jar jackson-core-2.21.1.jar xml-patch-0.3.1.jar jdo
+ m2-2.0.6.1.jar org.hl7.fhir.r5-6.9.12.jar org.hl7.fhir.utilities-6.9.12
+ .jar hapi-fhir-base-8.10.0.jar jackson-datatype-jsr310-2.20.1.jar commo
+ ns-text-1.10.0.jar slf4j-api-2.0.3.jar jcl-over-slf4j-2.0.17.jar jsr305
+ -3.0.2.jar opentelemetry-api-1.60.1.jar opentelemetry-context-1.60.1.ja
+ r opentelemetry-common-1.60.1.jar opentelemetry-instrumentation-annotat
+ ions-2.27.0.jar icu4j-78.1.jar commons-net-3.9.0.jar Saxon-HE-13.0.jar 
+ xmlresolver-6.0.23.jar xmlresolver-6.0.23-data.jar org.eclipse.jgit-7.4
+ .0.202509020913-r.jar JavaEWAH-1.2.3.jar plantuml-mit-1.2026.1.jar org.
+ hl7.fhir.r4-6.9.12.jar org.hl7.fhir.convertors-6.9.12.jar org.hl7.fhir.
+ dstu2-6.9.12.jar org.hl7.fhir.dstu2016may-6.9.12.jar xpp3-1.1.6.jar jak
+ arta-regexp-1.4.jar org.hl7.fhir.dstu3-6.9.12.jar org.hl7.fhir.dstu3.su
+ pport-6.9.12.jar org.hl7.fhir.r4b-6.9.12.jar org.hl7.fhir.model-6.9.12.
+ jar org.hl7.fhir.support-6.9.12.jar sqlite-jdbc-3.53.2.0.jar org.hl7.fh
+ ir.validation-6.9.12.jar thymeleaf-3.1.5.RELEASE.jar ognl-3.3.4.jar jav
+ assist-3.29.0-GA.jar attoparser-2.0.7.RELEASE.jar unbescape-1.1.6.RELEA
+ SE.jar xmlsec-3.0.6.jar woodstox-core-7.0.0.jar stax2-api-4.2.2.jar log
+ 4j-core-2.25.3.jar log4j-api-2.23.1.jar
 
