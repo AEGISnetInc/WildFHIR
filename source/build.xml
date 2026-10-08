@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="WildFHIRCE" basedir="." default="nysql">
+
+    <target name="mysql">
+        <delete file="${basedir}/../docker/wildfhirce-mysql/wildfhirce-wildfly/wildfhir-client.war" />
+        <delete file="${basedir}/../docker/wildfhirce-mysql/wildfhirce-wildfly/wildfhir-rest-server.war" />
+
+        <copy file="${basedir}/wildfhir-client/target/wildfhir-client.war" todir="${basedir}/../docker/wildfhirce-mysql/wildfhirce-wildfly"/>
+
+        <copy file="${basedir}/wildfhir-rest-server/target/wildfhir-rest-server.war" todir="${basedir}/../docker/wildfhirce-mysql/wildfhirce-wildfly"/>
+
+    </target>
+
+    <target name="postgresql">
+        <delete file="${basedir}/../docker/wildfhirce-postgresql/wildfhirce-wildfly/wildfhir-client.war" />
+        <delete file="${basedir}/../docker/wildfhirce-postgresql/wildfhirce-wildfly/wildfhir-rest-server.war" />
+
+        <copy file="${basedir}/wildfhir-client/target/wildfhir-client.war" todir="${basedir}/../docker/wildfhirce-postgresql/wildfhirce-wildfly"/>
+
+        <copy file="${basedir}/wildfhir-rest-server/target/wildfhir-rest-server.war" todir="${basedir}/../docker/wildfhirce-postgresql/wildfhirce-wildfly"/>
+
+    </target>
+</project>
