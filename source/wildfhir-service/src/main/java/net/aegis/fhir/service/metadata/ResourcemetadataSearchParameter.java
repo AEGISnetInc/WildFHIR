@@ -86,10 +86,10 @@ public class ResourcemetadataSearchParameter extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a SearchParameter object
 			if (chainedResource != null) {
-				iSearchParameter = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iSearchParameter = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iSearchParameter = new ByteArrayInputStream(resource.getResourceContents());
+				iSearchParameter = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             SearchParameter searchParameter = (SearchParameter) xmlP.parse(iSearchParameter);

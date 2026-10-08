@@ -80,10 +80,10 @@ public class ResourcemetadataDeviceMetric extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a DeviceMetric object
 			if (chainedResource != null) {
-				iDeviceMetric = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iDeviceMetric = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iDeviceMetric = new ByteArrayInputStream(resource.getResourceContents());
+				iDeviceMetric = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             DeviceMetric deviceMetric = (DeviceMetric) xmlP.parse(iDeviceMetric);

@@ -76,10 +76,10 @@ public class ResourcemetadataCatalogEntry extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a CatalogEntry object
 			if (chainedResource != null) {
-				iCatalogEntry = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iCatalogEntry = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iCatalogEntry = new ByteArrayInputStream(resource.getResourceContents());
+				iCatalogEntry = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             CatalogEntry catalogEntry = (CatalogEntry) xmlP.parse(iCatalogEntry);

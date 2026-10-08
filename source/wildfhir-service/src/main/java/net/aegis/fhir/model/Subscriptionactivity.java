@@ -59,7 +59,7 @@ public class Subscriptionactivity implements Serializable {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Integer id;
 
-    private String subscriptionId;
+    private String subscriptionid;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date recorded;
@@ -81,12 +81,12 @@ public class Subscriptionactivity implements Serializable {
         this.id = id;
     }
 
-	public String getSubscriptionId() {
-		return subscriptionId;
+	public String getSubscriptionid() {
+		return subscriptionid;
 	}
 
-	public void setSubscriptionId(String subscriptionId) {
-		this.subscriptionId = subscriptionId;
+	public void setSubscriptionid(String subscriptionid) {
+		this.subscriptionid = subscriptionid;
 	}
 
 	public Date getRecorded() {
@@ -138,7 +138,7 @@ public class Subscriptionactivity implements Serializable {
 		} else {
 			clone.setId(null);
 		}
-		clone.setSubscriptionId(this.getSubscriptionId());
+		clone.setSubscriptionid(this.getSubscriptionid());
 		clone.setRecorded(this.getRecorded());
 		clone.setType(this.getType());
 		clone.setStatus(this.getStatus());
@@ -174,7 +174,7 @@ public class Subscriptionactivity implements Serializable {
 
     @Override
     public String toString() {
-        return "Subscriptionactivity [id=" + id + ", subscriptionId=" + subscriptionId
+        return "Subscriptionactivity [id=" + id + ", subscriptionid=" + subscriptionid
         		+ ", recorded=" + recorded + ", type=" + type + ", status=" + status
         		+ ", description=" + description;
     }
@@ -183,7 +183,7 @@ public class Subscriptionactivity implements Serializable {
     	Subscriptionactivity dst = new Subscriptionactivity();
 
     	dst.setId(this.id);
-    	dst.setSubscriptionId(this.subscriptionId);
+    	dst.setSubscriptionid(this.subscriptionid);
     	dst.setRecorded(this.recorded);
     	dst.setType(this.type);
     	dst.setStatus(this.getStatus());

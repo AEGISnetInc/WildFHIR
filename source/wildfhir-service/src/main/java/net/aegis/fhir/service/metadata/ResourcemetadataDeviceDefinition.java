@@ -80,10 +80,10 @@ public class ResourcemetadataDeviceDefinition extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a DeviceDefinition object
 			if (chainedResource != null) {
-				iDeviceDefinition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iDeviceDefinition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iDeviceDefinition = new ByteArrayInputStream(resource.getResourceContents());
+				iDeviceDefinition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             DeviceDefinition deviceDefinition = (DeviceDefinition) xmlP.parse(iDeviceDefinition);

@@ -76,10 +76,10 @@ public class ResourcemetadataBinary extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Binary object
 			if (chainedResource != null) {
-				iBinary = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iBinary = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iBinary = new ByteArrayInputStream(resource.getResourceContents());
+				iBinary = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Binary binary = (Binary) xmlP.parse(iBinary);

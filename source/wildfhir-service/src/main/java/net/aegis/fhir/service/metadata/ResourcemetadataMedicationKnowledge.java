@@ -85,10 +85,10 @@ public class ResourcemetadataMedicationKnowledge extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a MedicationKnowledge object
 			if (chainedResource != null) {
-				iMedicationKnowledge = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMedicationKnowledge = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMedicationKnowledge = new ByteArrayInputStream(resource.getResourceContents());
+				iMedicationKnowledge = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MedicationKnowledge medicationKnowledge = (MedicationKnowledge) xmlP.parse(iMedicationKnowledge);

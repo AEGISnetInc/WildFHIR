@@ -88,10 +88,10 @@ public class ResourcemetadataGroup extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Group object
 			if (chainedResource != null) {
-				iGroup = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iGroup = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iGroup = new ByteArrayInputStream(resource.getResourceContents());
+				iGroup = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Group group = (Group) xmlP.parse(iGroup);

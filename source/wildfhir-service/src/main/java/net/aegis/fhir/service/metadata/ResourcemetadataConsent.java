@@ -82,10 +82,10 @@ public class ResourcemetadataConsent extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Consent object
 			if (chainedResource != null) {
-				iConsent = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iConsent = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iConsent = new ByteArrayInputStream(resource.getResourceContents());
+				iConsent = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Consent consent = (Consent) xmlP.parse(iConsent);

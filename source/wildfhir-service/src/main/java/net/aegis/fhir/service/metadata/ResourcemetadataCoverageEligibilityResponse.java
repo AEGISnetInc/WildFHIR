@@ -81,10 +81,10 @@ public class ResourcemetadataCoverageEligibilityResponse extends Resourcemetadat
 		try {
             // Extract and convert the resource contents to a CoverageEligibilityResponse object
 			if (chainedResource != null) {
-				iCoverageEligibilityResponse = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iCoverageEligibilityResponse = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iCoverageEligibilityResponse = new ByteArrayInputStream(resource.getResourceContents());
+				iCoverageEligibilityResponse = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             CoverageEligibilityResponse coverageEligibilityResponse = (CoverageEligibilityResponse) xmlP.parse(iCoverageEligibilityResponse);

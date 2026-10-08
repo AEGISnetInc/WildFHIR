@@ -86,10 +86,10 @@ public class ResourcemetadataSpecimen extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Specimen object
 			if (chainedResource != null) {
-				iSpecimen = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iSpecimen = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iSpecimen = new ByteArrayInputStream(resource.getResourceContents());
+				iSpecimen = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Specimen specimen = (Specimen) xmlP.parse(iSpecimen);

@@ -253,7 +253,7 @@ public class ResourceValidation extends ResourceOperationProxy {
 						// Resource instance found for resourceId, validate it
 
 						// FHIRValidatorClient singleton validate method
-						rOutcome = FHIRValidatorClient.instance().validateResource(resourceType, resourceContainer.getResource().getResourceContents(), profileUrl);
+						rOutcome = FHIRValidatorClient.instance().validateResource(resourceType, resourceContainer.getResource().getResourcecontents().getBytes("UTF-8"), profileUrl);
 					}
 				}
 				else {

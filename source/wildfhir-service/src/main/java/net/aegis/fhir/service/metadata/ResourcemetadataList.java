@@ -84,10 +84,10 @@ public class ResourcemetadataList extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a List_ object
 			if (chainedResource != null) {
-				iList = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iList = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iList = new ByteArrayInputStream(resource.getResourceContents());
+				iList = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			ListResource list = (ListResource) xmlP.parse(iList);

@@ -88,10 +88,10 @@ public class ResourcemetadataClaim extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Claim object
 			if (chainedResource != null) {
-				iClaim = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iClaim = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iClaim = new ByteArrayInputStream(resource.getResourceContents());
+				iClaim = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Claim claim = (Claim) xmlP.parse(iClaim);

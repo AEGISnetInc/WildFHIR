@@ -84,10 +84,10 @@ public class ResourcemetadataTask extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Task object
 			if (chainedResource != null) {
-				iTask = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iTask = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iTask = new ByteArrayInputStream(resource.getResourceContents());
+				iTask = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Task task = (Task) xmlP.parse(iTask);

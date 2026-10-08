@@ -88,10 +88,10 @@ public class ResourcemetadataPlanDefinition extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a PlanDefinition object
 			if (chainedResource != null) {
-				iPlanDefinition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iPlanDefinition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iPlanDefinition = new ByteArrayInputStream(resource.getResourceContents());
+				iPlanDefinition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			PlanDefinition planDefinition = (PlanDefinition) xmlP.parse(iPlanDefinition);

@@ -72,8 +72,8 @@ public enum ProvenanceServiceUtil {
 			ByteArrayOutputStream oResource = new ByteArrayOutputStream();
 			xmlP.setOutputStyle(OutputStyle.PRETTY);
 			xmlP.compose(oResource, provenance, true);
-			resourceDomain.setResourceContents(oResource.toByteArray());
-			resourceDomain.setResourceType("Provenance");
+			resourceDomain.setResourcecontents(oResource.toString("UTF-8"));
+			resourceDomain.setResourcetype("Provenance");
 		}
 		return resourceDomain;
 	}

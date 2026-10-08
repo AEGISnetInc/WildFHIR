@@ -76,10 +76,10 @@ public class ResourcemetadataOperationOutcome extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a OperationOutcome object
 			if (chainedResource != null) {
-				iOperationOutcome = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iOperationOutcome = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iOperationOutcome = new ByteArrayInputStream(resource.getResourceContents());
+				iOperationOutcome = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             OperationOutcome operationOutcome = (OperationOutcome) xmlP.parse(iOperationOutcome);

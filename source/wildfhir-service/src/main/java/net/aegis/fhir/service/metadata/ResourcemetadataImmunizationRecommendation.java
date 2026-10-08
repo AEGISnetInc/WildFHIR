@@ -85,10 +85,10 @@ public class ResourcemetadataImmunizationRecommendation extends Resourcemetadata
 		try {
 			// Extract and convert the resource contents to a ImmunizationRecommendation object
 			if (chainedResource != null) {
-				iImmunizationRecommendation = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iImmunizationRecommendation = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iImmunizationRecommendation = new ByteArrayInputStream(resource.getResourceContents());
+				iImmunizationRecommendation = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			ImmunizationRecommendation immunizationRecommendation = (ImmunizationRecommendation) xmlP.parse(iImmunizationRecommendation);

@@ -35,6 +35,7 @@ package net.aegis.fhir.operation;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
@@ -181,7 +182,7 @@ public class CompositionDocument extends ResourceOperationProxy {
 						}
 						else {
 							// Convert XML contents to Composition Resource object
-							ByteArrayInputStream iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourceContents());
+							ByteArrayInputStream iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourcecontents().getBytes("UTF-8"));
 							XmlParser xmlP = new XmlParser();
 							composition = (Composition) xmlP.parse(iResource);
 						}
@@ -443,8 +444,8 @@ public class CompositionDocument extends ResourceOperationProxy {
 
 				// Perform FHIR update to retain assigned resource id
 				net.aegis.fhir.model.Resource updateResource = new net.aegis.fhir.model.Resource();
-				updateResource.setResourceType("Bundle");
-				updateResource.setResourceContents(sOp.getBytes());
+				updateResource.setResourcetype("Bundle");
+				updateResource.setResourcecontents(new String(sOp.getBytes("UTF-8"), Charset.forName("UTF-8")));
 
 				resourceService.update(bundle.getId(), updateResource, baseUrl);
 
@@ -652,7 +653,7 @@ public class CompositionDocument extends ResourceOperationProxy {
 					}
 					else {
 						// Convert XML contents to Composition Resource object
-						iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourceContents());
+						iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourcecontents().getBytes("UTF-8"));
 						refResource = xmlP.parse(iResource);
 
 						// Check for duplicate resource
@@ -780,7 +781,7 @@ public class CompositionDocument extends ResourceOperationProxy {
 		Signature sig = null;
 		Coding sigType = null;
 		Reference sigWho = null;
-		byte[] docSig = null;
+		String docSig = null;
 
 		try {
 			sig = new Signature();
@@ -805,7 +806,9 @@ public class CompositionDocument extends ResourceOperationProxy {
 
 			// Get document signature image file contents
 			docSig = codeService.getCodeResourceContents("documentSignature");
-			sig.setData(docSig);
+			if (docSig != null) {
+				sig.setData(docSig.getBytes("UTF-8"));
+			}
 
 			bundle.setSignature(sig);
 		}
@@ -858,7 +861,7 @@ public class CompositionDocument extends ResourceOperationProxy {
 
 			if (resources != null && resources.size() == 1) {
 				// Existing Composition document bundle found, return it
-				iResource = new ByteArrayInputStream(resources.get(0).getResourceContents());
+				iResource = new ByteArrayInputStream(resources.get(0).getResourcecontents().getBytes("UTF-8"));
 				returnResource = xmlP.parse(iResource);
 			}
 			else if (resources != null && resources.size() > 1) {

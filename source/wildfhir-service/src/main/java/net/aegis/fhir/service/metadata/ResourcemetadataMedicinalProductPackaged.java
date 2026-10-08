@@ -80,10 +80,10 @@ public class ResourcemetadataMedicinalProductPackaged extends ResourcemetadataPr
 		try {
             // Extract and convert the resource contents to a MedicinalProductPackaged object
 			if (chainedResource != null) {
-				iMedicinalProductPackaged = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMedicinalProductPackaged = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMedicinalProductPackaged = new ByteArrayInputStream(resource.getResourceContents());
+				iMedicinalProductPackaged = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MedicinalProductPackaged medicinalProductPackaged = (MedicinalProductPackaged) xmlP.parse(iMedicinalProductPackaged);

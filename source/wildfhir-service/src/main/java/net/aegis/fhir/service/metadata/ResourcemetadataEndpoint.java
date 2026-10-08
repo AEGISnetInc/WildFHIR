@@ -81,10 +81,10 @@ public class ResourcemetadataEndpoint extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Endpoint object
 			if (chainedResource != null) {
-				iEndpoint = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iEndpoint = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iEndpoint = new ByteArrayInputStream(resource.getResourceContents());
+				iEndpoint = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Endpoint endpoint = (Endpoint) xmlP.parse(iEndpoint);

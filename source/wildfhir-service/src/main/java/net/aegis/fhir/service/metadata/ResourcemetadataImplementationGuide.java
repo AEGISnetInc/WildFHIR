@@ -87,10 +87,10 @@ public class ResourcemetadataImplementationGuide extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a ImplementationGuide object
 			if (chainedResource != null) {
-				iImplementationGuide = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iImplementationGuide = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iImplementationGuide = new ByteArrayInputStream(resource.getResourceContents());
+				iImplementationGuide = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			ImplementationGuide implementationGuide = (ImplementationGuide) xmlP.parse(iImplementationGuide);

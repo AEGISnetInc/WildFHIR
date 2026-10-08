@@ -85,10 +85,10 @@ public class ResourcemetadataMedicationRequest extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a MedicationRequest object
 			if (chainedResource != null) {
-				iMedicationRequest = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMedicationRequest = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMedicationRequest = new ByteArrayInputStream(resource.getResourceContents());
+				iMedicationRequest = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MedicationRequest medicationRequest = (MedicationRequest) xmlP.parse(iMedicationRequest);

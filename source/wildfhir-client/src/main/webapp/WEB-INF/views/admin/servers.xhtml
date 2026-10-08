@@ -28,13 +28,13 @@
 					<h:outputText value="#{server.name}" />
 				</p:column>
 				<p:column headerText="Base URL">
-					<h:outputText value="#{server.basePath}" />
+					<h:outputText value="#{server.basepath}" />
 				</p:column>
 				<p:column headerText="Last Updated">
-					<h:outputText value="#{server.lastUpdate}" />
+					<h:outputText value="#{server.lastupdate}" />
 				</p:column>
 				<p:column headerText="OAuth Type">
-					<h:outputText value="#{server.oauthGrantType}" />
+					<h:outputText value="#{server.oauthgranttype}" />
 				</p:column>
 				<p:column headerText="Actions">
 					<h:form id="serverPreviewForm" prependId="false"
@@ -97,7 +97,7 @@
 					</p:inputText>
 					<h:outputText value="Base URL: " />
 					<p:inputText id="selectedServerURL"
-						value="#{context.selectedServer.basePath}" required="true"
+						value="#{context.selectedServer.basepath}" required="true"
 						label="Server Base URL"
 						maxlength="255" size="60">
 						<f:validateLength minimum="10" />
@@ -109,20 +109,20 @@
 					<h:outputText value="" />
 
 					<h:outputText value="Grant Type: " />
-					<p:selectOneMenu id="selectedServerOAuthGrantTypeDropdown" required="false" label="Select OAuth Grant Type" value="#{context.selectedServer.oauthGrantType}" style="width:360px;text-align:left;padding-right:30px;">
+					<p:selectOneMenu id="selectedServerOAuthgranttypeDropdown" required="false" label="Select OAuth Grant Type" value="#{context.selectedServer.oauthgranttype}" style="width:360px;text-align:left;padding-right:30px;">
 						<f:selectItem itemValue="#{null}" itemLabel="-- Select OAuth Grant Type --         " noSelectionOption="true" />
 						<f:selectItem itemValue="client_credentials" itemLabel="client_credentials" />
 					</p:selectOneMenu>
 					<h:outputText value="Client Id: " />
-					<p:inputText id="selectedServerOAuthClientId"
-						value="#{context.selectedServer.oauthClientId}" required="false"
+					<p:inputText id="selectedServerOAuthclientid"
+						value="#{context.selectedServer.oauthclientid}" required="false"
 						label="Client Id"
 						maxlength="64" size="60">
 					</p:inputText>
 					<h:outputText value="Client Secret: " />
 					<h:panelGroup layout="block" styleClass="custom-password-container">
-						<p:password id="selectedServerOAuthClientSecret"
-							value="#{context.selectedServer.oauthClientSecret}" required="false"
+						<p:password id="selectedServerOAuthclientsecret"
+							value="#{context.selectedServer.oauthclientsecret}" required="false"
 							promptLabel="Please enter your client secret" redisplay="true"
 							toggleMask="true"
 							maxlength="255" size="55"
@@ -132,13 +132,13 @@
 						</p:password>
 					</h:panelGroup>
 					<h:outputText value="Scopes: " />
-					<h:inputTextarea id="selectedServerOAuthScope" value="#{context.selectedServer.oauthScope}" cols="50" rows="2" required="false" />
+					<h:inputTextarea id="selectedServerOAuthscope" value="#{context.selectedServer.oauthscope}" cols="50" rows="2" required="false" />
 					<h:outputText value="Auth URL: " />
-					<h:inputTextarea id="selectedServerOAuthAuthUrl" value="#{context.selectedServer.oauthAuthUrl}" cols="50" rows="2" required="false" />
+					<h:inputTextarea id="selectedServerOAuthauthurl" value="#{context.selectedServer.oauthauthurl}" cols="50" rows="2" required="false" />
 					<h:outputText value="Token URL: " />
-					<h:inputTextarea id="selectedServerOAuthTokenUrl" value="#{context.selectedServer.oauthTokenUrl}" cols="50" rows="2" required="false" />
+					<h:inputTextarea id="selectedServerOAuthtokenurl" value="#{context.selectedServer.oauthtokenurl}" cols="50" rows="2" required="false" />
 					<h:outputText value="Introspect URL: " />
-					<h:inputTextarea id="selectedServerOAuthIntrospectUrl" value="#{context.selectedServer.oauthIntrospectUrl}" cols="50" rows="2" required="false" />
+					<h:inputTextarea id="selectedServerOAuthintrospecturl" value="#{context.selectedServer.oauthintrospecturl}" cols="50" rows="2" required="false" />
 
 					<h:outputText value="" />
 					<p:commandButton value="Update Server"
@@ -192,7 +192,7 @@
 
 					<h:outputText value="Base URL: " />
 					<p:inputText id="newServerURL"
-						value="#{context.newServer.basePath}" required="true"
+						value="#{context.newServer.basepath}" required="true"
 						label="Server Base URL"
 						maxlength="255" size="60">
 						<f:validateLength minimum="10" />
@@ -204,20 +204,20 @@
 					<h:outputText value="" />
 
 					<h:outputText value="Grant Type: " />
-					<p:selectOneMenu id="newServerOAuthGrantTypeDropdown" required="false" label="Select OAuth Grant Type" value="#{context.newServer.oauthGrantType}" style="width:360px;text-align:left;padding-right:30px;">
+					<p:selectOneMenu id="newServerOAuthgranttypeDropdown" required="false" label="Select OAuth Grant Type" value="#{context.newServer.oauthgranttype}" style="width:360px;text-align:left;padding-right:30px;">
 						<f:selectItem itemValue="#{null}" itemLabel="-- Select OAuth Grant Type --         " noSelectionOption="true" />
 						<f:selectItem itemValue="client_credentials" itemLabel="client_credentials" />
 					</p:selectOneMenu>
 					<h:outputText value="Client Id: " />
-					<p:inputText id="newServerOAuthClientId"
-						value="#{context.newServer.oauthClientId}" required="false"
+					<p:inputText id="newServerOAuthclientid"
+						value="#{context.newServer.oauthclientid}" required="false"
 						label="Client Id"
 						maxlength="64" size="60">
 					</p:inputText>
 					<h:outputText value="Client Secret: " />
 					<h:panelGroup layout="block" styleClass="custom-password-container">
-						<p:password id="newServerOAuthClientSecret"
-							value="#{context.newServer.oauthClientSecret}" required="false"
+						<p:password id="newServerOAuthclientsecret"
+							value="#{context.newServer.oauthclientsecret}" required="false"
 							promptLabel="Please enter your client secret" redisplay="true"
 							toggleMask="true"
 							maxlength="255" size="55"
@@ -227,13 +227,13 @@
 							<button type="button" class="custom-toggle-btn masked-state" onclick="PF('newClientSecret').toggleMask(); toggleBtnIcon(this);"></button>
 					</h:panelGroup>
 					<h:outputText value="Scopes: " />
-					<h:inputTextarea id="newServerOAuthScope" value="#{context.newServer.oauthScope}" cols="50" rows="2" required="false" />
+					<h:inputTextarea id="newServerOAuthscope" value="#{context.newServer.oauthscope}" cols="50" rows="2" required="false" />
 					<h:outputText value="Auth URL: " />
-					<h:inputTextarea id="newServerOAuthAuthUrl" value="#{context.newServer.oauthAuthUrl}" cols="50" rows="2" required="false" />
+					<h:inputTextarea id="newServerOAuthauthurl" value="#{context.newServer.oauthauthurl}" cols="50" rows="2" required="false" />
 					<h:outputText value="Token URL: " />
-					<h:inputTextarea id="newServerOAuthTokenUrl" value="#{context.newServer.oauthTokenUrl}" cols="50" rows="2" required="false" />
+					<h:inputTextarea id="newServerOAuthtokenurl" value="#{context.newServer.oauthtokenurl}" cols="50" rows="2" required="false" />
 					<h:outputText value="Introspect URL: " />
-					<h:inputTextarea id="newServerOAuthIntrospectUrl" value="#{context.newServer.oauthIntrospectUrl}" cols="50" rows="2" required="false" />
+					<h:inputTextarea id="newServerOAuthintrospecturl" value="#{context.newServer.oauthintrospecturl}" cols="50" rows="2" required="false" />
 
 					<h:outputText value="" />
 					<p:commandButton value="Create Server"

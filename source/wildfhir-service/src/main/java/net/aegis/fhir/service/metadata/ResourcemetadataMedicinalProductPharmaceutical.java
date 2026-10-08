@@ -83,10 +83,10 @@ public class ResourcemetadataMedicinalProductPharmaceutical extends Resourcemeta
 		try {
             // Extract and convert the resource contents to a MedicinalProductPharmaceutical object
 			if (chainedResource != null) {
-				iMedicinalProductPharmaceutical = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMedicinalProductPharmaceutical = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMedicinalProductPharmaceutical = new ByteArrayInputStream(resource.getResourceContents());
+				iMedicinalProductPharmaceutical = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MedicinalProductPharmaceutical medicinalProductPharmaceutical = (MedicinalProductPharmaceutical) xmlP.parse(iMedicinalProductPharmaceutical);

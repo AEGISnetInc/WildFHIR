@@ -35,6 +35,7 @@ package net.aegis.fhir.service.metadata;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -92,15 +93,15 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Composition object
 			if (chainedResource != null) {
-				iComposition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iComposition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 
 				// Extract and convert the original resource contents to a Bundle object ONLY IF it is a Bundle resource type
-				if (resource.getResourceType().equals("Bundle")) {
-					iBundle = new ByteArrayInputStream(resource.getResourceContents());
+				if (resource.getResourcetype().equals("Bundle")) {
+					iBundle = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 				}
 			}
 			else {
-				iComposition = new ByteArrayInputStream(resource.getResourceContents());
+				iComposition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Composition composition = (Composition) xmlP.parse(iComposition);
@@ -115,7 +116,7 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 
 				// Use provided resource and build the required WildFHIR Resource for the Composition
 				compositionResource = new Resource();
-				compositionResource.setResourceId(composition.getId());
+				compositionResource.setResourceid(composition.getId());
 
 				// Convert the Resource to XML byte[]
 				ByteArrayOutputStream oResource = new ByteArrayOutputStream();
@@ -124,8 +125,8 @@ public class ResourcemetadataComposition extends ResourcemetadataProxy {
 				xmlParser.compose(oResource, composition, true);
 				byte[] bResource = oResource.toByteArray();
 
-				compositionResource.setResourceContents(bResource);
-				compositionResource.setResourceType(composition.fhirType());
+				compositionResource.setResourcecontents(new String(bResource, Charset.forName("UTF-8")));
+				compositionResource.setResourcetype(composition.fhirType());
 			}
 
 			/*

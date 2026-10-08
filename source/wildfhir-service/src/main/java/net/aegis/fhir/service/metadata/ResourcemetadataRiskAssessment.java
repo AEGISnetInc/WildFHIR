@@ -83,10 +83,10 @@ public class ResourcemetadataRiskAssessment extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a RiskAssessment object
 			if (chainedResource != null) {
-				iRiskAssessment = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iRiskAssessment = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iRiskAssessment = new ByteArrayInputStream(resource.getResourceContents());
+				iRiskAssessment = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             RiskAssessment riskAssessment = (RiskAssessment) xmlP.parse(iRiskAssessment);

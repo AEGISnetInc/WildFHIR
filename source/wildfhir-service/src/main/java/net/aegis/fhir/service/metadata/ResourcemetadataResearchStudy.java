@@ -84,10 +84,10 @@ public class ResourcemetadataResearchStudy extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a ResearchStudy object
 			if (chainedResource != null) {
-				iResearchStudy = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iResearchStudy = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iResearchStudy = new ByteArrayInputStream(resource.getResourceContents());
+				iResearchStudy = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			ResearchStudy researchStudy = (ResearchStudy) xmlP.parse(iResearchStudy);

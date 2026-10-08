@@ -119,34 +119,34 @@ public class ResourceResponseWrapper {
 				// Set FHIR resource metadata if available
 				net.aegis.fhir.model.Resource resourceBean = new net.aegis.fhir.model.Resource();
 				if (response.getHeaders().get(HttpHeadersKeys.Content_Location.toString()) != null) {
-					resourceBean.setResourceId(ServicesUtil.INSTANCE.extractResourceIdFromURL((String) response.getHeaders().get(HttpHeadersKeys.Content_Location.toString()).get(0)));
-					resourceBean.setVersionId(ServicesUtil.INSTANCE.extractVersionIdIntFromURL((String) response.getHeaders().get(HttpHeadersKeys.Content_Location.toString()).get(0)));
+					resourceBean.setResourceid(ServicesUtil.INSTANCE.extractResourceIdFromURL((String) response.getHeaders().get(HttpHeadersKeys.Content_Location.toString()).get(0)));
+					resourceBean.setVersionid(ServicesUtil.INSTANCE.extractVersionIdIntFromURL((String) response.getHeaders().get(HttpHeadersKeys.Content_Location.toString()).get(0)));
 				}
 				else if (response.getHeaders().get(HttpHeadersKeys.Location.toString()) != null) {
-					resourceBean.setResourceId(ServicesUtil.INSTANCE.extractResourceIdFromURL((String) response.getHeaders().get(HttpHeadersKeys.Location.toString()).get(0)));
-					resourceBean.setVersionId(ServicesUtil.INSTANCE.extractVersionIdIntFromURL((String) response.getHeaders().get(HttpHeadersKeys.Location.toString()).get(0)));
+					resourceBean.setResourceid(ServicesUtil.INSTANCE.extractResourceIdFromURL((String) response.getHeaders().get(HttpHeadersKeys.Location.toString()).get(0)));
+					resourceBean.setVersionid(ServicesUtil.INSTANCE.extractVersionIdIntFromURL((String) response.getHeaders().get(HttpHeadersKeys.Location.toString()).get(0)));
 				}
 				else {
 					// Response headers do not contain the Content-Location or Location; Extract values directly from the resource
 					if (responseResource != null) {
 						if (responseResource.getId() != null) {
-							resourceBean.setResourceId(responseResource.getId());
+							resourceBean.setResourceid(responseResource.getId());
 						}
 						else {
-							resourceBean.setResourceId("Not Defined!");
+							resourceBean.setResourceid("Not Defined!");
 						}
 						if (responseResource.hasMeta() && responseResource.getMeta().hasVersionId()) {
 							if (StringUtils.isNumeric(responseResource.getMeta().getVersionId())) {
-								resourceBean.setVersionId(Integer.valueOf(responseResource.getMeta().getVersionId()));
+								resourceBean.setVersionid(Integer.valueOf(responseResource.getMeta().getVersionId()));
 							}
 						}
 						else {
-							resourceBean.setVersionId(-1);
+							resourceBean.setVersionid(-1);
 						}
 					}
 					else {
-						resourceBean.setResourceId("Not Found!");
-						resourceBean.setVersionId(-1);
+						resourceBean.setResourceid("Not Found!");
+						resourceBean.setVersionid(-1);
 					}
 				}
 

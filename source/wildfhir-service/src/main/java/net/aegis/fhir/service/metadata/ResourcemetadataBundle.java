@@ -82,10 +82,10 @@ public class ResourcemetadataBundle extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Bundle object
 			if (chainedResource != null) {
-				iBundle = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iBundle = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iBundle = new ByteArrayInputStream(resource.getResourceContents());
+				iBundle = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Bundle bundle = (Bundle) xmlP.parse(iBundle);

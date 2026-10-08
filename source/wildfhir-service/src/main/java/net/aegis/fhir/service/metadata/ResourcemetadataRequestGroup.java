@@ -86,10 +86,10 @@ public class ResourcemetadataRequestGroup extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a RequestGroup object
 			if (chainedResource != null) {
-				iRequestGroup = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iRequestGroup = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iRequestGroup = new ByteArrayInputStream(resource.getResourceContents());
+				iRequestGroup = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             RequestGroup requestGroup = (RequestGroup) xmlP.parse(iRequestGroup);

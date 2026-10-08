@@ -281,7 +281,7 @@ public class ResourcemetadataService {
 
 			ResourcemetadataProxyObjectFactory objectFactory = new ResourcemetadataProxyObjectFactory();
 
-			ResourcemetadataProxy proxy = objectFactory.getResourcemetadataProxy(resource.getResourceType());
+			ResourcemetadataProxy proxy = objectFactory.getResourcemetadataProxy(resource.getResourcetype());
 
 			if (proxy != null) {
 				resourcemetadataList = proxy.generateAllForResource(resource, baseUrl2, resourceService);
@@ -315,10 +315,10 @@ public class ResourcemetadataService {
 		 */
 		try {
 			// Build native query based on resource type and parameters
-			StringBuffer sbQuery = new StringBuffer("select distinct 0, 0, rm.paramName, rm.paramType, rm.paramValue, rm.systemValue, rm.codeValue");
+			StringBuffer sbQuery = new StringBuffer("select distinct 0, 0, rm.paramname, rm.paramnype, rm.paramvalue, rm.systemvalue, rm.codevalue");
 			sbQuery.append(" from resourcemetadata rm");
-			sbQuery.append(" where rm.paramType = 'tag'");
-			sbQuery.append(" order by rm.paramName, rm.paramValue");
+			sbQuery.append(" where rm.paramtype = 'tag'");
+			sbQuery.append(" order by rm.paramname, rm.paramvalue");
 
 			log.fine("Native Query: " + sbQuery.toString());
 
@@ -356,16 +356,16 @@ public class ResourcemetadataService {
 		 */
 		try {
 			// Build native query based on resource type and parameters
-			StringBuffer sbQuery = new StringBuffer("select distinct 0, 0, rm.paramName, rm.paramType, rm.paramValue, rm.systemValue, rm.codeValue");
+			StringBuffer sbQuery = new StringBuffer("select distinct 0, 0, rm.paramname, rm.paramnype, rm.paramvalue, rm.systemvalue, rm.codevalue");
 			sbQuery.append(" from resourcemetadata rm");
-			sbQuery.append(" where rm.resourceJoinId in");
-			sbQuery.append("   (select r1.resourceId from resource r1");
-			sbQuery.append("    where r1.versionId =");
-			sbQuery.append("      (select max(r2.versionId) from resource r2 where r2.resourceId = r1.resourceId)");
+			sbQuery.append(" where rm.resourcejoinid in");
+			sbQuery.append("   (select r1.resourceid from resource r1");
+			sbQuery.append("    where r1.versionid =");
+			sbQuery.append("      (select max(r2.versionid) from resource r2 where r2.resourceid = r1.resourceid)");
 			sbQuery.append("    and r1.status <> 'deleted'");
-			sbQuery.append("    and r1.resourceType = '").append(resourceType).append("')");
-			sbQuery.append(" and rm.paramType = 'tag'");
-			sbQuery.append(" order by rm.paramName, rm.paramValue");
+			sbQuery.append("    and r1.resourcetype = '").append(resourceType).append("')");
+			sbQuery.append(" and rm.paramtype = 'tag'");
+			sbQuery.append(" order by rm.paramname, rm.paramvalue");
 
 			log.fine("Native Query: " + sbQuery.toString());
 
@@ -402,7 +402,7 @@ public class ResourcemetadataService {
 		 * Generate the Resourcemetadata list of all tags for a Resource
 		 */
 		try {
-			resourcemetadataQuery = em.createNamedQuery("findAllTagsByResource").setParameter("resourceId", resource.getResourceId());
+			resourcemetadataQuery = em.createNamedQuery("findAllTagsByResource").setParameter("resourceid", resource.getResourceid());
 
 			resourcemetadataList = (List<Resourcemetadata>) resourcemetadataQuery.getResultList();
 
@@ -435,7 +435,7 @@ public class ResourcemetadataService {
 		 * Generate the Resourcemetadata list of all general tags for a Resource
 		 */
 		try {
-			resourcemetadataQuery = em.createNamedQuery("findAllGeneralTagsByResource").setParameter("resourceId", resource.getResourceId());
+			resourcemetadataQuery = em.createNamedQuery("findAllGeneralTagsByResource").setParameter("resourceid", resource.getResourceid());
 
 			resourcemetadataList = (List<Resourcemetadata>) resourcemetadataQuery.getResultList();
 
@@ -468,7 +468,7 @@ public class ResourcemetadataService {
 		 * Generate the Resourcemetadata list of all profile tags for a Resource
 		 */
 		try {
-			resourcemetadataQuery = em.createNamedQuery("findAllProfileTagsByResource").setParameter("resourceId", resource.getResourceId());
+			resourcemetadataQuery = em.createNamedQuery("findAllProfileTagsByResource").setParameter("resourceid", resource.getResourceid());
 
 			resourcemetadataList = (List<Resourcemetadata>) resourcemetadataQuery.getResultList();
 
@@ -501,7 +501,7 @@ public class ResourcemetadataService {
 		 * Generate the Resourcemetadata list of all security tags for a Resource
 		 */
 		try {
-			resourcemetadataQuery = em.createNamedQuery("findAllSecurityTagsByResource").setParameter("resourceId", resource.getResourceId());
+			resourcemetadataQuery = em.createNamedQuery("findAllSecurityTagsByResource").setParameter("resourceid", resource.getResourceid());
 
 			resourcemetadataList = (List<Resourcemetadata>) resourcemetadataQuery.getResultList();
 
@@ -518,13 +518,14 @@ public class ResourcemetadataService {
 	/**
 	 * Generate the list of Resourcemetadata objects for a specific parameter name and a known resource id
 	 *
-	 * @param resourceId
-	 * @param paramName
+	 * @param resourceid
+	 * @param resourcetype
+	 * @param paramname
 	 * @return <code>List<Resourcemetadata></code>
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	public List<Resourcemetadata> findMetadataByResourceIdTypeParam(String resourceId, String resourceType, String paramName) throws Exception {
+	public List<Resourcemetadata> findMetadataByResourceIdTypeParam(String resourceid, String resourcetype, String paramname) throws Exception {
 
 		log.fine("[START] ResourcemetadataService.findMetadataByResourceIdTypeParam");
 
@@ -535,7 +536,7 @@ public class ResourcemetadataService {
 		 * Generate the Resourcemetadata list of all tags for a Resource
 		 */
 		try {
-			resourcemetadataQuery = em.createNamedQuery("findParamByResource").setParameter("resourceId", resourceId).setParameter("resourceType", resourceType).setParameter("paramName", paramName);
+			resourcemetadataQuery = em.createNamedQuery("findParamByResource").setParameter("resourceid", resourceid).setParameter("resourcetype", resourcetype).setParameter("paramname", paramname);
 
 			resourcemetadataList = (List<Resourcemetadata>) resourcemetadataQuery.getResultList();
 
@@ -552,13 +553,13 @@ public class ResourcemetadataService {
 	/**
 	 * Generate the list of Resourcemetadata objects for a specific parameter name and a known resource id
 	 *
-	 * @param resourceId
-	 * @param paramName
+	 * @param resourceid
+	 * @param resourcetype
 	 * @return <code>List<Resourcemetadata></code>
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	public List<Resourcemetadata> findMetadataByResourceIdTypeLevel1Param(String resourceId, String resourceType) throws Exception {
+	public List<Resourcemetadata> findMetadataByResourceIdTypeLevel1Param(String resourceid, String resourcetype) throws Exception {
 
 		log.fine("[START] ResourcemetadataService.findMetadataByResourceIdTypeLevel1Param");
 
@@ -569,7 +570,7 @@ public class ResourcemetadataService {
 		 * Generate the Resourcemetadata list of all tags for a Resource
 		 */
 		try {
-			resourcemetadataQuery = em.createNamedQuery("findLevel1ParamByResource").setParameter("resourceId", resourceId).setParameter("resourceType", resourceType);
+			resourcemetadataQuery = em.createNamedQuery("findLevel1ParamByResource").setParameter("resourceid", resourceid).setParameter("resourcetype", resourcetype);
 
 			resourcemetadataList = (List<Resourcemetadata>) resourcemetadataQuery.getResultList();
 
@@ -581,25 +582,5 @@ public class ResourcemetadataService {
 
 		return resourcemetadataList;
 
-	}
-
-	/**
-	 *
-	 * @param name
-	 * @param value
-	 * @return Generated <code>Resourcemetadata</code>
-	 */
-	protected Resourcemetadata generateResourcemetadata(net.aegis.fhir.model.Resource resource, String name, String value) {
-
-		log.fine("[START] ResourcemetadataService.generateResourcemetadata(" + name + ", " + value + ")");
-
-		Resourcemetadata r = new Resourcemetadata();
-
-		r.setResource(resource);
-		r.setParamName(name);
-		r.setParamValue(value);
-		r.setParamValueU(value);
-
-		return r;
 	}
 }

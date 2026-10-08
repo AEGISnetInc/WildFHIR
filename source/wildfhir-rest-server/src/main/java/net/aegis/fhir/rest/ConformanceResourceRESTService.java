@@ -155,7 +155,7 @@ public class ConformanceResourceRESTService {
 			ResourceContainer resourceContainer = conformanceService.read();
 
 			if (resourceContainer != null) {
-				String eTagVersion = resourceContainer.getConformance().getVersionId().toString();
+				String eTagVersion = resourceContainer.getConformance().getVersionid().toString();
 				EntityTag eTag = new EntityTag(eTagVersion, true);
 
 				builder = Response.status(resourceContainer.getResponseStatus()).tag(eTag).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
@@ -171,7 +171,7 @@ public class ConformanceResourceRESTService {
 					builder = builder.contentLocation(patientLocation);
 
 					// Get last update date
-					Date lastUpdate = resourceContainer.getConformance().getLastUpdate();
+					Date lastUpdate = resourceContainer.getConformance().getLastupdate();
 					log.fine("Last Update Date: " + lastUpdate);
 					if (lastUpdate != null) {
 						String sLastUpdate = utcDateUtil.formatUTCDateOffset(lastUpdate);
@@ -181,7 +181,7 @@ public class ConformanceResourceRESTService {
 
 					if (resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
 
-						byte[] resourceContents = resourceContainer.getConformance().getResourceContents();
+						byte[] resourceContents = resourceContainer.getConformance().getResourcecontents().getBytes("UTF-8");
 
 						if (resourceContents != null && resourceContents.length > 0) {
 

@@ -84,10 +84,10 @@ public class ResourcemetadataCoverage extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Coverage object
 			if (chainedResource != null) {
-				iCoverage = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iCoverage = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iCoverage = new ByteArrayInputStream(resource.getResourceContents());
+				iCoverage = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Coverage coverage = (Coverage) xmlP.parse(iCoverage);

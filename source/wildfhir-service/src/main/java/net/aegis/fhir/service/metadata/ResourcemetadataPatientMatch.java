@@ -90,14 +90,14 @@ public class ResourcemetadataPatientMatch extends ResourcemetadataProxy {
 
 		try {
 			// Remove 'Match' suffix from resource.resourceType
-			resource.setResourceType(resource.getResourceType().substring(0, resource.getResourceType().indexOf("Match")));
+			resource.setResourcetype(resource.getResourcetype().substring(0, resource.getResourcetype().indexOf("Match")));
 
 			// Extract and convert the resource contents to a Patient object
 			if (chainedResource != null) {
-				iPatient = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iPatient = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iPatient = new ByteArrayInputStream(resource.getResourceContents());
+				iPatient = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Patient patient = (Patient) xmlP.parse(iPatient);

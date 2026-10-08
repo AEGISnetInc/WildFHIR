@@ -217,11 +217,11 @@ public class PatientPurge extends ResourceOperationProxy {
 		 * Perform a search operation against all Patient Compartment resource types and combine all results into
 		 * a single OperationOutcome.
 		 */
-		String patientCriteria = "Patient/" + patient.getResourceId();
+		String patientCriteria = "Patient/" + patient.getResourceid();
 		MultivaluedMap<String, String> queryParams = null;
 		List<Resource> resources = null;
 
-		List<LabelKeyValueBean> compartmentResourceTypeCriteriaList = ResourceType.getCompartmentResourceTypeCriteria(patient.getResourceType());
+		List<LabelKeyValueBean> compartmentResourceTypeCriteriaList = ResourceType.getCompartmentResourceTypeCriteria(patient.getResourcetype());
 
 		for (LabelKeyValueBean lkvb : compartmentResourceTypeCriteriaList) {
 
@@ -260,7 +260,7 @@ public class PatientPurge extends ResourceOperationProxy {
 				 * Purge found resources
 				 */
 				for (Resource resourceEntry : resources) {
-					log.fine("     ----- Purging resource " + resourceEntry.getResourceType() + "/" + resourceEntry.getResourceId());
+					log.fine("     ----- Purging resource " + resourceEntry.getResourcetype() + "/" + resourceEntry.getResourceid());
 
 					resourceService.purge(resourceEntry.getId());
 				}

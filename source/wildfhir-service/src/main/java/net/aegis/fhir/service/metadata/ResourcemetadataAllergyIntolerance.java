@@ -86,10 +86,10 @@ public class ResourcemetadataAllergyIntolerance extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a AllergyIntolerance object
 			if (chainedResource != null) {
-				iAllergyIntolerance = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iAllergyIntolerance = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iAllergyIntolerance = new ByteArrayInputStream(resource.getResourceContents());
+				iAllergyIntolerance = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			AllergyIntolerance allergyIntolerance = (AllergyIntolerance) xmlP.parse(iAllergyIntolerance);

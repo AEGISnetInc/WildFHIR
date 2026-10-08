@@ -84,10 +84,10 @@ public class ResourcemetadataGoal extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Goal object
 			if (chainedResource != null) {
-				iGoal = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iGoal = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iGoal = new ByteArrayInputStream(resource.getResourceContents());
+				iGoal = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Goal goal = (Goal) xmlP.parse(iGoal);

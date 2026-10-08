@@ -114,8 +114,8 @@ public class CapabilityStatementReload extends ResourceOperationProxy {
 			ResourceContainer resourceContainer = conformanceService.fetchFhirBaseCapabilityStatement();
 			ParametersParameterComponent parameter = new ParametersParameterComponent();
 
-			if (resourceContainer != null && resourceContainer.getConformance() != null && resourceContainer.getConformance().getResourceContents() != null) {
-				byte baseCapStmt[] = resourceContainer.getConformance().getResourceContents();
+			if (resourceContainer != null && resourceContainer.getConformance() != null && resourceContainer.getConformance().getResourcecontents() != null) {
+				byte baseCapStmt[] = resourceContainer.getConformance().getResourcecontents().getBytes("UTF-8");
 				String baseCapStatement = new String(baseCapStmt, UTF8_CHARSET);
 				log.fine("softwareVersion:" + softwareVersion);
 				log.fine("baseCapStatement:" + baseCapStatement);
@@ -195,16 +195,16 @@ public class CapabilityStatementReload extends ResourceOperationProxy {
 			java.sql.Date lastUpdate = new java.sql.Date(capabilityStatementResource.getDate().getTime());
 			Conformance conformance = new Conformance();
 			conformance.setId(CONFORMANCE_ID);
-			conformance.setResourceId(CONFORMANCE_RESOURCE_ID);
-			conformance.setVersionId(CONFORMANCE_VERSION_ID);
-			conformance.setResourceType("CapabilityStatement");
+			conformance.setResourceid(CONFORMANCE_RESOURCE_ID);
+			conformance.setVersionid(CONFORMANCE_VERSION_ID);
+			conformance.setResourcetype("CapabilityStatement");
 			conformance.setStatus("generated");
-			conformance.setLastUser("system");
-			conformance.setLastUpdate(lastUpdate);
-			conformance.setResourceContents(conformanceString.getBytes());
+			conformance.setLastuser("system");
+			conformance.setLastupdate(lastUpdate);
+			conformance.setResourcecontents(conformanceString);
 
 			ResourceContainer resourceContainer = conformanceService.read();
-			if (resourceContainer != null && resourceContainer.getConformance() != null && resourceContainer.getConformance().getResourceId().equals(CONFORMANCE_RESOURCE_ID)) {
+			if (resourceContainer != null && resourceContainer.getConformance() != null && resourceContainer.getConformance().getResourceid().equals(CONFORMANCE_RESOURCE_ID)) {
 				conformance.setId(resourceContainer.getConformance().getId());
 				log.fine("reloadCapabilityStatement: Updating");
 				conformanceService.update(conformance);

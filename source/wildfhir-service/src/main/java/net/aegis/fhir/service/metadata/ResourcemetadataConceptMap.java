@@ -88,10 +88,10 @@ public class ResourcemetadataConceptMap extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a ConceptMap object
 			if (chainedResource != null) {
-				iConceptMap = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iConceptMap = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iConceptMap = new ByteArrayInputStream(resource.getResourceContents());
+				iConceptMap = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			ConceptMap conceptMap = (ConceptMap) xmlP.parse(iConceptMap);

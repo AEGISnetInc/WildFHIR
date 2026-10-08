@@ -153,8 +153,8 @@ public class ResourceService {
 		xmlP.setOutputStyle(OutputStyle.PRETTY);
 		byte[] resourceBytes = xmlP.composeBytes(resource);
 
-		wildfhirResource.setResourceType(resource.getResourceType().name() + "Match");
-		wildfhirResource.setResourceContents(resourceBytes);
+		wildfhirResource.setResourcetype(resource.getResourceType().name() + "Match");
+		wildfhirResource.setResourcecontents(new String(resourceBytes, Charset.forName("UTF-8")));
 
 		// Generate the list of Resourcemetadata objects for the Resource
 		List<Resourcemetadata> resourcemetadataList = resourcemetadataService.generateAllForResource(wildfhirResource, baseUrl, this);
@@ -182,7 +182,7 @@ public class ResourceService {
 
 		try {
 			/*
-			 * resourceId is now a VARCHAR(255); using GUID values now
+			 * resourceid is now a VARCHAR(255); using GUID values now
 			 */
 			String nextResourceIdString = null;
 			int nextVersionId = 1;
@@ -195,9 +195,9 @@ public class ResourceService {
 				nextResourceIdString = resourceId;
 
 				// Check for existing, deleted version of this resource
-				ResourceContainer readResourceContainer = this.read(resource.getResourceType(), resourceId, null);
-				if (readResourceContainer != null && readResourceContainer.getResource() != null && readResourceContainer.getResource().getVersionId() != null) {
-					nextVersionId = readResourceContainer.getResource().getVersionId().intValue() + 1;
+				ResourceContainer readResourceContainer = this.read(resource.getResourcetype(), resourceId, null);
+				if (readResourceContainer != null && readResourceContainer.getResource() != null && readResourceContainer.getResource().getVersionid() != null) {
+					nextVersionId = readResourceContainer.getResource().getVersionid().intValue() + 1;
 				}
 			}
 
@@ -205,15 +205,15 @@ public class ResourceService {
 
 			// create a new wildfhir resource; version based on whether we came from an update or not
 			net.aegis.fhir.model.Resource newResource = new net.aegis.fhir.model.Resource();
-			newResource.setResourceId(nextResourceIdString);
-			newResource.setVersionId(Integer.valueOf(nextVersionId));
-			newResource.setResourceType(resource.getResourceType());
+			newResource.setResourceid(nextResourceIdString);
+			newResource.setVersionid(Integer.valueOf(nextVersionId));
+			newResource.setResourcetype(resource.getResourcetype());
 			newResource.setStatus("valid");
-			newResource.setLastUser("system");
-			newResource.setLastUpdate(updatedTime);
+			newResource.setLastuser("system");
+			newResource.setLastupdate(updatedTime);
 
 			// Convert XML contents to Resource object and set id and meta
-			ByteArrayInputStream iResource = new ByteArrayInputStream(resource.getResourceContents());
+			ByteArrayInputStream iResource = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			XmlParser xmlP = new XmlParser();
 			xmlP.setOutputStyle(OutputStyle.PRETTY);
 			org.hl7.fhir.r4.model.Resource resourceObject = xmlP.parse(iResource);
@@ -243,7 +243,7 @@ public class ResourceService {
 
 			byte[] resourceBytes = xmlP.composeBytes(resourceObject);
 
-			newResource.setResourceContents(resourceBytes);
+			newResource.setResourcecontents(new String(resourceBytes, Charset.forName("UTF-8")));
 
 			/*
 			 *  TRANSACTION BEGIN
@@ -365,13 +365,13 @@ public class ResourceService {
 			result = resourcemetadataQuery.executeUpdate();
 
 			// Build native query for drop index fk_resourcemetatdata_resource_idx
-			sbQuery = new StringBuffer("alter table resourcemetadata drop index fk_resourcemetatdata_resource_idx");
+			//sbQuery = new StringBuffer("alter table resourcemetadata drop index fk_resourcemetatdata_resource_idx");
 
-			log.fine("Native Query: " + sbQuery.toString());
+			//log.fine("Native Query: " + sbQuery.toString());
 
-			resourcemetadataQuery = em.createNativeQuery(sbQuery.toString());
+			//resourcemetadataQuery = em.createNativeQuery(sbQuery.toString());
 
-			result = resourcemetadataQuery.executeUpdate();
+			//result = resourcemetadataQuery.executeUpdate();
 
 			// Build native query for truncate resourcemetadata
 			sbQuery = new StringBuffer("truncate resourcemetadata");
@@ -401,13 +401,13 @@ public class ResourceService {
 			result = resourcemetadataQuery.executeUpdate();
 
 			// Build native query to re-create index fk_resourcemetatdata_resource_idx
-			sbQuery = new StringBuffer("create index fk_resourcemetatdata_resource_idx on resourcemetadata (resourcejoinid asc)");
+			//sbQuery = new StringBuffer("create index fk_resourcemetatdata_resource_idx on resourcemetadata (resourcejoinid asc)");
 
-			log.fine("Native Query: " + sbQuery.toString());
+			//log.fine("Native Query: " + sbQuery.toString());
 
-			resourcemetadataQuery = em.createNativeQuery(sbQuery.toString());
+			//resourcemetadataQuery = em.createNativeQuery(sbQuery.toString());
 
-			result = resourcemetadataQuery.executeUpdate();
+			//result = resourcemetadataQuery.executeUpdate();
 
 			/*
 			 *  TRANSACTION COMMIT(END)
@@ -518,16 +518,16 @@ public class ResourceService {
 
 			// the current version of this resource is valid; create a new version with a status of "DELETED"
 			net.aegis.fhir.model.Resource newResource = new net.aegis.fhir.model.Resource();
-			newResource.setResourceId(resourceId);
-			Integer newVersion = Integer.valueOf(resourceContainer.getResource().getVersionId().intValue() + 1);
-			newResource.setVersionId(newVersion);
-			newResource.setResourceType(resourceContainer.getResource().getResourceType());
+			newResource.setResourceid(resourceId);
+			Integer newVersion = Integer.valueOf(resourceContainer.getResource().getVersionid().intValue() + 1);
+			newResource.setVersionid(newVersion);
+			newResource.setResourcetype(resourceContainer.getResource().getResourcetype());
 			newResource.setStatus("deleted");
-			newResource.setLastUser("system");
-			newResource.setLastUpdate(updatedTime);
+			newResource.setLastuser("system");
+			newResource.setLastupdate(updatedTime);
 
 			// Convert XML contents to of current Resource object and set id and meta
-			ByteArrayInputStream iResource = new ByteArrayInputStream(currentResource.getResourceContents());
+			ByteArrayInputStream iResource = new ByteArrayInputStream(currentResource.getResourcecontents().getBytes("UTF-8"));
 			XmlParser xmlP = new XmlParser();
 			xmlP.setOutputStyle(OutputStyle.PRETTY);
 			org.hl7.fhir.r4.model.Resource resourceObject = xmlP.parse(iResource);
@@ -544,7 +544,7 @@ public class ResourceService {
 
 			byte[] resourceBytes = xmlP.composeBytes(resourceObject);
 
-			newResource.setResourceContents(resourceBytes);
+			newResource.setResourcecontents(new String(resourceBytes, Charset.forName("UTF-8")));
 
 			/*
 			 *  TRANSACTION BEGIN
@@ -612,16 +612,16 @@ public class ResourceService {
 
 					// the current version of this resource is valid; create a new version with a status of "DELETED"
 					net.aegis.fhir.model.Resource newResource = new net.aegis.fhir.model.Resource();
-					newResource.setResourceId(resourceId);
-					Integer newVersion = Integer.valueOf(currentResource.getVersionId().intValue() + 1);
-					newResource.setVersionId(newVersion);
-					newResource.setResourceType(currentResource.getResourceType());
+					newResource.setResourceid(resourceId);
+					Integer newVersion = Integer.valueOf(currentResource.getVersionid().intValue() + 1);
+					newResource.setVersionid(newVersion);
+					newResource.setResourcetype(currentResource.getResourcetype());
 					newResource.setStatus("deleted");
-					newResource.setLastUser("system");
-					newResource.setLastUpdate(updatedTime);
+					newResource.setLastuser("system");
+					newResource.setLastupdate(updatedTime);
 
 					// Convert XML contents to of current Resource object and set id and meta
-					ByteArrayInputStream iResource = new ByteArrayInputStream(currentResource.getResourceContents());
+					ByteArrayInputStream iResource = new ByteArrayInputStream(currentResource.getResourcecontents().getBytes("UTF-8"));
 					xmlP.setOutputStyle(OutputStyle.PRETTY);
 					org.hl7.fhir.r4.model.Resource resourceObject = xmlP.parse(iResource);
 
@@ -637,7 +637,7 @@ public class ResourceService {
 
 					byte[] resourceBytes = xmlP.composeBytes(resourceObject);
 
-					newResource.setResourceContents(resourceBytes);
+					newResource.setResourcecontents(new String(resourceBytes, Charset.forName("UTF-8")));
 					em.persist(newResource);
 					resourceEventSrc.fire(newResource);
 				}
@@ -716,25 +716,25 @@ public class ResourceService {
 
 				// History Resource
 				if (resourceType != null) {
-					predicateList.add(cb.equal(resource.get("resourceType"), resourceType));
+					predicateList.add(cb.equal(resource.get("resourcetype"), resourceType));
 
 					// History Instance
 					if (resourceId != null) {
-						predicateList.add(cb.equal(resource.get("resourceId"), resourceId));
+						predicateList.add(cb.equal(resource.get("resourceid"), resourceId));
 					}
 				}
 
 				// History Global - if both resourceId and resourceType are null
 
 				if (since_ != null) {
-					predicateList.add(cb.greaterThan(resource.<Date> get("lastUpdate"), since_));
+					predicateList.add(cb.greaterThan(resource.<Date> get("lastupdate"), since_));
 				}
 
 				criteria.select(resource)
 					.where(cb.and(predicateList.toArray(new Predicate[predicateList.size()])))
-					.orderBy(cb.desc(resource.get("resourceType")))
-					.orderBy(cb.desc(resource.get("resourceId")))
-					.orderBy(cb.desc(resource.get("versionId")));
+					.orderBy(cb.desc(resource.get("resourcetype")))
+					.orderBy(cb.desc(resource.get("resourceid")))
+					.orderBy(cb.desc(resource.get("versionid")));
 
 				List<net.aegis.fhir.model.Resource> historyResources = em.createQuery(criteria).getResultList();
 
@@ -885,13 +885,13 @@ public class ResourceService {
 						BundleEntryRequestComponent requestComponent = new BundleEntryRequestComponent();
 
 						HTTPVerb requestMethod = HTTPVerb.PUT; // default to update
-						String requestUrl = resourceEntry.getResourceType() + "/" + resourceEntry.getResourceId();
+						String requestUrl = resourceEntry.getResourcetype() + "/" + resourceEntry.getResourceid();
 						if (resourceEntry.getStatus().equalsIgnoreCase("DELETED")) {
 							requestMethod = HTTPVerb.DELETE; // delete
 						}
-						if (resourceEntry.getVersionId().intValue() == 1) {
+						if (resourceEntry.getVersionid().intValue() == 1) {
 							requestMethod = HTTPVerb.POST; // create
-							requestUrl = resourceEntry.getResourceType();
+							requestUrl = resourceEntry.getResourcetype();
 						}
 
 						requestComponent.setMethod(requestMethod);
@@ -903,18 +903,18 @@ public class ResourceService {
 						BundleEntryResponseComponent responseComponent = new BundleEntryResponseComponent();
 
 						String responseStatus = "200 (OK)";
-						if (resourceEntry.getVersionId().intValue() == 1) {
+						if (resourceEntry.getVersionid().intValue() == 1) {
 							responseStatus = "201 (Created)";
 						}
 						responseComponent.setStatus(responseStatus);
-						responseComponent.setLastModified(resourceEntry.getLastUpdate());
+						responseComponent.setLastModified(resourceEntry.getLastupdate());
 
 						bundleEntry.setResponse(responseComponent);
 
 						// Bundle.entry.resource
 						if (!requestMethod.equals(HTTPVerb.DELETE)) {
 							// Convert XML contents to Resource object
-							iResource = new ByteArrayInputStream(resourceEntry.getResourceContents());
+							iResource = new ByteArrayInputStream(resourceEntry.getResourcecontents().getBytes("UTF-8"));
 							XmlParser xmlP = new XmlParser();
 							org.hl7.fhir.r4.model.Resource resourceObject = xmlP.parse(iResource);
 
@@ -1036,13 +1036,13 @@ public class ResourceService {
 				XmlParser xmlP = new XmlParser();
 				xmlP.setOutputStyle(OutputStyle.PRETTY);
 				xmlP.compose(oResource, outcome);
-				byte[] resourceContents = oResource.toByteArray();
+				byte[] resourcecontents = oResource.toByteArray();
 
 				net.aegis.fhir.model.Resource ooResource = new  net.aegis.fhir.model.Resource();
-				ooResource.setResourceContents(resourceContents);
-				ooResource.setResourceId(ooResourceId);
-				ooResource.setVersionId(1);
-				ooResource.setResourceType("OperationOutcome");
+				ooResource.setResourcecontents(new String(resourcecontents, Charset.forName("UTF-8")));
+				ooResource.setResourceid(ooResourceId);
+				ooResource.setVersionid(1);
+				ooResource.setResourcetype("OperationOutcome");
 
 				resourceContainer.setResource(ooResource);
 				resourceContainer.setResponseStatus(Response.Status.BAD_REQUEST);
@@ -1052,12 +1052,12 @@ public class ResourceService {
 				CriteriaQuery<net.aegis.fhir.model.Resource> criteria = cb.createQuery(net.aegis.fhir.model.Resource.class);
 				Root<net.aegis.fhir.model.Resource> resource = criteria.from(net.aegis.fhir.model.Resource.class);
 				List<Predicate> predicateList = new ArrayList<Predicate>();
-				predicateList.add(cb.equal(resource.get("resourceId"), resourceId));
-				predicateList.add(cb.equal(resource.get("resourceType"), resourceType));
+				predicateList.add(cb.equal(resource.get("resourceid"), resourceId));
+				predicateList.add(cb.equal(resource.get("resourcetype"), resourceType));
 
 				criteria.select(resource)
 					.where(cb.and(predicateList.toArray(new Predicate[predicateList.size()])))
-					.orderBy(cb.desc(resource.get("versionId")));
+					.orderBy(cb.desc(resource.get("versionid")));
 
 				List<net.aegis.fhir.model.Resource> resources = em.createQuery(criteria).getResultList();
 
@@ -1084,7 +1084,7 @@ public class ResourceService {
 						try {
 							if (resourceType.equals("Bundle")) {
 								// Convert XML contents to Bundle object
-								ByteArrayInputStream iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourceContents());
+								ByteArrayInputStream iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourcecontents().getBytes("UTF-8"));
 								XmlParser xmlP = new XmlParser();
 								xmlP.setOutputStyle(OutputStyle.PRETTY);
 								Bundle bundleObject = (Bundle)xmlP.parse(iResource);
@@ -1134,8 +1134,8 @@ public class ResourceService {
 			Root<net.aegis.fhir.model.Resource> resourceRoot = criteria.from(net.aegis.fhir.model.Resource.class);
 
 			List<Predicate> predicateList = new ArrayList<Predicate>();
-			predicateList.add(cb.equal(resourceRoot.get("resourceId"), resource.getResourceId()));
-			predicateList.add(cb.equal(resourceRoot.get("resourceType"), resource.getResourceType()));
+			predicateList.add(cb.equal(resourceRoot.get("resourceid"), resource.getResourceid()));
+			predicateList.add(cb.equal(resourceRoot.get("resourcetype"), resource.getResourcetype()));
 
 			criteria.select(resourceRoot)
 				.where(cb.and(predicateList.toArray(new Predicate[predicateList.size()])));
@@ -1167,7 +1167,7 @@ public class ResourceService {
 		List<net.aegis.fhir.model.Resource> resourceList = null;
 
 		try {
-			resourcQuery = em.createNamedQuery("findAllCurrentResourcesByType").setParameter("resourceType", resourceType);
+			resourcQuery = em.createNamedQuery("findAllCurrentResourcesByType").setParameter("resourcetype", resourceType);
 
 			resourceList = (List<net.aegis.fhir.model.Resource>) resourcQuery.getResultList();
 
@@ -1210,10 +1210,10 @@ public class ResourceService {
 				for (net.aegis.fhir.model.Resource resource : resourceList) {
 					// Check the resource status; if not 'DELETED' then consider it 'VALID'
 					if (resource.getStatus() != null && !resource.getStatus().equalsIgnoreCase("DELETED") &&
-							resource.getResourceContents() != null) {
+							resource.getResourcecontents() != null) {
 
 						// Convert XML contents to Bundle object
-						iResource = new ByteArrayInputStream(resource.getResourceContents());
+						iResource = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 						fhirResource = (org.hl7.fhir.r4.model.Resource)xmlP.parse(iResource);
 
 						fhirResourceList.add(fhirResource);
@@ -1238,7 +1238,9 @@ public class ResourceService {
 	 * The vread interaction performs a version specific read of the specified resource type. The interaction is performed by an HTTP
 	 * GET command.
 	 * @param resourceType type of resource we are trying to read
-	 * @param resource
+	 * @param resourceId
+	 * @param versionId
+	 * @param _summary
 	 * @return <code>ResourceContainer</code>
 	 * @throws Exception
 	 */
@@ -1271,13 +1273,13 @@ public class ResourceService {
 				XmlParser xmlP = new XmlParser();
 				xmlP.setOutputStyle(OutputStyle.PRETTY);
 				xmlP.compose(oResource, outcome);
-				byte[] resourceContents = oResource.toByteArray();
+				byte[] resourcecontents = oResource.toByteArray();
 
 				net.aegis.fhir.model.Resource ooResource = new  net.aegis.fhir.model.Resource();
-				ooResource.setResourceContents(resourceContents);
-				ooResource.setResourceId(ooResourceId);
-				ooResource.setVersionId(1);
-				ooResource.setResourceType("OperationOutcome");
+				ooResource.setResourcecontents(new String(resourcecontents, Charset.forName("UTF-8")));
+				ooResource.setResourceid(ooResourceId);
+				ooResource.setVersionid(1);
+				ooResource.setResourcetype("OperationOutcome");
 
 				resourceContainer.setResource(ooResource);
 				resourceContainer.setResponseStatus(Response.Status.BAD_REQUEST);
@@ -1289,13 +1291,13 @@ public class ResourceService {
 
 				List<Predicate> predicateList = new ArrayList<Predicate>();
 
-				predicateList.add(cb.equal(resource.get("resourceId"), resourceId));
-				predicateList.add(cb.equal(resource.get("versionId"), versionId));
-				predicateList.add(cb.equal(resource.get("resourceType"), resourceType));
+				predicateList.add(cb.equal(resource.get("resourceid"), resourceId));
+				predicateList.add(cb.equal(resource.get("versionid"), versionId));
+				predicateList.add(cb.equal(resource.get("resourcetype"), resourceType));
 
 				criteria.select(resource)
 					.where(cb.and(predicateList.toArray(new Predicate[predicateList.size()])))
-					.orderBy(cb.desc(resource.get("versionId")));
+					.orderBy(cb.desc(resource.get("versionid")));
 
 				List<net.aegis.fhir.model.Resource> resources = em.createQuery(criteria).getResultList();
 
@@ -1321,7 +1323,7 @@ public class ResourceService {
 						try {
 							if (resourceType.equals("Bundle")) {
 								// Convert XML contents to Bundle object
-								ByteArrayInputStream iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourceContents());
+								ByteArrayInputStream iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourcecontents().getBytes("UTF-8"));
 								XmlParser xmlP = new XmlParser();
 								xmlP.setOutputStyle(OutputStyle.PRETTY);
 								Bundle bundleObject = (Bundle)xmlP.parse(iResource);
@@ -1378,9 +1380,9 @@ public class ResourceService {
 			net.aegis.fhir.model.Resource currentResource = em.find(net.aegis.fhir.model.Resource.class, resource.getId());
 
 			// Update resource record last updated time
-			currentResource.setLastUpdate(updatedTime);
+			currentResource.setLastupdate(updatedTime);
 			// Assign updated resource contents
-			currentResource.setResourceContents(resource.getResourceContents());
+			currentResource.setResourcecontents(resource.getResourcecontents());
 
 			em.merge(currentResource);
 			resourceEventSrc.fire(currentResource);
@@ -1416,7 +1418,7 @@ public class ResourceService {
 		log.fine("[START] ResourceService.update");
 
 		// Get the current version of the resource
-		ResourceContainer resourceContainer = read(resource.getResourceType(), resourceId, null);
+		ResourceContainer resourceContainer = read(resource.getResourcetype(), resourceId, null);
 
 		// Check the status of the resource to determine the action to perform
 		if (resourceContainer.getResponseStatus().equals(Response.Status.NOT_FOUND)) {
@@ -1428,15 +1430,15 @@ public class ResourceService {
 
 			// create a new wildfhir resource; version 1
 			net.aegis.fhir.model.Resource newResource = new net.aegis.fhir.model.Resource();
-			newResource.setResourceId(resourceId);
-			newResource.setVersionId(Integer.valueOf(1));
-			newResource.setResourceType(resource.getResourceType());
+			newResource.setResourceid(resourceId);
+			newResource.setVersionid(Integer.valueOf(1));
+			newResource.setResourcetype(resource.getResourcetype());
 			newResource.setStatus("valid");
-			newResource.setLastUser("system");
-			newResource.setLastUpdate(updatedTime);
+			newResource.setLastuser("system");
+			newResource.setLastupdate(updatedTime);
 
 			// Convert XML contents to Resource object and set id and meta
-			ByteArrayInputStream iResource = new ByteArrayInputStream(resource.getResourceContents());
+			ByteArrayInputStream iResource = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			XmlParser xmlP = new XmlParser();
 			xmlP.setOutputStyle(OutputStyle.PRETTY);
 			org.hl7.fhir.r4.model.Resource resourceObject = xmlP.parse(iResource);
@@ -1453,7 +1455,7 @@ public class ResourceService {
 
 			byte[] resourceBytes = xmlP.composeBytes(resourceObject);
 
-			newResource.setResourceContents(resourceBytes);
+			newResource.setResourcecontents(new String(resourceBytes, Charset.forName("UTF-8")));
 
 			/*
 			 *  TRANSACTION BEGIN
@@ -1463,7 +1465,7 @@ public class ResourceService {
 			resourceEventSrc.fire(newResource);
 
 			// Extract base url from update path
-			baseUrl = ServicesUtil.INSTANCE.extractBaseURL(baseUrl, resource.getResourceType());
+			baseUrl = ServicesUtil.INSTANCE.extractBaseURL(baseUrl, resource.getResourcetype());
 
 			// Generate the list of Resourcemetadata objects for the new Resource
 			List<Resourcemetadata> resourcemetadataList = resourcemetadataService.generateAllForResource(newResource, baseUrl, this);
@@ -1489,16 +1491,16 @@ public class ResourceService {
 
 			// the current version of this resource exists; create a new version
 			net.aegis.fhir.model.Resource newResource = new net.aegis.fhir.model.Resource();
-			newResource.setResourceId(resourceId);
-			Integer newVersion = Integer.valueOf(resourceContainer.getResource().getVersionId().intValue() + 1);
-			newResource.setVersionId(newVersion);
-			newResource.setResourceType(resourceContainer.getResource().getResourceType());
+			newResource.setResourceid(resourceId);
+			Integer newVersion = Integer.valueOf(resourceContainer.getResource().getVersionid().intValue() + 1);
+			newResource.setVersionid(newVersion);
+			newResource.setResourcetype(resourceContainer.getResource().getResourcetype());
 			newResource.setStatus("valid");
-			newResource.setLastUser("system");
-			newResource.setLastUpdate(updatedTime);
+			newResource.setLastuser("system");
+			newResource.setLastupdate(updatedTime);
 
 			// Convert XML contents to Resource object and set id and meta
-			ByteArrayInputStream iResource = new ByteArrayInputStream(resource.getResourceContents());
+			ByteArrayInputStream iResource = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			XmlParser xmlP = new XmlParser();
 			xmlP.setOutputStyle(OutputStyle.PRETTY);
 			org.hl7.fhir.r4.model.Resource resourceObject = xmlP.parse(iResource);
@@ -1515,7 +1517,7 @@ public class ResourceService {
 
 			byte[] resourceBytes = xmlP.composeBytes(resourceObject);
 
-			newResource.setResourceContents(resourceBytes);
+			newResource.setResourcecontents(new String(resourceBytes, Charset.forName("UTF-8")));
 
 			/*
 			 *  TRANSACTION BEGIN
@@ -1525,7 +1527,7 @@ public class ResourceService {
 			resourceEventSrc.fire(newResource);
 
 			// Extract base url from update path
-			baseUrl = ServicesUtil.INSTANCE.extractBaseURL(baseUrl, resource.getResourceType());
+			baseUrl = ServicesUtil.INSTANCE.extractBaseURL(baseUrl, resource.getResourcetype());
 
 			// Generate the list of Resourcemetadata objects for the new Resource
 			List<Resourcemetadata> resourcemetadataList = resourcemetadataService.generateAllForResource(newResource, baseUrl, this);
@@ -1559,7 +1561,7 @@ public class ResourceService {
 		log.fine("[START] ResourceService.jsonPatch");
 
 		boolean isTestOnly = false;
-		String resourceId = resourceContainer.getResource().getResourceId();
+		String resourceId = resourceContainer.getResource().getResourceid();
 		net.aegis.fhir.model.Resource resource = resourceContainer.getResource();
 		org.hl7.fhir.r4.model.Resource newResourceObject = null;
 		String resourceMessage = null;
@@ -1569,7 +1571,7 @@ public class ResourceService {
 
 		try {
 			// Convert XML contents to Resource object
-			ByteArrayInputStream iResource = new ByteArrayInputStream(resource.getResourceContents());
+			ByteArrayInputStream iResource = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			org.hl7.fhir.r4.model.Resource resourceObject = xmlParser.parse(iResource);
 
 			// Convert Resource object to be patched to a JSON string
@@ -1606,13 +1608,13 @@ public class ResourceService {
 
 				// the current version of this resource exists; create a new version
 				net.aegis.fhir.model.Resource newResource = new net.aegis.fhir.model.Resource();
-				newResource.setResourceId(resourceId);
-				Integer newVersion = Integer.valueOf(resourceContainer.getResource().getVersionId().intValue() + 1);
-				newResource.setVersionId(newVersion);
-				newResource.setResourceType(resourceContainer.getResource().getResourceType());
+				newResource.setResourceid(resourceId);
+				Integer newVersion = Integer.valueOf(resourceContainer.getResource().getVersionid().intValue() + 1);
+				newResource.setVersionid(newVersion);
+				newResource.setResourcetype(resourceContainer.getResource().getResourcetype());
 				newResource.setStatus("valid");
-				newResource.setLastUser("system");
-				newResource.setLastUpdate(updatedTime);
+				newResource.setLastuser("system");
+				newResource.setLastupdate(updatedTime);
 
 				// Set id and meta on new resource object
 				newResourceObject.setId(resourceId);
@@ -1625,7 +1627,7 @@ public class ResourceService {
 				xmlParser.setOutputStyle(OutputStyle.PRETTY);
 				byte[] resourceBytes = xmlParser.composeBytes(newResourceObject);
 
-				newResource.setResourceContents(resourceBytes);
+				newResource.setResourcecontents(new String(resourceBytes, Charset.forName("UTF-8")));
 
 				/*
 				 *  TRANSACTION BEGIN
@@ -1654,7 +1656,7 @@ public class ResourceService {
 				byte[] resourceBytes = xmlParser.composeBytes(newResourceObject);
 
 				resourceContainer.setResponseStatus(Response.Status.OK);
-				resourceContainer.getResource().setResourceContents(resourceBytes);
+				resourceContainer.getResource().setResourcecontents(new String(resourceBytes, Charset.forName("UTF-8")));
 			}
 		}
 		else {
@@ -1679,7 +1681,7 @@ public class ResourceService {
 
 		log.fine("[START] ResourceService.xmlPatch");
 
-		String resourceId = resourceContainer.getResource().getResourceId();
+		String resourceId = resourceContainer.getResource().getResourceid();
 		net.aegis.fhir.model.Resource resource = resourceContainer.getResource();
 		org.hl7.fhir.r4.model.Resource newResourceObject = null;
 		String resourceMessage = null;
@@ -1689,7 +1691,7 @@ public class ResourceService {
 
 		try {
 			// Convert XML contents to String
-			String xmlSourceString = new String(resource.getResourceContents());
+			String xmlSourceString = new String(resource.getResourcecontents().getBytes("UTF-8"));
 
 			log.fine("XML Source String: " + xmlSourceString);
 
@@ -1715,13 +1717,13 @@ public class ResourceService {
 
 			// the current version of this resource exists; create a new version
 			net.aegis.fhir.model.Resource newResource = new net.aegis.fhir.model.Resource();
-			newResource.setResourceId(resourceId);
-			Integer newVersion = Integer.valueOf(resourceContainer.getResource().getVersionId().intValue() + 1);
-			newResource.setVersionId(newVersion);
-			newResource.setResourceType(resourceContainer.getResource().getResourceType());
+			newResource.setResourceid(resourceId);
+			Integer newVersion = Integer.valueOf(resourceContainer.getResource().getVersionid().intValue() + 1);
+			newResource.setVersionid(newVersion);
+			newResource.setResourcetype(resourceContainer.getResource().getResourcetype());
 			newResource.setStatus("valid");
-			newResource.setLastUser("system");
-			newResource.setLastUpdate(updatedTime);
+			newResource.setLastuser("system");
+			newResource.setLastupdate(updatedTime);
 
 			// Set id and meta on new resource object
 			newResourceObject.setId(resourceId);
@@ -1734,7 +1736,7 @@ public class ResourceService {
 			xmlParser.setOutputStyle(OutputStyle.PRETTY);
 			byte[] resourceBytes = xmlParser.composeBytes(newResourceObject);
 
-			newResource.setResourceContents(resourceBytes);
+			newResource.setResourcecontents(new String(resourceBytes, Charset.forName("UTF-8")));
 
 			/*
 			 *  TRANSACTION BEGIN
@@ -1929,7 +1931,7 @@ public class ResourceService {
 
 						// First, populate the _matchedId list for use in _include and _revInclude duplicate check
 						for (net.aegis.fhir.model.Resource resourceEntry : resources) {
-							_matchedId.add(resourceEntry.getResourceType() + "/" + resourceEntry.getResourceId());
+							_matchedId.add(resourceEntry.getResourcetype() + "/" + resourceEntry.getResourceid());
 						}
 
 						// Extract base url from locationPath for use in Bundle.entry.fullUrl element
@@ -2069,7 +2071,7 @@ public class ResourceService {
 							BundleEntryComponent bundleEntry = new BundleEntryComponent();
 
 							// Build and set Bundle.entry.fullUrl
-							fullUrl = baseUrl + resourceEntry.getResourceType() + "/" + resourceEntry.getResourceId();
+							fullUrl = baseUrl + resourceEntry.getResourcetype() + "/" + resourceEntry.getResourceid();
 							bundleEntry.setFullUrl(fullUrl);
 
 							// Check for _summary
@@ -2080,11 +2082,11 @@ public class ResourceService {
 								SummaryUtil.INSTANCE.generateResourceSummary(foundResource, summary_);
 
 								// Convert XML contents of copy to Resource object
-								iResource = new ByteArrayInputStream(foundResource.getResourceContents());
+								iResource = new ByteArrayInputStream(foundResource.getResourcecontents().getBytes("UTF-8"));
 							}
 							else {
 								// Convert XML contents to Resource object
-								iResource = new ByteArrayInputStream(resourceEntry.getResourceContents());
+								iResource = new ByteArrayInputStream(resourceEntry.getResourcecontents().getBytes("UTF-8"));
 							}
 
 							resourceObject = xmlP.parse(iResource);
@@ -2125,7 +2127,7 @@ public class ResourceService {
 									log.fine("--> _include is '" + source + ":" + (parameter != null ? parameter : "null") + ":" + (type != null ? type : "null") + "'");
 
 									// Proceed only if current resource type matches include source and we have a parameter
-									if (resourceEntry.getResourceType().equals(source) && parameter != null) {
+									if (resourceEntry.getResourcetype().equals(source) && parameter != null) {
 										log.fine("-->--> _include resource type match (" + source + "); _include parameter is reference (" + parameter + ")");
 
 										boolean isParamRef = false;
@@ -2136,11 +2138,11 @@ public class ResourceService {
 
 										// Check for wild card parameter
 										if (parameter.equals("*")) {
-											paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeLevel1Param(resourceEntry.getResourceId(), source);
+											paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeLevel1Param(resourceEntry.getResourceid(), source);
 										}
 										else {
 											// Query the resourcemetadata for the current resource parameter
-											paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeParam(resourceEntry.getResourceId(), source, parameter);
+											paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeParam(resourceEntry.getResourceid(), source, parameter);
 										}
 
 										if (paramMetaData != null && paramMetaData.size() > 0) {
@@ -2148,22 +2150,22 @@ public class ResourceService {
 
 											for (Resourcemetadata metadata : paramMetaData) {
 												if (parameter.equals("*")) {
-													resolvedParamEnd = metadata.getParamName().indexOf("[");
+													resolvedParamEnd = metadata.getParamname().indexOf("[");
 													if (resolvedParamEnd < 0) {
-														resolvedParamEnd = metadata.getParamName().length();
+														resolvedParamEnd = metadata.getParamname().length();
 													}
-													resolvedParameter = metadata.getParamName().substring(0, resolvedParamEnd);
+													resolvedParameter = metadata.getParamname().substring(0, resolvedParamEnd);
 												}
 												else {
 													resolvedParameter = parameter;
 												}
 												isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, resolvedParameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
-												if (isParamRef == true && !metadata.getParamValue().isEmpty()) {
-													log.fine("-->-->-->--> _include parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
+												if (isParamRef == true && !metadata.getParamvalue().isEmpty()) {
+													log.fine("-->-->-->--> _include parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamvalue() + ")");
 
 													// Extract resource type and id
-													String[] refParts = metadata.getParamValue().split("/");
+													String[] refParts = metadata.getParamvalue().split("/");
 
 													int refPartsLength = refParts.length;
 													if (refPartsLength > 1) {
@@ -2193,7 +2195,7 @@ public class ResourceService {
 																	bundleEntry.setFullUrl(fullUrl);
 
 																	// Convert XML contents to Resource object
-																	iResource = new ByteArrayInputStream(refResource.getResource().getResourceContents());
+																	iResource = new ByteArrayInputStream(refResource.getResource().getResourcecontents().getBytes("UTF-8"));
 
 																	resourceObject = xmlP.parse(iResource);
 
@@ -2254,7 +2256,7 @@ public class ResourceService {
 									log.fine("--> _include:iterate is '" + source + ":" + (parameter != null ? parameter : "null") + ":" + (type != null ? type : "null") + "'");
 
 									// Proceed only if current resource type matches include source and we have a parameter
-									if (resourceEntry.getResourceType().equals(source) && parameter != null) {
+									if (resourceEntry.getResourcetype().equals(source) && parameter != null) {
 										log.fine("-->--> _include:iterate resource type match (" + source + "); _include:iterate parameter is reference (" + parameter + ")");
 
 										boolean isParamRef = false;
@@ -2265,11 +2267,11 @@ public class ResourceService {
 
 										// Check for wild card parameter
 										if (parameter.equals("*")) {
-											paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeLevel1Param(resourceEntry.getResourceId(), source);
+											paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeLevel1Param(resourceEntry.getResourceid(), source);
 										}
 										else {
 											// Query the resourcemetadata for the current resource parameter
-											paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeParam(resourceEntry.getResourceId(), source, parameter);
+											paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeParam(resourceEntry.getResourceid(), source, parameter);
 										}
 
 										if (paramMetaData != null && paramMetaData.size() > 0) {
@@ -2277,22 +2279,22 @@ public class ResourceService {
 
 											for (Resourcemetadata metadata : paramMetaData) {
 												if (parameter.equals("*")) {
-													resolvedParamEnd = metadata.getParamName().indexOf("[");
+													resolvedParamEnd = metadata.getParamname().indexOf("[");
 													if (resolvedParamEnd < 0) {
-														resolvedParamEnd = metadata.getParamName().length();
+														resolvedParamEnd = metadata.getParamname().length();
 													}
-													resolvedParameter = metadata.getParamName().substring(0, resolvedParamEnd);
+													resolvedParameter = metadata.getParamname().substring(0, resolvedParamEnd);
 												}
 												else {
 													resolvedParameter = parameter;
 												}
 												isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, resolvedParameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
-												if (isParamRef == true && !metadata.getParamValue().isEmpty()) {
-													log.fine("-->-->-->--> _include:iterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
+												if (isParamRef == true && !metadata.getParamvalue().isEmpty()) {
+													log.fine("-->-->-->--> _include:iterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamvalue() + ")");
 
 													// Extract resource type and id
-													String[] refParts = metadata.getParamValue().split("/");
+													String[] refParts = metadata.getParamvalue().split("/");
 
 													int refPartsLength = refParts.length;
 													if (refPartsLength > 1) {
@@ -2322,7 +2324,7 @@ public class ResourceService {
 																	bundleEntry.setFullUrl(fullUrl);
 
 																	// Convert XML contents to Resource object
-																	iResource = new ByteArrayInputStream(refResource.getResource().getResourceContents());
+																	iResource = new ByteArrayInputStream(refResource.getResource().getResourcecontents().getBytes("UTF-8"));
 
 																	resourceObject = xmlP.parse(iResource);
 
@@ -2386,23 +2388,23 @@ public class ResourceService {
 									}
 
 									// Proceed based on revinclude source and current resource type
-									log.fine("-->--> _revinclude resource type (" + source + "); current resource type (" + resourceEntry.getResourceType() + ")");
+									log.fine("-->--> _revinclude resource type (" + source + "); current resource type (" + resourceEntry.getResourcetype() + ")");
 
 									// Proceed only if we have a parameter
 									if (parameter != null) {
 										boolean isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, parameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
 										if (isParamRef) {
-											log.fine("-->-->--> _revinclude parameter is reference (" + parameter + "); current resource id entry (" + resourceEntry.getResourceId() + ")");
+											log.fine("-->-->--> _revinclude parameter is reference (" + parameter + "); current resource id entry (" + resourceEntry.getResourceid() + ")");
 
 											// If type defined, check for current resource type match
-											if (type == null || resourceEntry.getResourceType().equals(type)) {
+											if (type == null || resourceEntry.getResourcetype().equals(type)) {
 												if (type != null) {
 													log.fine("-->-->-->-->--> _revinclude type match (" + type + ")");
 												}
 
 												// Build reverse search parameter
-												String revSearchParameter = parameter + "=" + resourceEntry.getResourceType() + "/" + resourceEntry.getResourceId();
+												String revSearchParameter = parameter + "=" + resourceEntry.getResourcetype() + "/" + resourceEntry.getResourceid();
 
 												// Convert search parameter string into queryParams map
 												List<NameValuePair> params = URLEncodedUtils.parse(revSearchParameter, Charset.defaultCharset());
@@ -2416,7 +2418,7 @@ public class ResourceService {
 													log.fine("-->-->-->--> _revinclude reverse search found matches (" + revSearch.size() + ")");
 
 													for (net.aegis.fhir.model.Resource revResource : revSearch) {
-														String revResourceCheckId = revResource.getResourceType() + "/" + revResource.getResourceId();
+														String revResourceCheckId = revResource.getResourcetype() + "/" + revResource.getResourceid();
 														log.fine("-->-->-->-->--> _revinclude resource (" + revResourceCheckId + ")");
 
 														// Check already _revincludedId and _matchedId lists for this revincluded resource; if found, skip
@@ -2436,11 +2438,11 @@ public class ResourceService {
 																SummaryUtil.INSTANCE.generateResourceSummary(foundRevResource, summary_);
 
 																// Convert XML contents of copy to Resource object
-																iResource = new ByteArrayInputStream(foundRevResource.getResourceContents());
+																iResource = new ByteArrayInputStream(foundRevResource.getResourcecontents().getBytes("UTF-8"));
 															}
 															else {
 																// Convert XML contents to Resource object
-																iResource = new ByteArrayInputStream(revResource.getResourceContents());
+																iResource = new ByteArrayInputStream(revResource.getResourcecontents().getBytes("UTF-8"));
 															}
 
 															resourceObject = xmlP.parse(iResource);
@@ -2688,22 +2690,22 @@ public class ResourceService {
 
 								for (Resourcemetadata metadata : paramMetaData) {
 									if (parameter.equals("*")) {
-										resolvedParamEnd = metadata.getParamName().indexOf("[");
+										resolvedParamEnd = metadata.getParamname().indexOf("[");
 										if (resolvedParamEnd < 0) {
-											resolvedParamEnd = metadata.getParamName().length();
+											resolvedParamEnd = metadata.getParamname().length();
 										}
-										resolvedParameter = metadata.getParamName().substring(0, resolvedParamEnd);
+										resolvedParameter = metadata.getParamname().substring(0, resolvedParamEnd);
 									}
 									else {
 										resolvedParameter = parameter;
 									}
 									isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, resolvedParameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
-									if (isParamRef == true && !metadata.getParamValue().isEmpty()) {
-										log.fine("-->-->-->--> _include parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
+									if (isParamRef == true && !metadata.getParamvalue().isEmpty()) {
+										log.fine("-->-->-->--> _include parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamvalue() + ")");
 
 										// Extract resource type and id
-										String[] refParts = metadata.getParamValue().split("/");
+										String[] refParts = metadata.getParamvalue().split("/");
 
 										int refPartsLength = refParts.length;
 										if (refPartsLength > 1) {
@@ -2733,7 +2735,7 @@ public class ResourceService {
 														bundleEntry.setFullUrl(fullUrl);
 
 														// Convert XML contents to Resource object
-														iResource = new ByteArrayInputStream(refResource.getResource().getResourceContents());
+														iResource = new ByteArrayInputStream(refResource.getResource().getResourcecontents().getBytes("UTF-8"));
 
 														resourceObject = xmlP.parse(iResource);
 
@@ -2817,22 +2819,22 @@ public class ResourceService {
 
 								for (Resourcemetadata metadata : paramMetaData) {
 									if (parameter.equals("*")) {
-										resolvedParamEnd = metadata.getParamName().indexOf("[");
+										resolvedParamEnd = metadata.getParamname().indexOf("[");
 										if (resolvedParamEnd < 0) {
-											resolvedParamEnd = metadata.getParamName().length();
+											resolvedParamEnd = metadata.getParamname().length();
 										}
-										resolvedParameter = metadata.getParamName().substring(0, resolvedParamEnd);
+										resolvedParameter = metadata.getParamname().substring(0, resolvedParamEnd);
 									}
 									else {
 										resolvedParameter = parameter;
 									}
 									isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, resolvedParameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
-									if (isParamRef == true && !metadata.getParamValue().isEmpty()) {
-										log.fine("-->-->-->--> _include:iterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
+									if (isParamRef == true && !metadata.getParamvalue().isEmpty()) {
+										log.fine("-->-->-->--> _include:iterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamvalue() + ")");
 
 										// Extract resource type and id
-										String[] refParts = metadata.getParamValue().split("/");
+										String[] refParts = metadata.getParamvalue().split("/");
 
 										int refPartsLength = refParts.length;
 										if (refPartsLength > 1) {
@@ -2862,7 +2864,7 @@ public class ResourceService {
 														bundleEntry.setFullUrl(fullUrl);
 
 														// Convert XML contents to Resource object
-														iResource = new ByteArrayInputStream(refResource.getResource().getResourceContents());
+														iResource = new ByteArrayInputStream(refResource.getResource().getResourcecontents().getBytes("UTF-8"));
 
 														resourceObject = xmlP.parse(iResource);
 
@@ -2932,22 +2934,22 @@ public class ResourceService {
 
 			for (Resourcemetadata metadata : paramMetaData) {
 				if (parameter.equals("*")) {
-					resolvedParamEnd = metadata.getParamName().indexOf("[");
+					resolvedParamEnd = metadata.getParamname().indexOf("[");
 					if (resolvedParamEnd < 0) {
-						resolvedParamEnd = metadata.getParamName().length();
+						resolvedParamEnd = metadata.getParamname().length();
 					}
-					resolvedParameter = metadata.getParamName().substring(0, resolvedParamEnd);
+					resolvedParameter = metadata.getParamname().substring(0, resolvedParamEnd);
 				}
 				else {
 					resolvedParameter = parameter;
 				}
 				isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, resolvedParameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
-				if (isParamRef == true && !metadata.getParamValue().isEmpty()) {
-					log.fine("-->-->-->--> includeIterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
+				if (isParamRef == true && !metadata.getParamvalue().isEmpty()) {
+					log.fine("-->-->-->--> includeIterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamvalue() + ")");
 
 					// Extract resource type and id
-					String[] refParts = metadata.getParamValue().split("/");
+					String[] refParts = metadata.getParamvalue().split("/");
 
 					int refPartsLength = refParts.length;
 					if (refPartsLength > 1) {
@@ -2977,7 +2979,7 @@ public class ResourceService {
 									bundleEntry.setFullUrl(fullUrl);
 
 									// Convert XML contents to Resource object
-									iResource = new ByteArrayInputStream(refResource.getResource().getResourceContents());
+									iResource = new ByteArrayInputStream(refResource.getResource().getResourcecontents().getBytes("UTF-8"));
 
 									resourceObject = xmlP.parse(iResource);
 
@@ -3049,27 +3051,27 @@ public class ResourceService {
 			String tempTableName = "temp" + UUIDUtil.getGUID();
 
 			// Build native query based on resource type and parameters
-			StringBuffer sbQuery = new StringBuffer("select r1.id, r1.resourceId, r1.versionId, r1.resourceType, r1.status, r1.lastUser, r1.lastUpdate, r1.resourceContents");
+			StringBuffer sbQuery = new StringBuffer("select r1.id, r1.resourceid, r1.versionid, r1.resourcetype, r1.status, r1.lastuser, r1.lastupdate, r1.resourcecontents");
 			StringBuffer sbCriteria = new StringBuffer(" from resource r1 where");
 
-			// FHIR-??? - SQL performance modifications: add engine=memory, remove unnecessary outer select * from () AS t1
-			//StringBuffer sbCreateTempTable = new StringBuffer("create temporary table ").append(tempTableName).append(" as select * from ( ");
-			StringBuffer sbCreateTempTable = new StringBuffer("create temporary table ").append(tempTableName).append(" engine=memory as ");
+			// SQL performance modifications: add engine=memory
+			//StringBuffer sbCreateTempTable = new StringBuffer("create temporary table ").append(tempTableName).append(" engine=memory as ");
+			StringBuffer sbCreateTempTable = new StringBuffer("create temporary table ").append(tempTableName).append(" as ");
 
 			StringBuffer sbCreateTempSelect = new StringBuffer("select rm.resourceJoinId as id from resourcemetadata rm"); // Append " where " when combining
 			StringBuffer sbCreateTempWhereJoin = new StringBuffer(" "); // If where join length > 5 then append " and " when combining
 			StringBuffer sbCreateTempWhereCriteria = new StringBuffer("");
 
-			sbDropTempTable.append("drop temporary table ").append(tempTableName);
+			sbDropTempTable.append("drop table ").append(tempTableName);
 
 			if (resourceType != null && !resourceType.isEmpty()) {
-				sbCriteria.append(" r1.resourceType = '").append(resourceType).append("'").append(" and r1.status = 'valid'");
-				sbCriteria.append(" and r1.versionId = (select max(r2.versionId) from resource r2 where r2.resourceType = '").append(resourceType).append("' and r2.resourceId = r1.resourceId)");
+				sbCriteria.append(" r1.resourcetype = '").append(resourceType).append("'").append(" and r1.status = 'valid'");
+				sbCriteria.append(" and r1.versionid = (select max(r2.versionid) from resource r2 where r2.resourcetype = '").append(resourceType).append("' and r2.resourceid = r1.resourceid)");
 			}
 			else {
 				resourceType = null;
 				sbCriteria.append(" r1.status = 'valid'");
-				sbCriteria.append(" and r1.versionId = (select max(r2.versionId) from resource r2 where r2.resourceType = r1.resourceType and r2.resourceId = r1.resourceId)");
+				sbCriteria.append(" and r1.versionid = (select max(r2.versionid) from resource r2 where r2.resourcetype = r1.resourcetype and r2.resourceid = r1.resourceid)");
 			}
 
 			List<Entry<String, List<String>>> compartmentSet = new ArrayList<Entry<String, List<String>>>();
@@ -3113,10 +3115,10 @@ public class ResourceService {
 							int idListCount = idList.length;
 
 							if (idListCount == 1) {
-								sbCriteria.append(" and r1.resourceId = '").append(value).append("'");
+								sbCriteria.append(" and r1.resourceid = '").append(value).append("'");
 							}
 							else {
-								sbCriteria.append(" and r1.resourceId IN ('");
+								sbCriteria.append(" and r1.resourceid IN ('");
 								for (String idValue : idList) {
 									sbCriteria.append(idValue);
 
@@ -3567,20 +3569,20 @@ public class ResourceService {
 											if (iExists > 1) {
 												sbCreateTempWhereJoin.append(" and ");
 											}
-											sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
+											sbCreateTempWhereJoin.append(sExists).append(".resourceJoinid = rm.resourceJoinid");
 										}
 
 										if (utcDateUtil.hasTimeZone(value)) {
 											stringValue = utcDateUtil.formatDate(dateValue, UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getTimeZone(UTCDateUtil.TIME_ZONE_UTC));
 
 											sbCreateTempWhereCriteria.append("(")
-												.append(sExists).append(".paramName = '_lastUpdated' and ").append(sExists).append(".paramValue >= '").append(stringValue).append("')");
+												.append(sExists).append(".paramname = '_lastUpdated' and ").append(sExists).append(".paramvalue >= '").append(stringValue).append("')");
 										}
 										else {
 											stringValue = utcDateUtil.formatDate(dateValue, UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getDefault());
 	
 											sbCreateTempWhereCriteria.append("(")
-												.append(sExists).append(".paramName = '_lastUpdated' and ").append(sExists).append(".codeValue >= '").append(stringValue).append("')");
+												.append(sExists).append(".paramname = '_lastUpdated' and ").append(sExists).append(".codevalue >= '").append(stringValue).append("')");
 										}
 									}
 									else {
@@ -3630,7 +3632,7 @@ public class ResourceService {
 										}
 
 										if (sbInvalidTypes.isEmpty()) {
-											sbCriteria.append(" and r1.resourceType IN (");
+											sbCriteria.append(" and r1.resourcetype IN (");
 											typeCount = 0;
 											for (String type : typeArray) {
 												if (typeCount > 0) {
@@ -3687,10 +3689,10 @@ public class ResourceService {
 								if (value != null && value.length() > 0) {
 									if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
 										if (value.equalsIgnoreCase("true")) {
-											sbCriteria.append(" and r1.id NOT IN (select rm.resourceJoinId as id from resourcemetadata rm where rm.paramName = '").append(key).append("')");
+											sbCriteria.append(" and r1.id NOT IN (select rm.resourcejoinid as id from resourcemetadata rm where rm.paramname = '").append(key).append("')");
 										}
 										else if (value.equalsIgnoreCase("false")) {
-											sbCriteria.append(" and r1.id IN (select rm.resourceJoinId as id from resourcemetadata rm where rm.paramName = '").append(key).append("')");
+											sbCriteria.append(" and r1.id IN (select rm.resourcejoinid as id from resourcemetadata rm where rm.paramname = '").append(key).append("')");
 										}
 									}
 									else {
@@ -3728,10 +3730,10 @@ public class ResourceService {
 										key = key.substring(0, key.indexOf(":missing"));
 
 										if (value.equalsIgnoreCase("true")) {
-											sbCriteria.append(" and r1.id NOT IN (select rm.resourceJoinId as id from resourcemetadata rm where rm.paramName = '").append(key).append("')");
+											sbCriteria.append(" and r1.id NOT IN (select rm.resourcejoinid as id from resourcemetadata rm where rm.paramname = '").append(key).append("')");
 										}
 										else if (value.equalsIgnoreCase("false")) {
-											sbCriteria.append(" and r1.id IN (select rm.resourceJoinId as id from resourcemetadata rm where rm.paramName = '").append(key).append("')");
+											sbCriteria.append(" and r1.id IN (select rm.resourcejoinid as id from resourcemetadata rm where rm.paramname = '").append(key).append("')");
 										}
 									}
 									else {
@@ -3776,10 +3778,10 @@ public class ResourceService {
 										if (iExists > 1) {
 											sbCreateTempWhereJoin.append(" and ");
 										}
-										sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
+										sbCreateTempWhereJoin.append(sExists).append(".resourcejoinid = rm.resourcejoinid");
 									}
-									sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramName = '")
-										.append(key).append("' and ").append(sExists).append(".paramValue like '").append(sqValue.toUpperCase()).append("')");
+									sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramname = '")
+										.append(key).append("' and ").append(sExists).append(".paramvalue = '").append(sqValue).append("')");
 								}
 								else {
 									invalidParam = new String[2];
@@ -3810,10 +3812,10 @@ public class ResourceService {
 										if (iExists > 1) {
 											sbCreateTempWhereJoin.append(" and ");
 										}
-										sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
+										sbCreateTempWhereJoin.append(sExists).append(".resourcejoinid = rm.resourcejoinid");
 									}
-									sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramName = '")
-										.append(key).append("' and ").append(sExists).append(".textValueU like '%").append(sqValue.toUpperCase()).append("%')");
+									sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramname = '")
+										.append(key).append("' and ").append(sExists).append(".textvalueu like '%").append(sqValue.toUpperCase()).append("%')");
 								}
 								else {
 									invalidParam = new String[2];
@@ -3853,11 +3855,11 @@ public class ResourceService {
 											if (iExists > 1) {
 												sbCreateTempWhereJoin.append(" and ");
 											}
-											sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
+											sbCreateTempWhereJoin.append(sExists).append(".resourcejoinid = rm.resourcejoinid");
 										}
 
-										sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramName = '")
-											.append("age' and ").append(sExists).append(".codeValue >= '").append(stringStartValue).append("' and ").append(sExists).append(".codeValue <= '")
+										sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramname = '")
+											.append("age' and ").append(sExists).append(".codevalue >= '").append(stringStartValue).append("' and ").append(sExists).append(".codevalue <= '")
 												.append(stringEndValue).append("')");
 									}
 									else {
@@ -3900,10 +3902,10 @@ public class ResourceService {
 										if (iExists > 1) {
 											sbCreateTempWhereJoin.append(" and ");
 										}
-										sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
+										sbCreateTempWhereJoin.append(sExists).append(".resourcejoinid = rm.resourcejoinid");
 									}
-									sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramName = '")
-										.append(key).append("' and ").append(sExists).append(".paramValue like '%").append(sqValue).append("%')");
+									sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramname = '")
+										.append(key).append("' and ").append(sExists).append(".paramvalue like '%").append(sqValue).append("%')");
 								}
 								else {
 									invalidParam = new String[2];
@@ -4064,7 +4066,7 @@ public class ResourceService {
 								}
 
 								if (value != null & value.length() > 0) {
-									log.fine("resourceType = '" + (resourceType == null ? "null" : resourceType) + "'; key = '" + key + "'; value = '" + value + "'");
+									log.fine("resourcetype = '" + (resourceType == null ? "null" : resourceType) + "'; key = '" + key + "'; value = '" + value + "'");
 									// Initialize TimeZones
 									TimeZone timeZoneDefault = TimeZone.getDefault();
 									TimeZone timeZoneUTC = TimeZone.getTimeZone(UTCDateUtil.TIME_ZONE_UTC);
@@ -4356,13 +4358,13 @@ public class ResourceService {
 											if (iExists > 1) {
 												sbCreateTempWhereJoin.append(" and ");
 											}
-											sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
+											sbCreateTempWhereJoin.append(sExists).append(".resourcejoinid = rm.resourcejoinid");
 										}
 										if (valueListCount == 1) {
-											sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramName = '").append(key).append("' and");
+											sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramname = '").append(key).append("' and");
 										}
 										else {
-											sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramName = '").append(key).append("' and ((");
+											sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramname = '").append(key).append("' and ((");
 										}
 
 										for (String listValue : validValueList) {
@@ -4384,9 +4386,9 @@ public class ResourceService {
 											String lowRangeValue = "";
 											String highRangeValue = "";
 											Integer dateFormatLength = Integer.valueOf(14);
-											String dateParamValueColName = sExists + ".paramValue";
-											String periodStartValueColName = sExists + ".paramValue";
-											String periodEndValueColName = sExists + ".systemValue";
+											String dateParamValueColName = sExists + ".paramvalue";
+											String periodStartValueColName = sExists + ".paramvalue";
+											String periodEndValueColName = sExists + ".systemvalue";
 
 											/*
 											 * Process system|value|code if found
@@ -4450,16 +4452,16 @@ public class ResourceService {
 																if (utcDateUtil.hasTimeZone(prefixValue)) {
 																	prefixValue = utcDateUtil.formatDate(dateValue, UTCDateUtil.DATETIME_SORT_FORMAT, timeZoneUTC);
 
-																	dateParamValueColName = sExists + ".paramValue";
-																	periodStartValueColName = sExists + ".paramValue";
-																	periodEndValueColName = sExists + ".systemValue";
+																	dateParamValueColName = sExists + ".paramvalue";
+																	periodStartValueColName = sExists + ".paramvalue";
+																	periodEndValueColName = sExists + ".systemvalue";
 																}
 																else {
 																	prefixValue = utcDateUtil.formatDate(dateValue, UTCDateUtil.DATETIME_SORT_FORMAT, timeZoneDefault, dateFormatLength);
 
-																	dateParamValueColName = sExists + ".codeValue";
-																	periodStartValueColName = sExists + ".codeValue";
-																	periodEndValueColName = sExists + ".textValue";
+																	dateParamValueColName = sExists + ".codevalue";
+																	periodStartValueColName = sExists + ".codevalue";
+																	periodEndValueColName = sExists + ".textvalue";
 																}
 															}
 
@@ -4476,8 +4478,8 @@ public class ResourceService {
 															if (prefixControl.equals("eq") || prefixControl.equals("sa") || prefixControl.equals("eb") || prefixControl.equals("ap")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) >= ").append(lowRangeValue)
-																		.append(" AND CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) <= ").append(highRangeValue).append(")");
+																	sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) >= ").append(lowRangeValue)
+																		.append(" AND CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) <= ").append(highRangeValue).append(")");
 																}
 																else if (isPeriodType) {
 																	// isPeriodType EQUALS, APPROXIMATE
@@ -4501,23 +4503,23 @@ public class ResourceService {
 																	// isDateType - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
 																	// -- EQUALS, APPROXIMATE
 																	if (prefixControl.equals("eq") || prefixControl.equals("ap")) {
-																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodStartValueColName)
+																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND ").append(periodStartValueColName)
 																			.append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '").append(lowRangeValue).append("' AND ")
 																			.append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '")
-																			.append(highRangeValue).append("') OR (").append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" >= '")
+																			.append(highRangeValue).append("') OR (").append(sExists).append(".paramtype = 'DATE' AND ").append(dateParamValueColName).append(" >= '")
 																			.append(lowRangeValue).append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))");
 																	}
 																	// -- STARTS AFTER
 																	if (prefixControl.equals("sa")) {
-																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodStartValueColName)
+																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND ").append(periodStartValueColName)
 																			.append(" IS NOT NULL AND ").append(periodStartValueColName).append(" > '").append(highRangeValue).append("') OR (")
-																			.append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" > '").append(highRangeValue).append("'))");
+																			.append(sExists).append(".paramtype = 'DATE' AND ").append(dateParamValueColName).append(" > '").append(highRangeValue).append("'))");
 																	}
 																	// -- ENDS BEFORE
 																	if (prefixControl.equals("eb")) {
-																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodEndValueColName)
+																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND ").append(periodEndValueColName)
 																			.append(" IS NOT NULL AND ").append(periodEndValueColName).append(" < '").append(lowRangeValue).append("') OR (")
-																			.append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" < '").append(lowRangeValue).append("'))");
+																			.append(sExists).append(".paramtype = 'DATE' AND ").append(dateParamValueColName).append(" < '").append(lowRangeValue).append("'))");
 																	}
 																}
 																splitCriteriaWritten = true;
@@ -4528,8 +4530,8 @@ public class ResourceService {
 															else if (prefixControl.equals("ne")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) > ").append(lowRangeValue)
-																		.append(" OR CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) < ").append(highRangeValue).append(")");
+																	sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) > ").append(lowRangeValue)
+																		.append(" OR CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) < ").append(highRangeValue).append(")");
 																}
 																else if (isPeriodType) {
 																	// isPeriodType NOT EQUALS
@@ -4540,10 +4542,10 @@ public class ResourceService {
 																}
 																else {
 																	// isDateType NOT EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ((").append(periodStartValueColName)
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtType = 'PERIOD' AND ((").append(periodStartValueColName)
 																		.append(" IS NULL OR ").append(periodEndValueColName).append(" IS NULL) OR ((").append(periodStartValueColName).append(" IS NOT NULL AND ")
 																		.append(periodStartValueColName).append(" < '").append(lowRangeValue).append("') OR (").append(periodEndValueColName).append(" IS NOT NULL AND ")
-																		.append(periodEndValueColName).append(" > '").append(highRangeValue).append("')))) OR (").append(sExists).append(".paramType = 'DATE' AND (")
+																		.append(periodEndValueColName).append(" > '").append(highRangeValue).append("')))) OR (").append(sExists).append(".paramtype = 'DATE' AND (")
 																		.append(dateParamValueColName).append(" < '").append(lowRangeValue).append("' OR ").append(dateParamValueColName).append(" > '")
 																		.append(highRangeValue).append("')))");
 																}
@@ -4555,7 +4557,7 @@ public class ResourceService {
 															else if (prefixControl.equals("gt")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) > ").append(highRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) > ").append(highRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType GREATER THAN
@@ -4564,9 +4566,9 @@ public class ResourceService {
 																}
 																else {
 																	// isDateType GREATER THAN - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND (").append(periodEndValueColName)
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND (").append(periodEndValueColName)
 																		.append(" IS NULL or ").append(periodEndValueColName).append(" > '").append(highRangeValue).append("')) OR (").append(sExists)
-																		.append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" > '").append(highRangeValue).append("'))");
+																		.append(".paramtype = 'DATE' AND ").append(dateParamValueColName).append(" > '").append(highRangeValue).append("'))");
 																}
 																splitCriteriaWritten = true;
 															}
@@ -4576,7 +4578,7 @@ public class ResourceService {
 															else if (prefixControl.equals("lt")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) < ").append(lowRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) < ").append(lowRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType LESS THAN
@@ -4585,9 +4587,9 @@ public class ResourceService {
 																}
 																else {
 																	// isDateType LESS THAN - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and (").append(periodStartValueColName)
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' and (").append(periodStartValueColName)
 																		.append(" IS NULL OR ").append(periodStartValueColName).append(" < '").append(lowRangeValue).append("')) OR (")
-																		.append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" < '").append(lowRangeValue).append("'))");
+																		.append(sExists).append(".paramtype = 'DATE' AND ").append(dateParamValueColName).append(" < '").append(lowRangeValue).append("'))");
 																}
 																splitCriteriaWritten = true;
 															}
@@ -4597,7 +4599,7 @@ public class ResourceService {
 															else if (prefixControl.equals("ge")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) >= ").append(highRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) >= ").append(highRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType GREATER THAN OR EQUALS
@@ -4608,11 +4610,11 @@ public class ResourceService {
 																}
 																else {
 																	// isDateType GREATER THAN OR EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ((").append(periodEndValueColName)
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND ((").append(periodEndValueColName)
 																		.append(" IS NULL OR ").append(periodEndValueColName).append(" > '").append(highRangeValue).append("') OR (")
 																		.append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '").append(lowRangeValue)
 																		.append("' AND ").append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '")
-																		.append(highRangeValue).append("'))) OR (").append(sExists).append(".paramType = 'DATE' AND ((").append(dateParamValueColName)
+																		.append(highRangeValue).append("'))) OR (").append(sExists).append(".paramtype = 'DATE' AND ((").append(dateParamValueColName)
 																		.append(" >= '").append(highRangeValue).append("') OR (").append(dateParamValueColName).append(" >= '").append(lowRangeValue)
 																		.append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))))");
 																}
@@ -4624,7 +4626,7 @@ public class ResourceService {
 															else if (prefixControl.equals("le")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) <= ").append(lowRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) <= ").append(lowRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType LESS THAN OR EQUALS
@@ -4635,11 +4637,11 @@ public class ResourceService {
 																}
 																else {
 																	// isDateType LESS THAN OR EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ((").append(periodStartValueColName)
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND ((").append(periodStartValueColName)
 																		.append(" IS NULL OR ").append(periodStartValueColName).append(" < '").append(lowRangeValue).append("') OR (")
 																		.append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '")
 																		.append(lowRangeValue).append("' AND ").append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName)
-																		.append(" <= '").append(highRangeValue).append("'))) OR (").append(sExists).append(".paramType = 'DATE' AND ((")
+																		.append(" <= '").append(highRangeValue).append("'))) OR (").append(sExists).append(".paramtype = 'DATE' AND ((")
 																		.append(dateParamValueColName).append(" <= '").append(lowRangeValue).append("') OR (").append(dateParamValueColName).append(" >= '")
 																		.append(lowRangeValue).append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))))");
 																}
@@ -4671,16 +4673,16 @@ public class ResourceService {
 															if (utcDateUtil.hasTimeZone(pairValue)) {
 																pairValue = utcDateUtil.formatDate(dateValue, UTCDateUtil.DATETIME_SORT_FORMAT, timeZoneUTC);
 
-																dateParamValueColName = sExists + ".paramValue";
-																periodStartValueColName = sExists + ".paramValue";
-																periodEndValueColName = sExists + ".systemValue";
+																dateParamValueColName = sExists + ".paramvalue";
+																periodStartValueColName = sExists + ".paramvalue";
+																periodEndValueColName = sExists + ".systemvalue";
 															}
 															else {
 																pairValue = utcDateUtil.formatDate(dateValue, UTCDateUtil.DATETIME_SORT_FORMAT, timeZoneDefault, dateFormatLength);
 
-																dateParamValueColName = sExists + ".codeValue";
-																periodStartValueColName = sExists + ".codeValue";
-																periodEndValueColName = sExists + ".textValue";
+																dateParamValueColName = sExists + ".codevalue";
+																periodStartValueColName = sExists + ".codevalue";
+																periodEndValueColName = sExists + ".textvalue";
 															}
 														}
 
@@ -4695,8 +4697,8 @@ public class ResourceService {
 														}
 														if (isNumericType || isQuantityType) {
 															// Value is numeric, do not enclose value in quotes
-															sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) >= ").append(lowRangeValue)
-																.append(" and CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) <= ").append(highRangeValue).append(")");
+															sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) >= ").append(lowRangeValue)
+																.append(" and CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) <= ").append(highRangeValue).append(")");
 														}
 														else if (isPeriodType) {
 															// isPeriodType DEFAULT TO EQUALS
@@ -4706,10 +4708,10 @@ public class ResourceService {
 														}
 														else {
 															// isDateType DEFAULT TO EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-															sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodStartValueColName)
+															sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND ").append(periodStartValueColName)
 																.append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '").append(lowRangeValue).append("' AND ")
 																.append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '")
-																.append(highRangeValue).append("') OR (").append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" >= '")
+																.append(highRangeValue).append("') OR (").append(sExists).append(".paramtype = 'DATE' AND ").append(dateParamValueColName).append(" >= '")
 																.append(lowRangeValue).append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))");
 														}
 													}
@@ -4717,7 +4719,7 @@ public class ResourceService {
 												else {
 													// FHIR-164/KT-130 - exclude paramValue criteria if empty
 													if (!StringUtils.isEmpty(pairValue)) {
-														sbCreateTempWhereCriteria.append(" ").append(sExists).append(".paramValue = '").append(pairValue).append("'");
+														sbCreateTempWhereCriteria.append(" ").append(sExists).append(".paramvalue = '").append(pairValue).append("'");
 													}
 													else {
 														sbCreateTempWhereCriteria.append(" 1 = 1");
@@ -4725,10 +4727,10 @@ public class ResourceService {
 												}
 
 												if (!StringUtils.isEmpty(pairNamespace)) {
-													sbCreateTempWhereCriteria.append(" and ").append(sExists).append(".systemValue = '").append(pairNamespace).append("'");
+													sbCreateTempWhereCriteria.append(" and ").append(sExists).append(".systemvalue = '").append(pairNamespace).append("'");
 												}
 												if (!StringUtils.isEmpty(pairCodeValue)) {
-													sbCreateTempWhereCriteria.append(" and ").append(sExists).append(".codeValue = '").append(pairCodeValue).append("'");
+													sbCreateTempWhereCriteria.append(" and ").append(sExists).append(".codevalue = '").append(pairCodeValue).append("'");
 												}
 											}
 											/*
@@ -4766,16 +4768,16 @@ public class ResourceService {
 																if (utcDateUtil.hasTimeZone(prefixValue)) {
 																	prefixValue = utcDateUtil.formatDate(dateValue, UTCDateUtil.DATETIME_SORT_FORMAT, timeZoneUTC);
 
-																	dateParamValueColName = sExists + ".paramValue";
-																	periodStartValueColName = sExists + ".paramValue";
-																	periodEndValueColName = sExists + ".systemValue";
+																	dateParamValueColName = sExists + ".paramvalue";
+																	periodStartValueColName = sExists + ".paramvalue";
+																	periodEndValueColName = sExists + ".systemvalue";
 																}
 																else {
 																	prefixValue = utcDateUtil.formatDate(dateValue, UTCDateUtil.DATETIME_SORT_FORMAT, timeZoneDefault, dateFormatLength);
 
-																	dateParamValueColName = sExists + ".codeValue";
-																	periodStartValueColName = sExists + ".codeValue";
-																	periodEndValueColName = sExists + ".textValue";
+																	dateParamValueColName = sExists + ".codevalue";
+																	periodStartValueColName = sExists + ".codevalue";
+																	periodEndValueColName = sExists + ".textvalue";
 																}
 															}
 
@@ -4788,8 +4790,8 @@ public class ResourceService {
 															if (prefixControl.equals("eq") || prefixControl.equals("sa") || prefixControl.equals("eb") || prefixControl.equals("ap")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) >= ").append(lowRangeValue)
-																		.append(" AND CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) <= ").append(highRangeValue).append(")");
+																	sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) >= ").append(lowRangeValue)
+																		.append(" AND CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) <= ").append(highRangeValue).append(")");
 																}
 																else if (isPeriodType) {
 																	// isPeriodType EQUALS, APPROXIMATE
@@ -4813,23 +4815,23 @@ public class ResourceService {
 																	// isDateType - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
 																	// -- EQUALS, APPROXIMATE
 																	if (prefixControl.equals("eq") || prefixControl.equals("ap")) {
-																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodStartValueColName)
+																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND ").append(periodStartValueColName)
 																			.append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '").append(lowRangeValue).append("' AND ")
 																			.append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '")
-																			.append(highRangeValue).append("') OR (").append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" >= '")
+																			.append(highRangeValue).append("') OR (").append(sExists).append(".paramtype = 'DATE' AND ").append(dateParamValueColName).append(" >= '")
 																			.append(lowRangeValue).append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))");
 																	}
 																	// -- STARTS AFTER
 																	if (prefixControl.equals("sa")) {
-																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodStartValueColName)
+																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND ").append(periodStartValueColName)
 																			.append(" IS NOT NULL AND ").append(periodStartValueColName).append(" > '").append(highRangeValue).append("') OR (")
-																			.append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" > '").append(highRangeValue).append("'))");
+																			.append(sExists).append(".paramtype = 'DATE' AND ").append(dateParamValueColName).append(" > '").append(highRangeValue).append("'))");
 																	}
 																	// -- ENDS BEFORE
 																	if (prefixControl.equals("eb")) {
-																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodEndValueColName)
+																		sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND ").append(periodEndValueColName)
 																			.append(" IS NOT NULL AND ").append(periodEndValueColName).append(" < '").append(lowRangeValue).append("') OR (")
-																			.append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" < '").append(lowRangeValue).append("'))");
+																			.append(sExists).append(".paramtype = 'DATE' AND ").append(dateParamValueColName).append(" < '").append(lowRangeValue).append("'))");
 																	}
 																}
 																splitCriteriaWritten = true;
@@ -4840,8 +4842,8 @@ public class ResourceService {
 															else if (prefixControl.equals("ne")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) > ").append(lowRangeValue)
-																		.append(" OR CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) < ").append(highRangeValue).append(")");
+																	sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) > ").append(lowRangeValue)
+																		.append(" OR CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) < ").append(highRangeValue).append(")");
 																}
 																else if (isPeriodType) {
 																	// isPeriodType NOT EQUALS
@@ -4852,10 +4854,10 @@ public class ResourceService {
 																}
 																else {
 																	// isDateType NOT EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ((").append(periodStartValueColName)
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND ((").append(periodStartValueColName)
 																		.append(" IS NULL OR ").append(periodEndValueColName).append(" IS NULL) OR ((").append(periodStartValueColName).append(" IS NOT NULL AND ")
 																		.append(periodStartValueColName).append(" < '").append(lowRangeValue).append("') OR (").append(periodEndValueColName).append(" IS NOT NULL AND ")
-																		.append(periodEndValueColName).append(" > '").append(highRangeValue).append("')))) OR (").append(sExists).append(".paramType = 'DATE' AND (")
+																		.append(periodEndValueColName).append(" > '").append(highRangeValue).append("')))) OR (").append(sExists).append(".paramtype = 'DATE' AND (")
 																		.append(dateParamValueColName).append(" < '").append(lowRangeValue).append("' OR ").append(dateParamValueColName).append(" > '")
 																		.append(highRangeValue).append("')))");
 																}
@@ -4867,7 +4869,7 @@ public class ResourceService {
 															else if (prefixControl.equals("gt")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) > ").append(highRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) > ").append(highRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType GREATER THAN
@@ -4876,9 +4878,9 @@ public class ResourceService {
 																}
 																else {
 																	// isDateType GREATER THAN - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND (").append(periodEndValueColName)
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND (").append(periodEndValueColName)
 																		.append(" IS NULL or ").append(periodEndValueColName).append(" > '").append(highRangeValue).append("')) OR (").append(sExists)
-																		.append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" > '").append(highRangeValue).append("'))");
+																		.append(".paramtype = 'DATE' AND ").append(dateParamValueColName).append(" > '").append(highRangeValue).append("'))");
 																}
 																splitCriteriaWritten = true;
 															}
@@ -4888,7 +4890,7 @@ public class ResourceService {
 															else if (prefixControl.equals("lt")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) < ").append(lowRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) < ").append(lowRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType LESS THAN
@@ -4897,9 +4899,9 @@ public class ResourceService {
 																}
 																else {
 																	// isDateType LESS THAN - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' and (").append(periodStartValueColName)
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' and (").append(periodStartValueColName)
 																		.append(" IS NULL OR ").append(periodStartValueColName).append(" < '").append(lowRangeValue).append("')) OR (")
-																		.append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" < '").append(lowRangeValue).append("'))");
+																		.append(sExists).append(".paramtype = 'DATE' AND ").append(dateParamValueColName).append(" < '").append(lowRangeValue).append("'))");
 																}
 																splitCriteriaWritten = true;
 															}
@@ -4909,7 +4911,7 @@ public class ResourceService {
 															else if (prefixControl.equals("ge")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) >= ").append(highRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) >= ").append(highRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType GREATER THAN OR EQUALS
@@ -4920,11 +4922,11 @@ public class ResourceService {
 																}
 																else {
 																	// isDateType GREATER THAN OR EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ((").append(periodEndValueColName)
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND ((").append(periodEndValueColName)
 																		.append(" IS NULL OR ").append(periodEndValueColName).append(" > '").append(highRangeValue).append("') OR (")
 																		.append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '").append(lowRangeValue)
 																		.append("' AND ").append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '")
-																		.append(highRangeValue).append("'))) OR (").append(sExists).append(".paramType = 'DATE' AND ((").append(dateParamValueColName)
+																		.append(highRangeValue).append("'))) OR (").append(sExists).append(".paramtype = 'DATE' AND ((").append(dateParamValueColName)
 																		.append(" >= '").append(highRangeValue).append("') OR (").append(dateParamValueColName).append(" >= '").append(lowRangeValue)
 																		.append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))))");
 																}
@@ -4936,7 +4938,7 @@ public class ResourceService {
 															else if (prefixControl.equals("le")) {
 																if (isNumericType || isQuantityType) {
 																	// Value is numeric, do not enclose value in quotes
-																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) <= ").append(lowRangeValue);
+																	sbCreateTempWhereCriteria.append(" CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) <= ").append(lowRangeValue);
 																}
 																else if (isPeriodType) {
 																	// isPeriodType LESS THAN OR EQUALS
@@ -4947,11 +4949,11 @@ public class ResourceService {
 																}
 																else {
 																	// isDateType LESS THAN OR EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ((").append(periodStartValueColName)
+																	sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND ((").append(periodStartValueColName)
 																		.append(" IS NULL OR ").append(periodStartValueColName).append(" < '").append(lowRangeValue).append("') OR (")
 																		.append(periodStartValueColName).append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '")
 																		.append(lowRangeValue).append("' AND ").append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName)
-																		.append(" <= '").append(highRangeValue).append("'))) OR (").append(sExists).append(".paramType = 'DATE' AND ((")
+																		.append(" <= '").append(highRangeValue).append("'))) OR (").append(sExists).append(".paramtype = 'DATE' AND ((")
 																		.append(dateParamValueColName).append(" <= '").append(lowRangeValue).append("') OR (").append(dateParamValueColName).append(" >= '")
 																		.append(lowRangeValue).append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))))");
 																}
@@ -4983,16 +4985,16 @@ public class ResourceService {
 															if (utcDateUtil.hasTimeZone(listValue)) {
 																listValue = utcDateUtil.formatDate(dateValue, UTCDateUtil.DATETIME_SORT_FORMAT, timeZoneUTC);
 
-																dateParamValueColName = sExists + ".paramValue";
-																periodStartValueColName = sExists + ".paramValue";
-																periodEndValueColName = sExists + ".systemValue";
+																dateParamValueColName = sExists + ".paramvalue";
+																periodStartValueColName = sExists + ".paramvalue";
+																periodEndValueColName = sExists + ".systemvalue";
 															}
 															else {
 																listValue = utcDateUtil.formatDate(dateValue, UTCDateUtil.DATETIME_SORT_FORMAT, timeZoneDefault, dateFormatLength);
 
-																dateParamValueColName = sExists + ".codeValue";
-																periodStartValueColName = sExists + ".codeValue";
-																periodEndValueColName = sExists + ".textValue";
+																dateParamValueColName = sExists + ".codevalue";
+																periodStartValueColName = sExists + ".codevalue";
+																periodEndValueColName = sExists + ".textvalue";
 															}
 														}
 
@@ -5007,8 +5009,8 @@ public class ResourceService {
 														}
 														if (isNumericType || isQuantityType) {
 															// Value is numeric, do not enclose value in quotes
-															sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) >= ").append(lowRangeValue)
-																.append(" and CAST(").append(sExists).append(".paramValue AS DECIMAL(30,15)) <= ").append(highRangeValue).append(")");
+															sbCreateTempWhereCriteria.append(" (CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) >= ").append(lowRangeValue)
+																.append(" and CAST(").append(sExists).append(".paramvalue AS DECIMAL(30,15)) <= ").append(highRangeValue).append(")");
 														}
 														else if (isPeriodType) {
 															// isPeriodType DEFAULT TO EQUALS
@@ -5018,10 +5020,10 @@ public class ResourceService {
 														}
 														else {
 															// isDateType DEFAULT TO EQUALS - must check actual paramType in criteria; if PERIOD, apply isPeriodType logic
-															sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramType = 'PERIOD' AND ").append(periodStartValueColName)
+															sbCreateTempWhereCriteria.append(" ((").append(sExists).append(".paramtype = 'PERIOD' AND ").append(periodStartValueColName)
 																.append(" IS NOT NULL AND ").append(periodStartValueColName).append(" >= '").append(lowRangeValue).append("' AND ")
 																.append(periodEndValueColName).append(" IS NOT NULL AND ").append(periodEndValueColName).append(" <= '")
-																.append(highRangeValue).append("') OR (").append(sExists).append(".paramType = 'DATE' AND ").append(dateParamValueColName).append(" >= '")
+																.append(highRangeValue).append("') OR (").append(sExists).append(".paramtype = 'DATE' AND ").append(dateParamValueColName).append(" >= '")
 																.append(lowRangeValue).append("' AND ").append(dateParamValueColName).append(" <= '").append(highRangeValue).append("'))");
 														}
 													}
@@ -5032,25 +5034,23 @@ public class ResourceService {
 													 */
 													if (isStringType) {
 														// CASE-INSENSITIVE, STARTS WITH OR EXACT MATCH
-														sbCreateTempWhereCriteria.append(" ").append(sExists).append(".paramValueU like '").append(listValue.toUpperCase()).append("%'");
+														sbCreateTempWhereCriteria.append(" ").append(sExists).append(".paramvalueu like '").append(listValue.toUpperCase()).append("%'");
 													}
 													else if (isTokenType) {
 														// CASE-INSENSITIVE, EXACT MATCH
-														sbCreateTempWhereCriteria.append(" ").append(sExists).append(".paramValueU = '").append(listValue.toUpperCase()).append("'");
+														sbCreateTempWhereCriteria.append(" ").append(sExists).append(".paramvalueu = '").append(listValue.toUpperCase()).append("'");
 													}
 													else if (isUriType) {
 														// CASE-SENSITIVE, EXACT MATCH
-														// Force parameter value comparison to be case-sensitive via MySQL binary qualifier on string value
-														sbCreateTempWhereCriteria.append(" ").append(sExists).append(".paramValue = binary '").append(listValue).append("'");
+														sbCreateTempWhereCriteria.append(" ").append(sExists).append(".paramvalue = '").append(listValue).append("'");
 													}
 													else if (isReferenceType) {
 														// (REFERENCE) CASE-SENSITIVE, ENDS WITH OR EXACT MATCH
-														// Force parameter value comparison to be case-sensitive via MySQL binary qualifier on string value
-														sbCreateTempWhereCriteria.append(" ").append(sExists).append(".paramValue like binary '%").append(listValue).append("'");
+														sbCreateTempWhereCriteria.append(" ").append(sExists).append(".paramvalue like '%").append(listValue).append("'");
 													}
 													else {
 														// (default) CASE-INSENSITIVE, CONTAINS OR EXACT MATCH
-														sbCreateTempWhereCriteria.append(" ").append(sExists).append(".paramValueU like '%").append(listValue.toUpperCase()).append("%'");
+														sbCreateTempWhereCriteria.append(" ").append(sExists).append(".paramvalueu like '%").append(listValue.toUpperCase()).append("%'");
 													}
 												}
 											}
@@ -5098,11 +5098,11 @@ public class ResourceService {
 								if (iExists > 1) {
 									sbCreateTempWhereJoin.append(" and ");
 								}
-								sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
+								sbCreateTempWhereJoin.append(sExists).append(".resourcejoinid = rm.resourcejoinid");
 							}
-							sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramName = '")
-								.append(entry.getKey()).append("' and ").append(sExists).append(".paramValue is not null and ").append(sExists).append(".systemValue is not null ")
-								.append(" and calcDistanceMi(").append(sExists).append(".paramValue, ").append(sExists).append(".systemValue, ")
+							sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramname = '")
+								.append(entry.getKey()).append("' and ").append(sExists).append(".paramvalue is not null and ").append(sExists).append(".systemvalue is not null ")
+								.append(" and calcdistancemi(").append(sExists).append(".paramvalue, ").append(sExists).append(".systemvalue, ")
 								.append(entry.getValue()[0]).append(", ").append(entry.getValue()[1]).append(") <= ").append(entry.getValue()[2]).append(")");
 						}
 						else if (entry.getValue()[3].contains("km")) {
@@ -5115,11 +5115,11 @@ public class ResourceService {
 								if (iExists > 1) {
 									sbCreateTempWhereJoin.append(" and ");
 								}
-								sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
+								sbCreateTempWhereJoin.append(sExists).append(".resourcejoinid = rm.resourcejoinid");
 							}
-							sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramName = '")
-								.append(entry.getKey()).append("' and ").append(sExists).append(".paramValue is not null and ").append(sExists).append(".systemValue is not null ")
-								.append(" and calcDistanceKm(").append(sExists).append(".paramValue, ").append(sExists).append(".systemValue, ")
+							sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramname = '")
+								.append(entry.getKey()).append("' and ").append(sExists).append(".paramvalue is not null and ").append(sExists).append(".systemvalue is not null ")
+								.append(" and calcdistancekm(").append(sExists).append(".paramvalue, ").append(sExists).append(".systemvalue, ")
 								.append(entry.getValue()[0]).append(", ").append(entry.getValue()[1]).append(") <= ").append(entry.getValue()[2]).append(")");
 						}
 						else {
@@ -5141,7 +5141,7 @@ public class ResourceService {
 						if (iExists > 1) {
 							sbCreateTempWhereJoin.append(" and ");
 						}
-						sbCreateTempWhereJoin.append(sExists).append(".resourceJoinId = rm.resourceJoinId");
+						sbCreateTempWhereJoin.append(sExists).append(".resourcejoinid = rm.resourcejoinid");
 					}
 					sbCreateTempWhereCriteria.append("(");
 
@@ -5157,8 +5157,8 @@ public class ResourceService {
 							sbCreateTempWhereCriteria.append(" or ");
 						}
 
-						sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramName = '").append(key).append("' and ")
-							.append(sExists).append(".paramValue like '%").append(value).append("%')");
+						sbCreateTempWhereCriteria.append("(").append(sExists).append(".paramname = '").append(key).append("' and ")
+							.append(sExists).append(".paramvalue like '%").append(value).append("%')");
 
 						firstEntry = false;
 					}
@@ -5252,14 +5252,14 @@ public class ResourceService {
 						sbQuery.append(", (select ");
 						// determine sort column type
 						if (sortCriteria[2] != null && sortCriteria[2].equalsIgnoreCase("DATE")) {
-							sbQuery.append(" ifnull(rmsort").append(sortCount).append(".systemValue, rmsort").append(sortCount).append(".paramValue)");
+							sbQuery.append(" ifnull(rmsort").append(sortCount).append(".systemvalue, rmsort").append(sortCount).append(".paramvalue)");
 						}
 						else {
-							sbQuery.append(" rmsort").append(sortCount).append(".paramValue");
+							sbQuery.append(" rmsort").append(sortCount).append(".paramvalue");
 						}
 						sbQuery.append(" from resourcemetadata rmsort").append(sortCount)
 							.append(" where rmsort").append(sortCount)
-							.append(".resourceJoinId = r1.id and rmsort").append(sortCount)
+							.append(".resourcejoinid = r1.id and rmsort").append(sortCount)
 							.append(".paramName = '").append(sortCriteria[0]).append("' limit 1) sort").append(sortCount);
 
 						// Next append sort order by to criteria

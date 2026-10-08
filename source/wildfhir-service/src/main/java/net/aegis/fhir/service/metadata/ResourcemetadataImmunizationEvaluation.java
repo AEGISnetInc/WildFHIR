@@ -82,10 +82,10 @@ public class ResourcemetadataImmunizationEvaluation extends ResourcemetadataProx
 		try {
 			// Extract and convert the resource contents to a ImmunizationEvaluation object
 			if (chainedResource != null) {
-				iImmunizationEvaluation = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iImmunizationEvaluation = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iImmunizationEvaluation = new ByteArrayInputStream(resource.getResourceContents());
+				iImmunizationEvaluation = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			ImmunizationEvaluation immunizationEvaluation = (ImmunizationEvaluation) xmlP.parse(iImmunizationEvaluation);

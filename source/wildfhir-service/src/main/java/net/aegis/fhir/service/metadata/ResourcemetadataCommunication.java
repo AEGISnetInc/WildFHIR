@@ -86,10 +86,10 @@ public class ResourcemetadataCommunication extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Communication object
 			if (chainedResource != null) {
-				iCommunication = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iCommunication = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iCommunication = new ByteArrayInputStream(resource.getResourceContents());
+				iCommunication = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Communication communication = (Communication) xmlP.parse(iCommunication);

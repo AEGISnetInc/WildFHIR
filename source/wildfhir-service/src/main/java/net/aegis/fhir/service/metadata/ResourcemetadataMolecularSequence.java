@@ -77,10 +77,10 @@ public class ResourcemetadataMolecularSequence extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a MolecularSequence object
 			if (chainedResource != null) {
-				iMolecularSequence = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMolecularSequence = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMolecularSequence = new ByteArrayInputStream(resource.getResourceContents());
+				iMolecularSequence = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MolecularSequence molecularSequence = (MolecularSequence) xmlP.parse(iMolecularSequence);

@@ -87,10 +87,10 @@ public class ResourcemetadataEncounter extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Encounter object
 			if (chainedResource != null) {
-				iEncounter = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iEncounter = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iEncounter = new ByteArrayInputStream(resource.getResourceContents());
+				iEncounter = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Encounter encounter = (Encounter) xmlP.parse(iEncounter);

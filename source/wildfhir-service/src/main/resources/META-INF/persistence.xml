@@ -11,11 +11,11 @@
         <class>net.aegis.fhir.model.Serverdirectory</class>
         <class>net.aegis.fhir.model.Subscriptionactivity</class>
         <properties>
-            <property name="hibernate.connection.driver_class" value="com.mysql.cj.jdbc.Driver"/>
-            <property name="hibernate.archive.autodetection" value="class, hbm"/> 
+            <property name="hibernate.dialect" value="${hibernate.dialect}"/>
+            <property name="hibernate.archive.autodetection" value="class, hbm"/>
             <property name="hibernate.show_sql" value="false"/>
-            <property name="hibernate.format_sql" value="false"/>            
-            <property name="hibernate.use_sql_comments" value="false"/>     
+            <property name="hibernate.format_sql" value="false"/>
+            <property name="hibernate.use_sql_comments" value="false"/>
         </properties>
     </persistence-unit>
 </persistence>

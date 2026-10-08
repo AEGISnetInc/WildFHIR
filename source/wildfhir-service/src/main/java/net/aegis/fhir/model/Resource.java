@@ -54,20 +54,20 @@ public class Resource implements Serializable {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Integer id;
 
-    private String resourceId;
+    private String resourceid;
 
-    private Integer versionId;
+    private Integer versionid;
 
-    private String resourceType;
+    private String resourcetype;
 
     private String status;
 
-    private String lastUser;
+    private String lastuser;
 
     @Temporal(TemporalType.TIMESTAMP)
-    private Date lastUpdate;
+    private Date lastupdate;
 
-    private byte[] resourceContents;
+    private String resourcecontents;
 
     // 10 Placeholder columns used for sort criteria
     private String sort0;
@@ -97,28 +97,28 @@ public class Resource implements Serializable {
         this.id = id;
     }
 
-    public String getResourceId() {
-        return resourceId;
+    public String getResourceid() {
+        return resourceid;
     }
 
-    public void setResourceId(String resourceId) {
-        this.resourceId = resourceId;
+    public void setResourceid(String resourceid) {
+        this.resourceid = resourceid;
     }
 
-    public Integer getVersionId() {
-        return versionId;
+    public Integer getVersionid() {
+        return versionid;
     }
 
-    public void setVersionId(Integer versionId) {
-        this.versionId = versionId;
+    public void setVersionid(Integer versionid) {
+        this.versionid = versionid;
     }
 
-    public String getResourceType() {
-        return resourceType;
+    public String getResourcetype() {
+        return resourcetype;
     }
 
-    public void setResourceType(String resourceType) {
-        this.resourceType = resourceType;
+    public void setResourcetype(String resourcetype) {
+        this.resourcetype = resourcetype;
     }
 
     public String getStatus() {
@@ -129,28 +129,28 @@ public class Resource implements Serializable {
         this.status = status;
     }
 
-    public String getLastUser() {
-        return lastUser;
+    public String getLastuser() {
+        return lastuser;
     }
 
-    public void setLastUser(String lastUser) {
-        this.lastUser = lastUser;
+    public void setLastuser(String lastuser) {
+        this.lastuser = lastuser;
     }
 
-    public Date getLastUpdate() {
-        return lastUpdate;
+    public Date getLastupdate() {
+        return lastupdate;
     }
 
-    public void setLastUpdate(Date lastUpdate) {
-        this.lastUpdate = lastUpdate;
+    public void setLastupdate(Date lastupdate) {
+        this.lastupdate = lastupdate;
     }
 
-    public byte[] getResourceContents() {
-        return resourceContents;
+    public String getResourcecontents() {
+        return resourcecontents;
     }
 
-    public void setResourceContents(byte[] resourceContents) {
-        this.resourceContents = resourceContents;
+    public void setResourcecontents(String resourcecontents) {
+        this.resourcecontents = resourcecontents;
     }
 
     public String getSort0() {
@@ -245,7 +245,7 @@ public class Resource implements Serializable {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((resourceId == null) ? 0 : resourceId.hashCode());
+        result = prime * result + ((resourceid == null) ? 0 : resourceid.hashCode());
         return result;
     }
 
@@ -258,33 +258,33 @@ public class Resource implements Serializable {
         if (getClass() != obj.getClass())
             return false;
         Resource other = (Resource) obj;
-        if (resourceId == null) {
-            if (other.resourceId != null)
+        if (resourceid == null) {
+            if (other.resourceid != null)
                 return false;
-        } else if (!resourceId.equals(other.resourceId))
+        } else if (!resourceid.equals(other.resourceid))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "Resource [id=" + id + ", resourceId=" + resourceId + ", versionId="
-                + versionId + ", resourceType=" + resourceType + ", status=" + status
-                + ", lastUser=" + lastUser + ", lastUpdate=" + lastUpdate
-                + ", resourceContents=" + resourceContents.toString();
+        return "Resource [id=" + id + ", resourceid=" + resourceid + ", versionid="
+                + versionid + ", resourcetype=" + resourcetype + ", status=" + status
+                + ", lastuser=" + lastuser + ", lastupdate=" + lastupdate
+                + ", resourcecontents=" + resourcecontents.toString();
     }
 
     public Resource copy() {
     	Resource dst = new Resource();
 
     	dst.setId(this.id);
-    	dst.setResourceId(this.getResourceId());
-    	dst.setVersionId(this.getVersionId());
-    	dst.setResourceType(this.getResourceType());
+    	dst.setResourceid(this.getResourceid());
+    	dst.setVersionid(this.getVersionid());
+    	dst.setResourcetype(this.getResourcetype());
     	dst.setStatus(this.getStatus());
-    	dst.setLastUser(this.getLastUser());
-    	dst.setLastUpdate(this.getLastUpdate());
-    	dst.setResourceContents(this.getResourceContents());
+    	dst.setLastuser(this.getLastuser());
+    	dst.setLastupdate(this.getLastupdate());
+    	dst.setResourcecontents(this.getResourcecontents());
     	dst.setSort0(this.getSort0());
     	dst.setSort1(this.getSort1());
     	dst.setSort2(this.getSort2());

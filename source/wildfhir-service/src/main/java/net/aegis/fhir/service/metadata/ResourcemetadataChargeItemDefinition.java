@@ -56,10 +56,10 @@ public class ResourcemetadataChargeItemDefinition extends ResourcemetadataProxy 
 		try {
 			// Extract and convert the resource contents to a ChargeItemDefinition object
 			if (chainedResource != null) {
-				iChargeItemDefinition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iChargeItemDefinition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iChargeItemDefinition = new ByteArrayInputStream(resource.getResourceContents());
+				iChargeItemDefinition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			ChargeItemDefinition chargeItemDefinition = (ChargeItemDefinition) xmlP.parse(iChargeItemDefinition);

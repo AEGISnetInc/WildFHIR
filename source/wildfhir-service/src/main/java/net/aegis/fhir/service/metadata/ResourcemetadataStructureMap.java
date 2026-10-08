@@ -85,10 +85,10 @@ public class ResourcemetadataStructureMap extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a StructureMap object
 			if (chainedResource != null) {
-				iStructureMap = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iStructureMap = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iStructureMap = new ByteArrayInputStream(resource.getResourceContents());
+				iStructureMap = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             StructureMap structureMap = (StructureMap) xmlP.parse(iStructureMap);

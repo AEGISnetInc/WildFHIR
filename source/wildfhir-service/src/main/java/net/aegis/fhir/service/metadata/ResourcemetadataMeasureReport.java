@@ -82,10 +82,10 @@ public class ResourcemetadataMeasureReport extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a MeasureReport object
 			if (chainedResource != null) {
-				iMeasureReport = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMeasureReport = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMeasureReport = new ByteArrayInputStream(resource.getResourceContents());
+				iMeasureReport = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			MeasureReport measureReport = (MeasureReport) xmlP.parse(iMeasureReport);

@@ -80,10 +80,10 @@ public class ResourcemetadataMedicinalProductUndesirableEffect extends Resourcem
 		try {
             // Extract and convert the resource contents to a MedicinalProductUndesirableEffect object
 			if (chainedResource != null) {
-				iMedicinalProductUndesirableEffect = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMedicinalProductUndesirableEffect = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMedicinalProductUndesirableEffect = new ByteArrayInputStream(resource.getResourceContents());
+				iMedicinalProductUndesirableEffect = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MedicinalProductUndesirableEffect medicinalProductUndesirableEffect = (MedicinalProductUndesirableEffect) xmlP.parse(iMedicinalProductUndesirableEffect);

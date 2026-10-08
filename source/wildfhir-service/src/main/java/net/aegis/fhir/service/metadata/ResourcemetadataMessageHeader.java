@@ -35,6 +35,7 @@ package net.aegis.fhir.service.metadata;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,15 +86,15 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a MessageHeader object
 			if (chainedResource != null) {
-				iMessageHeader = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMessageHeader = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 
 				// Extract and convert the original resource contents to a Bundle object ONLY IF it is a Bundle resource type
-				if (resource.getResourceType().equals("Bundle")) {
-					iBundle = new ByteArrayInputStream(resource.getResourceContents());
+				if (resource.getResourcetype().equals("Bundle")) {
+					iBundle = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 				}
 			}
 			else {
-				iMessageHeader = new ByteArrayInputStream(resource.getResourceContents());
+				iMessageHeader = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MessageHeader messageHeader = (MessageHeader) xmlP.parse(iMessageHeader);
@@ -108,7 +109,7 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 
 				// Use provided resource and build the required WildFHIR Resource for the Composition
 				messageHeaderResource = new Resource();
-				messageHeaderResource.setResourceId(messageHeader.getId());
+				messageHeaderResource.setResourceid(messageHeader.getId());
 
 				// Convert the Resource to XML byte[]
 				ByteArrayOutputStream oResource = new ByteArrayOutputStream();
@@ -117,8 +118,8 @@ public class ResourcemetadataMessageHeader extends ResourcemetadataProxy {
 				xmlParser.compose(oResource, messageHeader, true);
 				byte[] bResource = oResource.toByteArray();
 
-				messageHeaderResource.setResourceContents(bResource);
-				messageHeaderResource.setResourceType(messageHeader.fhirType());
+				messageHeaderResource.setResourcecontents(new String(bResource, Charset.forName("UTF-8")));
+				messageHeaderResource.setResourcetype(messageHeader.fhirType());
 			}
 
 			/*

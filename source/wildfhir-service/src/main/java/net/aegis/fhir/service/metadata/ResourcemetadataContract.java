@@ -83,10 +83,10 @@ public class ResourcemetadataContract extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Contract object
 			if (chainedResource != null) {
-				iContract = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iContract = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iContract = new ByteArrayInputStream(resource.getResourceContents());
+				iContract = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Contract contract = (Contract) xmlP.parse(iContract);

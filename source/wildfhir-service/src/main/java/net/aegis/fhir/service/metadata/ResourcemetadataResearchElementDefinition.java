@@ -87,10 +87,10 @@ public class ResourcemetadataResearchElementDefinition extends ResourcemetadataP
 		try {
             // Extract and convert the resource contents to a ResearchElementDefinition object
 			if (chainedResource != null) {
-				iResearchElementDefinition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iResearchElementDefinition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iResearchElementDefinition = new ByteArrayInputStream(resource.getResourceContents());
+				iResearchElementDefinition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             ResearchElementDefinition researchElementDefinition = (ResearchElementDefinition) xmlP.parse(iResearchElementDefinition);

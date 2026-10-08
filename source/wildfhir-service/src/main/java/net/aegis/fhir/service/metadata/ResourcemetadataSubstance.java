@@ -85,10 +85,10 @@ public class ResourcemetadataSubstance extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Substance object
 			if (chainedResource != null) {
-				iSubstance = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iSubstance = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iSubstance = new ByteArrayInputStream(resource.getResourceContents());
+				iSubstance = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Substance substance = (Substance) xmlP.parse(iSubstance);

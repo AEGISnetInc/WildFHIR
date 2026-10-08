@@ -34,6 +34,7 @@ package net.aegis.fhir.service.metadata;
 
 //import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -176,36 +177,36 @@ public abstract class ResourcemetadataProxy {
 		Resourcemetadata r = new Resourcemetadata();
 
 		r.setResource(resource);
-		r.setParamName(name);
+		r.setParamname(name);
 
 		// Set type to overrideType if present
 		if (overrideType != null) {
 //			System.out.println("  --> [override] " + overrideType);
-			r.setParamType(overrideType);
+			r.setParamtype(overrideType);
 		}
 		// Otherwise, determine type from Resource Type and Metadata name
 		else {
-			String type = ResourceType.findResourceTypeResourceCriteriaType(resource.getResourceType(), name);
+			String type = ResourceType.findResourceTypeResourceCriteriaType(resource.getResourcetype(), name);
 //			System.out.println("  --> " + type);
-			r.setParamType(type);
+			r.setParamtype(type);
 		}
 
 		if (value != null && !value.isEmpty()) {
-			r.setParamValue(value);
-			r.setParamValueU(value.toUpperCase());
+			r.setParamvalue(value);
+			r.setParamvalueu(value.toUpperCase());
 		}
 
 		if (systemValue != null && !systemValue.isEmpty()) {
-			r.setSystemValue(systemValue);
+			r.setSystemvalue(systemValue);
 		}
 
 		if (codeValue != null && !codeValue.isEmpty()) {
-			r.setCodeValue(codeValue);
+			r.setCodevalue(codeValue);
 		}
 
 		if (textValue != null && !textValue.isEmpty()) {
-			r.setTextValue(textValue);
-			r.setTextValueU(textValue.toUpperCase());
+			r.setTextvalue(textValue);
+			r.setTextvalueu(textValue.toUpperCase());
 		}
 
 		return r;
@@ -249,7 +250,7 @@ public abstract class ResourcemetadataProxy {
 //				System.out.println("   -- chainedResourceType: " + chainedResourceType);
 
 				// Check reference resource type; if single resource type, generate chained parameters without explicit chained resource type
-				LabelKeyValueBean resourceSearchParam = ResourceType.findResourceTypeResourceCriteria(resource.getResourceType(), chainedParameter);
+				LabelKeyValueBean resourceSearchParam = ResourceType.findResourceTypeResourceCriteria(resource.getResourcetype(), chainedParameter);
 				if (resourceSearchParam != null && resourceSearchParam.getRefType() != null && !resourceSearchParam.getRefType().isEmpty() && !resourceSearchParam.getRefType().equals("*")) {
 //					System.out.println("   -- search param type:   " + resourceSearchParam.getRefType());
 
@@ -375,7 +376,7 @@ public abstract class ResourcemetadataProxy {
 				if (fhirResource != null) {
 					// Use provided chained resource and build the required WildFHIR Resource
 					Resource chainedResource = new Resource();
-					chainedResource.setResourceId(fhirResource.getId());
+					chainedResource.setResourceid(fhirResource.getId());
 
 					// Convert the Resource to XML byte[]
 					ByteArrayOutputStream oResource = new ByteArrayOutputStream();
@@ -384,8 +385,8 @@ public abstract class ResourcemetadataProxy {
 					xmlParser.compose(oResource, fhirResource, true);
 					byte[] bResource = oResource.toByteArray();
 
-					chainedResource.setResourceContents(bResource);
-					chainedResource.setResourceType(fhirResource.getResourceType().name());
+					chainedResource.setResourcecontents(new String(bResource, Charset.forName("UTF-8")));
+					chainedResource.setResourcetype(fhirResource.getResourceType().name());
 
 					rList = proxy.generateAllForResource(resource, baseUrl, resourceService, chainedResource, chainedParameter, chainedIndex, fhirResource);
 				}
@@ -445,7 +446,7 @@ public abstract class ResourcemetadataProxy {
 				if (chainedFHIRResource != null) {
 					// Use provided chained resource and build the required WildFHIR Resource
 					Resource chainedResource = new Resource();
-					chainedResource.setResourceId(chainedFHIRResource.getId());
+					chainedResource.setResourceid(chainedFHIRResource.getId());
 
 					// Convert the Resource to XML byte[]
 					ByteArrayOutputStream oResource = new ByteArrayOutputStream();
@@ -454,8 +455,8 @@ public abstract class ResourcemetadataProxy {
 					xmlParser.compose(oResource, chainedFHIRResource, true);
 					byte[] bResource = oResource.toByteArray();
 
-					chainedResource.setResourceContents(bResource);
-					chainedResource.setResourceType(chainedResourceType);
+					chainedResource.setResourcecontents(new String(bResource, Charset.forName("UTF-8")));
+					chainedResource.setResourcetype(chainedResourceType);
 
 					rList = proxy.generateAllForResource(resource, baseUrl, resourceService, chainedResource, chainedParameter, 0, fhirResource);
 				}
@@ -487,7 +488,7 @@ public abstract class ResourcemetadataProxy {
 		 *  Process meta data within the resource
 		 */
 		try {
-			if (resource != null && resource.getResourceContents() != null) {
+			if (resource != null && resource.getResourcecontents() != null) {
 
 				if (fhirResource != null) {
 

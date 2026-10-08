@@ -88,10 +88,10 @@ public class ResourcemetadataActivityDefinition extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a ActivityDefinition object
 			if (chainedResource != null) {
-				iActivityDefinition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iActivityDefinition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iActivityDefinition = new ByteArrayInputStream(resource.getResourceContents());
+				iActivityDefinition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			ActivityDefinition activityDefinition = (ActivityDefinition) xmlP.parse(iActivityDefinition);

@@ -81,10 +81,10 @@ public class ResourcemetadataFlag extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Flag object
 			if (chainedResource != null) {
-				iFlag = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iFlag = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iFlag = new ByteArrayInputStream(resource.getResourceContents());
+				iFlag = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Flag flag = (Flag) xmlP.parse(iFlag);

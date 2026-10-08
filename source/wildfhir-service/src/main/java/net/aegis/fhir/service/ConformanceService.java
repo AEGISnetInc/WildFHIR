@@ -50,8 +50,6 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.transaction.UserTransaction;
 import jakarta.ws.rs.core.Response;
-
-import net.aegis.fhir.model.Code;
 import net.aegis.fhir.model.Conformance;
 import net.aegis.fhir.model.ResourceContainer;
 
@@ -83,7 +81,7 @@ public class ConformanceService {
 	 * for this server's CapabilityStatement resource.
 	 *
 	 * @param resourceType
-	 * @param resourceId
+	 * @param resourceid
 	 * @return <code>ResourceContainer</code>
 	 * @throws Exception
 	 */
@@ -98,13 +96,13 @@ public class ConformanceService {
 	 * for this server's CapabilityStatement resource.
 	 *
 	 * @param resourceType
-	 * @param resourceId
+	 * @param resourceid
 	 * @return <code>ResourceContainer</code>
 	 * @throws Exception
 	 */
-	public ResourceContainer read(String resourceId) throws Exception {
+	public ResourceContainer read(String resourceid) throws Exception {
 
-		log.fine("[START] ConformanceService.read(" + resourceId + ")");
+		log.fine("[START] ConformanceService.read(" + resourceid + ")");
 
 		ResourceContainer resourceContainer = new ResourceContainer();
 
@@ -118,12 +116,12 @@ public class ConformanceService {
 			CriteriaQuery<net.aegis.fhir.model.Conformance> criteria = cb.createQuery(net.aegis.fhir.model.Conformance.class);
 			Root<net.aegis.fhir.model.Conformance> conformance = criteria.from(net.aegis.fhir.model.Conformance.class);
 			List<Predicate> predicateList = new ArrayList<Predicate>();
-			predicateList.add(cb.equal(conformance.get("resourceId"), resourceId));
-			predicateList.add(cb.equal(conformance.get("resourceType"), "CapabilityStatement"));
+			predicateList.add(cb.equal(conformance.get("resourceid"), resourceid));
+			predicateList.add(cb.equal(conformance.get("resourcetype"), "CapabilityStatement"));
 
 			criteria.select(conformance)
 				.where(cb.and(predicateList.toArray(new Predicate[predicateList.size()])))
-				.orderBy(cb.desc(conformance.get("versionId")));
+				.orderBy(cb.desc(conformance.get("versionid")));
 
 			List<net.aegis.fhir.model.Conformance> conformances = em.createQuery(criteria).getResultList();
 
@@ -311,13 +309,13 @@ public class ConformanceService {
 		try {
 			// Fetch Conformance resource for FHIR base capability statement
 			resourceContainer = this.read("fhir-base");
-			if (resourceContainer != null && resourceContainer.getConformance() != null && resourceContainer.getConformance().getResourceContents() != null) {
-				byte rcs[] =  resourceContainer.getConformance().getResourceContents();
+			if (resourceContainer != null && resourceContainer.getConformance() != null && resourceContainer.getConformance().getResourcecontents() != null) {
+				byte rcs[] =  resourceContainer.getConformance().getResourcecontents().getBytes("UTF-8");
 				String rcsStr = new String(rcs, UTF8_CHARSET);
 				log.fine("conformance resource: " + rcsStr);
 
 				// Fetch baseUrl
-				String baseUrl = getBaseUrl();
+				String baseUrl = codeService.getCodeValue("baseUrl");
 				log.fine("getBaseUrl: " + baseUrl);
 				resourceContainer.setResponseStatus(Response.Status.OK);
 			} else {
@@ -331,21 +329,5 @@ public class ConformanceService {
 
 		return resourceContainer;
     }
-
-    /**
-	 * @return String - RS Algorithm-based Jwk Provider URL
-	 * @throws Exception
-	 */
-	public String getBaseUrl() throws Exception {
-		String baseUrl = "";
-
-		Code code = codeService.findCodeByName("baseUrl");
-
-		if (code != null && !code.getValue().isEmpty()) {
-			baseUrl = code.getValue();
-		}
-
-		return baseUrl;
-	}
 
 }

@@ -94,8 +94,8 @@ public class ServerdirectoryService {
 
 		try {
 			newServerdirectory = serverdirectory.clone(false);
-			newServerdirectory.setLastUser("system");
-			newServerdirectory.setLastUpdate(new Date());
+			newServerdirectory.setLastuser("system");
+			newServerdirectory.setLastupdate(new Date());
 
 			/*
 			 * TRANSACTION BEGIN
@@ -171,16 +171,20 @@ public class ServerdirectoryService {
 
 			serverdirectory.setName(updateServerdirectory.getName());
 			serverdirectory.setDescription(updateServerdirectory.getDescription());
-			serverdirectory.setBasePath(updateServerdirectory.getBasePath());
-			serverdirectory.setLastUser("system");
-			serverdirectory.setLastUpdate(new Date());
-			serverdirectory.setOauthGrantType(updateServerdirectory.getOauthGrantType());
-			serverdirectory.setOauthClientId(updateServerdirectory.getOauthClientId());
-			serverdirectory.setOauthClientSecret(updateServerdirectory.getOauthClientSecret());
-			serverdirectory.setOauthScope(updateServerdirectory.getOauthScope());
-			serverdirectory.setOauthAuthUrl(updateServerdirectory.getOauthAuthUrl());
-			serverdirectory.setOauthTokenUrl(updateServerdirectory.getOauthTokenUrl());
-			serverdirectory.setOauthIntrospectUrl(updateServerdirectory.getOauthIntrospectUrl());
+			serverdirectory.setBasepath(updateServerdirectory.getBasepath());
+			serverdirectory.setLastuser("system");
+			serverdirectory.setLastupdate(new Date());
+			serverdirectory.setOauthgranttype(updateServerdirectory.getOauthgranttype());
+			serverdirectory.setOauthclientid(updateServerdirectory.getOauthclientid());
+			serverdirectory.setOauthclientsecret(updateServerdirectory.getOauthclientsecret());
+			serverdirectory.setOauthusername(updateServerdirectory.getOauthusername());
+			serverdirectory.setOauthpassword(updateServerdirectory.getOauthpassword());
+			serverdirectory.setOauthprivatekey(updateServerdirectory.getOauthprivatekey());
+			serverdirectory.setOauthpublickey(updateServerdirectory.getOauthpublickey());
+			serverdirectory.setOauthscope(updateServerdirectory.getOauthscope());
+			serverdirectory.setOauthauthurl(updateServerdirectory.getOauthauthurl());
+			serverdirectory.setOauthtokenurl(updateServerdirectory.getOauthtokenurl());
+			serverdirectory.setOauthintrospecturl(updateServerdirectory.getOauthintrospecturl());
 
 			/*
 			 * TRANSACTION BEGIN
@@ -292,7 +296,7 @@ public class ServerdirectoryService {
 		 * only be one
 		 */
 		try {
-			serverdirectoryQuery = em.createNamedQuery("findServerdirectoryByBasePath").setParameter("basePath",
+			serverdirectoryQuery = em.createNamedQuery("findServerdirectoryByBasePath").setParameter("basepath",
 					basePath);
 
 			List<Serverdirectory> serverdirectoryList = (List<Serverdirectory>) serverdirectoryQuery.getResultList();

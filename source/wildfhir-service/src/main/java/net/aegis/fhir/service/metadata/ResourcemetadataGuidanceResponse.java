@@ -79,10 +79,10 @@ public class ResourcemetadataGuidanceResponse extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a GuidanceResponse object
 			if (chainedResource != null) {
-				iGuidanceResponse = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iGuidanceResponse = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iGuidanceResponse = new ByteArrayInputStream(resource.getResourceContents());
+				iGuidanceResponse = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			GuidanceResponse guidanceResponse = (GuidanceResponse) xmlP.parse(iGuidanceResponse);

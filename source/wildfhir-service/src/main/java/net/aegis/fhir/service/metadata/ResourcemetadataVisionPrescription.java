@@ -81,10 +81,10 @@ public class ResourcemetadataVisionPrescription extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a VisionPrescription object
 			if (chainedResource != null) {
-				iVisionPrescription = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iVisionPrescription = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iVisionPrescription = new ByteArrayInputStream(resource.getResourceContents());
+				iVisionPrescription = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             VisionPrescription visionPrescription = (VisionPrescription) xmlP.parse(iVisionPrescription);

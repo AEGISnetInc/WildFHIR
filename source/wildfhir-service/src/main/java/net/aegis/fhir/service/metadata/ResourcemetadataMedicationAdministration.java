@@ -85,10 +85,10 @@ public class ResourcemetadataMedicationAdministration extends ResourcemetadataPr
 		try {
             // Extract and convert the resource contents to a MedicationAdministration object
 			if (chainedResource != null) {
-				iMedicationAdministration = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMedicationAdministration = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMedicationAdministration = new ByteArrayInputStream(resource.getResourceContents());
+				iMedicationAdministration = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MedicationAdministration medicationAdministration = (MedicationAdministration) xmlP.parse(iMedicationAdministration);

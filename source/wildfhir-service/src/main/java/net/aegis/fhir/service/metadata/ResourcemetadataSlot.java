@@ -83,10 +83,10 @@ public class ResourcemetadataSlot extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Slot object
 			if (chainedResource != null) {
-				iSlot = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iSlot = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iSlot = new ByteArrayInputStream(resource.getResourceContents());
+				iSlot = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Slot slot = (Slot) xmlP.parse(iSlot);

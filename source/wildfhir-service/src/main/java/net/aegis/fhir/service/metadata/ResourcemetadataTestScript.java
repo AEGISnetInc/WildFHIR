@@ -85,10 +85,10 @@ public class ResourcemetadataTestScript extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a TestScript object
 			if (chainedResource != null) {
-				iTestScript = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iTestScript = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iTestScript = new ByteArrayInputStream(resource.getResourceContents());
+				iTestScript = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			TestScript testScript = (TestScript) xmlP.parse(iTestScript);

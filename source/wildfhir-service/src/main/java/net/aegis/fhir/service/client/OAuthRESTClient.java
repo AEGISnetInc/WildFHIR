@@ -83,14 +83,14 @@ public class OAuthRESTClient implements Serializable {
 		Response resourceResponse;
 
 		log.fine("OAuthRESTClient.getAccessTokenResponse(): "
-				+ "\ngrant_type   : " + serverdirectory.getOauthGrantType()
-				+ "\nclient_id    : " + serverdirectory.getOauthClientId()
-				+ "\nclient_secret: " + serverdirectory.getOauthClientSecret()
-				+ "\nscope        : " + (serverdirectory.getOauthScope() != null ? serverdirectory.getOauthScope() : "null"));
+				+ "\ngrant_type   : " + serverdirectory.getOauthgranttype()
+				+ "\nclient_id    : " + serverdirectory.getOauthclientid()
+				+ "\nclient_secret: " + serverdirectory.getOauthclientsecret()
+				+ "\nscope        : " + (serverdirectory.getOauthscope() != null ? serverdirectory.getOauthscope() : "null"));
 
 		try {
 			client = WebClientHelper.createClientWihtoutHostVerification();
-			ResteasyWebTarget webTarget = client.target(serverdirectory.getOauthTokenUrl());
+			ResteasyWebTarget webTarget = client.target(serverdirectory.getOauthtokenurl());
 			Builder targetBuilder = webTarget.request();
 
 			targetBuilder = targetBuilder.header(HttpHeaders.ACCEPT, "application/json");
@@ -99,12 +99,12 @@ public class OAuthRESTClient implements Serializable {
 			// Build OAuth form payload - concatenate Serverdirectory oauth data
 			Form fOAuthForm = new Form();
 
-			fOAuthForm.param("grant_type", serverdirectory.getOauthGrantType())
-					.param("client_id", serverdirectory.getOauthClientId())
-					.param("client_secret", serverdirectory.getOauthClientSecret());
+			fOAuthForm.param("grant_type", serverdirectory.getOauthgranttype())
+					.param("client_id", serverdirectory.getOauthclientid())
+					.param("client_secret", serverdirectory.getOauthclientsecret());
 
-			if (serverdirectory.getOauthScope() != null) {
-				fOAuthForm.param("scope", serverdirectory.getOauthScope());
+			if (serverdirectory.getOauthscope() != null) {
+				fOAuthForm.param("scope", serverdirectory.getOauthscope());
 			}
 
 			resourceResponse = targetBuilder.post(Entity.form(fOAuthForm));
@@ -130,7 +130,7 @@ public class OAuthRESTClient implements Serializable {
 		// Get Serverdirectory OAuth token and add to headers only if OAuth Client processing is enabled/supported
 		if (codeService.isSupported("oauthClientEnabled")) {
 			// Check Serverdirectory OAuth client_id
-			if (serverdirectory != null && serverdirectory.getOauthClientId() != null) {
+			if (serverdirectory != null && serverdirectory.getOauthclientid() != null) {
 				Response oauthResponse = this.getAccessTokenResponse(serverdirectory);
 				String access_token = this.getResponseOAuthAccessToken(oauthResponse);
 

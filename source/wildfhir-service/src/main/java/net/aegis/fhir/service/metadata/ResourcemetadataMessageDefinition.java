@@ -87,10 +87,10 @@ public class ResourcemetadataMessageDefinition extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a MessageDefinition object
 			if (chainedResource != null) {
-				iMessageDefinition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMessageDefinition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMessageDefinition = new ByteArrayInputStream(resource.getResourceContents());
+				iMessageDefinition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			MessageDefinition messageDefinition = (MessageDefinition) xmlP.parse(iMessageDefinition);

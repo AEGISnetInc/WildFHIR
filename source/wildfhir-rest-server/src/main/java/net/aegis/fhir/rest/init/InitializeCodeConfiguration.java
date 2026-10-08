@@ -114,15 +114,15 @@ public class InitializeCodeConfiguration extends HttpServlet {
 					// Check for boolean value
 					if (envValue.equals("true")) {
 						code.setValue(envValue);
-						code.setIntValue(1);
+						code.setIntvalue(1);
 					}
 					else if (envValue.equals("false")) {
 						code.setValue(envValue);
-						code.setIntValue(0);
+						code.setIntvalue(0);
 					}
 					else if (StringUtils.isNumeric(envValue)) {
 						Integer intValue = Integer.parseInt(envValue);
-						code.setIntValue(intValue);
+						code.setIntvalue(intValue);
 						if (intValue > 0) {
 							code.setValue("true");
 						}
@@ -132,16 +132,16 @@ public class InitializeCodeConfiguration extends HttpServlet {
 					}
 					else {
 						code.setValue(envValue);
-						code.setIntValue(0);
+						code.setIntvalue(0);
 					}
 
 					// Update code configuration record
 					codeService.update(code);
 
-					log.info("Init Configuration - " + v + " = " + code.getValue() + " int = " + code.getIntValue());
+					log.info("Init Configuration - " + v + " = " + code.getValue() + " int = " + code.getIntvalue());
 				}
 				else {
-					log.info("Init Configuration - " + v + " = " + code.getValue() + " int = " + code.getIntValue() + " unchanged");
+					log.info("Init Configuration - " + v + " = " + code.getValue() + " int = " + code.getIntvalue() + " unchanged");
 				}
 			}
 			else {

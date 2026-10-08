@@ -80,10 +80,10 @@ public class ResourcemetadataObservationDefinition extends ResourcemetadataProxy
 		try {
             // Extract and convert the resource contents to a ObservationDefinition object
 			if (chainedResource != null) {
-				iObservationDefinition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iObservationDefinition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iObservationDefinition = new ByteArrayInputStream(resource.getResourceContents());
+				iObservationDefinition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             ObservationDefinition observationDefinition = (ObservationDefinition) xmlP.parse(iObservationDefinition);

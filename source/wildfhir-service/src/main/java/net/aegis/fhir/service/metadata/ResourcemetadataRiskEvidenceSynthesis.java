@@ -85,10 +85,10 @@ public class ResourcemetadataRiskEvidenceSynthesis extends ResourcemetadataProxy
 		try {
             // Extract and convert the resource contents to a RiskEvidenceSynthesis object
 			if (chainedResource != null) {
-				iRiskEvidenceSynthesis = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iRiskEvidenceSynthesis = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iRiskEvidenceSynthesis = new ByteArrayInputStream(resource.getResourceContents());
+				iRiskEvidenceSynthesis = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             RiskEvidenceSynthesis riskEvidenceSynthesis = (RiskEvidenceSynthesis) xmlP.parse(iRiskEvidenceSynthesis);

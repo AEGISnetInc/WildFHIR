@@ -86,10 +86,10 @@ public class ResourcemetadataProvenance extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Provenance object
 			if (chainedResource != null) {
-				iProvenance = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iProvenance = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iProvenance = new ByteArrayInputStream(resource.getResourceContents());
+				iProvenance = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Provenance provenance = (Provenance) xmlP.parse(iProvenance);

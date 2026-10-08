@@ -190,34 +190,34 @@ public class PatientMatch extends ResourceOperationProxy {
 				metaParams.append("&");
 			}
 
-			if (meta.getParamValue() != null && !meta.getParamValue().isEmpty()) {
-				if (meta.getParamName().contains("birthdate")) {
-					Date birthDate = utcDateUtil.parseDate(meta.getParamValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getTimeZone(UTCDateUtil.TIME_ZONE_UTC));
+			if (meta.getParamvalue() != null && !meta.getParamvalue().isEmpty()) {
+				if (meta.getParamname().contains("birthdate")) {
+					Date birthDate = utcDateUtil.parseDate(meta.getParamvalue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getTimeZone(UTCDateUtil.TIME_ZONE_UTC));
 					String sBirthDate = utcDateUtil.formatDate(birthDate, UTCDateUtil.DATE_ONLY_PARAMETER_FORMAT, TimeZone.getTimeZone(UTCDateUtil.TIME_ZONE_UTC));
 
 					if (!sBirthDate.isEmpty()) {
-						metaParams.append(meta.getParamName()).append("=").append(sBirthDate);
+						metaParams.append(meta.getParamname()).append("=").append(sBirthDate);
 					}
 				}
-				else if (meta.getParamName().contains("_lastUpdated")) {
-					Date lastUpdated = utcDateUtil.parseDate(meta.getParamValue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getTimeZone(UTCDateUtil.TIME_ZONE_UTC));
+				else if (meta.getParamname().contains("_lastUpdated")) {
+					Date lastUpdated = utcDateUtil.parseDate(meta.getParamvalue(), UTCDateUtil.DATETIME_SORT_FORMAT, TimeZone.getTimeZone(UTCDateUtil.TIME_ZONE_UTC));
 					String sLastUpdated = utcDateUtil.formatDate(lastUpdated, UTCDateUtil.DATE_PARAMETER_FORMAT, TimeZone.getTimeZone(UTCDateUtil.TIME_ZONE_UTC));
 
 					if (!sLastUpdated.isEmpty()) {
-						metaParams.append(meta.getParamName()).append("=").append(sLastUpdated);
+						metaParams.append(meta.getParamname()).append("=").append(sLastUpdated);
 					}
 				}
 				else {
-					metaParams.append(meta.getParamName()).append("=");
+					metaParams.append(meta.getParamname()).append("=");
 
-					if (meta.getSystemValue() != null && !meta.getSystemValue().isEmpty()) {
-						metaParams.append(meta.getSystemValue()).append("|");
+					if (meta.getSystemvalue() != null && !meta.getSystemvalue().isEmpty()) {
+						metaParams.append(meta.getSystemvalue()).append("|");
 					}
-					if (meta.getParamValue() != null && !meta.getParamValue().isEmpty()) {
-						metaParams.append(meta.getParamValue());
+					if (meta.getParamvalue() != null && !meta.getParamvalue().isEmpty()) {
+						metaParams.append(meta.getParamvalue());
 					}
-					if (meta.getCodeValue() != null && !meta.getCodeValue().isEmpty()) {
-						metaParams.append("|").append(meta.getCodeValue());
+					if (meta.getCodevalue() != null && !meta.getCodevalue().isEmpty()) {
+						metaParams.append("|").append(meta.getCodevalue());
 					}
 				}
 			}

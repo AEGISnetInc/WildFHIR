@@ -72,8 +72,8 @@ public enum AuditEventServiceUtil {
 			ByteArrayOutputStream oResource = new ByteArrayOutputStream();
 			xmlP.setOutputStyle(OutputStyle.PRETTY);
 			xmlP.compose(oResource, audit, true);
-			resourceDomain.setResourceContents(oResource.toByteArray());
-			resourceDomain.setResourceType("AuditEvent");
+			resourceDomain.setResourcecontents(oResource.toString("UTF-8"));
+			resourceDomain.setResourcetype("AuditEvent");
 		}
 
 		return resourceDomain;

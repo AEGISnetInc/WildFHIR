@@ -166,7 +166,7 @@ public class SubscriptionactivityService {
 		try {
 			subscriptionactivity = read(updateSubscriptionactivity.getId());
 
-			subscriptionactivity.setSubscriptionId(updateSubscriptionactivity.getSubscriptionId());
+			subscriptionactivity.setSubscriptionid(updateSubscriptionactivity.getSubscriptionid());
 			subscriptionactivity.setRecorded(updateSubscriptionactivity.getRecorded());
 			subscriptionactivity.setType(updateSubscriptionactivity.getType());
 			subscriptionactivity.setStatus(updateSubscriptionactivity.getStatus());
@@ -283,7 +283,7 @@ public class SubscriptionactivityService {
 		 * only be one
 		 */
 		try {
-			subscriptionactivityQuery = em.createNamedQuery("findSubscriptionactivityById").setParameter("subscriptionId",
+			subscriptionactivityQuery = em.createNamedQuery("findSubscriptionactivityById").setParameter("subscriptionid",
 					subscriptionId);
 
 			result = (List<Subscriptionactivity>) subscriptionactivityQuery.getResultList();

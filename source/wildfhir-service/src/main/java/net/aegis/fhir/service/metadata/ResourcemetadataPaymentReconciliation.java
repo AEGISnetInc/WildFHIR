@@ -81,10 +81,10 @@ public class ResourcemetadataPaymentReconciliation extends ResourcemetadataProxy
 		try {
             // Extract and convert the resource contents to a PaymentReconciliation object
 			if (chainedResource != null) {
-				iPaymentReconciliation = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iPaymentReconciliation = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iPaymentReconciliation = new ByteArrayInputStream(resource.getResourceContents());
+				iPaymentReconciliation = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             PaymentReconciliation paymentReconciliation = (PaymentReconciliation) xmlP.parse(iPaymentReconciliation);

@@ -81,10 +81,10 @@ public class ResourcemetadataQuestionnaireResponse extends ResourcemetadataProxy
 		try {
             // Extract and convert the resource contents to a QuestionnaireResponse object
 			if (chainedResource != null) {
-				iQuestionnaireResponse = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iQuestionnaireResponse = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iQuestionnaireResponse = new ByteArrayInputStream(resource.getResourceContents());
+				iQuestionnaireResponse = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             QuestionnaireResponse questionnaireResponse = (QuestionnaireResponse) xmlP.parse(iQuestionnaireResponse);

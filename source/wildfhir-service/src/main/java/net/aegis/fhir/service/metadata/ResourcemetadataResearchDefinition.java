@@ -87,10 +87,10 @@ public class ResourcemetadataResearchDefinition extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a ResearchDefinition object
 			if (chainedResource != null) {
-				iResearchDefinition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iResearchDefinition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iResearchDefinition = new ByteArrayInputStream(resource.getResourceContents());
+				iResearchDefinition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             ResearchDefinition researchDefinition = (ResearchDefinition) xmlP.parse(iResearchDefinition);

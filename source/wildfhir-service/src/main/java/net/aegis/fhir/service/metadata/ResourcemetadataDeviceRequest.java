@@ -85,10 +85,10 @@ public class ResourcemetadataDeviceRequest extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a DeviceRequest object
 			if (chainedResource != null) {
-				iDeviceRequest = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iDeviceRequest = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iDeviceRequest = new ByteArrayInputStream(resource.getResourceContents());
+				iDeviceRequest = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             DeviceRequest deviceRequest = (DeviceRequest) xmlP.parse(iDeviceRequest);

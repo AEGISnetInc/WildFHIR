@@ -85,10 +85,10 @@ public class ResourcemetadataNutritionOrder extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a NutritionOrder object
 			if (chainedResource != null) {
-				iNutritionOrder = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iNutritionOrder = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iNutritionOrder = new ByteArrayInputStream(resource.getResourceContents());
+				iNutritionOrder = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             NutritionOrder nutritionOrder = (NutritionOrder) xmlP.parse(iNutritionOrder);

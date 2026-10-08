@@ -81,10 +81,10 @@ public class ResourcemetadataMedicinalProductAuthorization extends Resourcemetad
 		try {
             // Extract and convert the resource contents to a MedicinalProductAuthorization object
 			if (chainedResource != null) {
-				iMedicinalProductAuthorization = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMedicinalProductAuthorization = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMedicinalProductAuthorization = new ByteArrayInputStream(resource.getResourceContents());
+				iMedicinalProductAuthorization = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MedicinalProductAuthorization medicinalProductAuthorization = (MedicinalProductAuthorization) xmlP.parse(iMedicinalProductAuthorization);

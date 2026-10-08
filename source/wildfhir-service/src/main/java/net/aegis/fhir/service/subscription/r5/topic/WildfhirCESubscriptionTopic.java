@@ -186,8 +186,8 @@ public class WildfhirCESubscriptionTopic extends SubscriptionTopicProxy {
 
 				// Initialize a Resource to be created
 				net.aegis.fhir.model.Resource aegisResource = new net.aegis.fhir.model.Resource();
-				aegisResource.setResourceType("SubscriptionStatus");
-				aegisResource.setResourceContents(bResource);
+				aegisResource.setResourcetype("SubscriptionStatus");
+				aegisResource.setResourcecontents(new String(bResource, Charset.forName("UTF-8")));
 
 				// Create new SubscriptionStatus
 				ResourceContainer rcStatus = resourceService.create(aegisResource, null, baseUrl);
@@ -196,8 +196,8 @@ public class WildfhirCESubscriptionTopic extends SubscriptionTopicProxy {
 
 				// Add R4 Parameters (SubscriptionStatus) to subscription notification bundle
 				subscriptionEntry = new BundleEntryComponent();
-				subscriptionEntry.setFullUrl(baseUrl + "/Parameters/" + aegisResource.getResourceId());
-				pSubscriptionStatus.setId(aegisResource.getResourceId());
+				subscriptionEntry.setFullUrl(baseUrl + "/Parameters/" + aegisResource.getResourceid());
+				pSubscriptionStatus.setId(aegisResource.getResourceid());
 				subscriptionEntry.setResource(pSubscriptionStatus);
 				// Set request and response
 				BundleEntryRequestComponent entryRequest = new BundleEntryRequestComponent();
