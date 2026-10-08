@@ -1,0 +1,6 @@
+# -------------------------------------------------------------------------------
+# Build wildfhirce-mysql multi-arch image
+# - Build SBOM attestation and a provenance attestation with max mode provenance
+# - Named tag v0.8.1
+# -------------------------------------------------------------------------------
+docker buildx build --provenance=true --sbom=true --platform linux/arm64,linux/amd64 -t aegisnetinc/wildfhirce-mysql:v0.8.1 .
