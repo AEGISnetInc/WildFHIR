@@ -80,10 +80,10 @@ public class ResourcemetadataMedicinalProductManufactured extends Resourcemetada
 		try {
             // Extract and convert the resource contents to a MedicinalProductManufactured object
 			if (chainedResource != null) {
-				iMedicinalProductManufactured = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMedicinalProductManufactured = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMedicinalProductManufactured = new ByteArrayInputStream(resource.getResourceContents());
+				iMedicinalProductManufactured = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MedicinalProductManufactured medicinalProductManufactured = (MedicinalProductManufactured) xmlP.parse(iMedicinalProductManufactured);

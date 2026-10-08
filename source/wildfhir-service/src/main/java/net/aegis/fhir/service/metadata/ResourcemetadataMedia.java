@@ -83,10 +83,10 @@ public class ResourcemetadataMedia extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Media object
 			if (chainedResource != null) {
-				iMedia = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMedia = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMedia = new ByteArrayInputStream(resource.getResourceContents());
+				iMedia = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Media media = (Media) xmlP.parse(iMedia);

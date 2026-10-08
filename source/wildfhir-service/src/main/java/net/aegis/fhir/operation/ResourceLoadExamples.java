@@ -36,6 +36,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map.Entry;
@@ -252,8 +253,8 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 			if (okToProcessResource) {
 				// Initialize a DB Resource to be updated
 				net.aegis.fhir.model.Resource updateResource = new net.aegis.fhir.model.Resource();
-				updateResource.setResourceType(exampleResource.getResourceType().name());
-				updateResource.setResourceContents(fileContent);
+				updateResource.setResourcetype(exampleResource.getResourceType().name());
+				updateResource.setResourcecontents(new String(fileContent, Charset.forName("UTF-8")));
 
 				// Verify resource id; if not defined, use filename
 				String resourceId = null;
@@ -299,8 +300,8 @@ public class ResourceLoadExamples extends ResourceOperationProxy {
 					xmlP.compose(oResource, entryResource, true);
 					byte[] bResource = oResource.toByteArray();
 
-					updateResource.setResourceType(entryResource.getResourceType().name());
-					updateResource.setResourceContents(bResource);
+					updateResource.setResourcetype(entryResource.getResourceType().name());
+					updateResource.setResourcecontents(new String(bResource, Charset.forName("UTF-8")));
 
 					// Verify entry resource id; if not defined, generate GUID
 					if (entryResource.hasId()) {

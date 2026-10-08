@@ -87,10 +87,10 @@ public class ResourcemetadataImmunization extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Immunization object
 			if (chainedResource != null) {
-				iImmunization = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iImmunization = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iImmunization = new ByteArrayInputStream(resource.getResourceContents());
+				iImmunization = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Immunization immunization = (Immunization) xmlP.parse(iImmunization);

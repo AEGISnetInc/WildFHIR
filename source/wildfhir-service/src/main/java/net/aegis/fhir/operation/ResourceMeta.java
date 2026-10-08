@@ -102,15 +102,15 @@ public class ResourceMeta extends ResourceOperationProxy {
 
 				for (Resourcemetadata metadata : tagList) {
 
-					if (metadata.getParamName().equals(Tag.METADATA_NAME_PROFILE_TAG)) {
-						resourceMeta.addProfile(metadata.getParamValue());
+					if (metadata.getParamname().equals(Tag.METADATA_NAME_PROFILE_TAG)) {
+						resourceMeta.addProfile(metadata.getParamvalue());
 					}
-					if (metadata.getParamName().equals(Tag.METADATA_NAME_SECURITY_TAG)) {
-						Coding securityCoding = new Coding(metadata.getSystemValue(), metadata.getParamValue(), metadata.getCodeValue());
+					if (metadata.getParamname().equals(Tag.METADATA_NAME_SECURITY_TAG)) {
+						Coding securityCoding = new Coding(metadata.getSystemvalue(), metadata.getParamvalue(), metadata.getCodevalue());
 						resourceMeta.addSecurity(securityCoding);
 					}
-					if (metadata.getParamName().equals(Tag.METADATA_NAME_GENERAL_TAG)) {
-						Coding tagCoding = new Coding(metadata.getSystemValue(), metadata.getParamValue(), metadata.getCodeValue());
+					if (metadata.getParamname().equals(Tag.METADATA_NAME_GENERAL_TAG)) {
+						Coding tagCoding = new Coding(metadata.getSystemvalue(), metadata.getParamvalue(), metadata.getCodevalue());
 						resourceMeta.addTag(tagCoding);
 					}
 				}
@@ -130,15 +130,15 @@ public class ResourceMeta extends ResourceOperationProxy {
 
 				for (Resourcemetadata metadata : tagList) {
 
-					if (metadata.getParamName().equals(Tag.METADATA_NAME_PROFILE_TAG)) {
-						resourceMeta.addProfile(metadata.getParamValue());
+					if (metadata.getParamname().equals(Tag.METADATA_NAME_PROFILE_TAG)) {
+						resourceMeta.addProfile(metadata.getParamvalue());
 					}
-					if (metadata.getParamName().equals(Tag.METADATA_NAME_SECURITY_TAG)) {
-						Coding securityCoding = new Coding(metadata.getSystemValue(), metadata.getParamValue(), metadata.getCodeValue());
+					if (metadata.getParamname().equals(Tag.METADATA_NAME_SECURITY_TAG)) {
+						Coding securityCoding = new Coding(metadata.getSystemvalue(), metadata.getParamvalue(), metadata.getCodevalue());
 						resourceMeta.addSecurity(securityCoding);
 					}
-					if (metadata.getParamName().equals(Tag.METADATA_NAME_GENERAL_TAG)) {
-						Coding tagCoding = new Coding(metadata.getSystemValue(), metadata.getParamValue(), metadata.getCodeValue());
+					if (metadata.getParamname().equals(Tag.METADATA_NAME_GENERAL_TAG)) {
+						Coding tagCoding = new Coding(metadata.getSystemvalue(), metadata.getParamvalue(), metadata.getCodevalue());
 						resourceMeta.addTag(tagCoding);
 					}
 				}
@@ -167,7 +167,7 @@ public class ResourceMeta extends ResourceOperationProxy {
 			}
 			else {
 				XmlParser xmlP = new XmlParser();
-				Resource resource = xmlP.parse(new ByteArrayInputStream(resourceContainer.getResource().getResourceContents()));
+				Resource resource = xmlP.parse(new ByteArrayInputStream(resourceContainer.getResource().getResourcecontents().getBytes("UTF-8")));
 
 				Meta resourceMeta = new Meta();
 

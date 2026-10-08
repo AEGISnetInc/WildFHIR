@@ -91,10 +91,10 @@ public class ResourcemetadataCondition extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Condition object
 			if (chainedResource != null) {
-				iCondition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iCondition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iCondition = new ByteArrayInputStream(resource.getResourceContents());
+				iCondition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Condition condition = (Condition) xmlP.parse(iCondition);

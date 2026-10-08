@@ -80,10 +80,10 @@ public class ResourcemetadataSubstancePolymer extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a SubstancePolymer object
 			if (chainedResource != null) {
-				iSubstancePolymer = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iSubstancePolymer = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iSubstancePolymer = new ByteArrayInputStream(resource.getResourceContents());
+				iSubstancePolymer = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             SubstancePolymer substancePolymer = (SubstancePolymer) xmlP.parse(iSubstancePolymer);

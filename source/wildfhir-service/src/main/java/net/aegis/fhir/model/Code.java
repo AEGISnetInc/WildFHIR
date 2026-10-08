@@ -33,7 +33,6 @@
 package net.aegis.fhir.model;
 
 import java.io.Serializable;
-import java.nio.charset.StandardCharsets;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -57,15 +56,15 @@ public class Code implements Serializable {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 
-	private String codeName;
+	private String codename;
 
 	private String value;
 
-	private Integer intValue;
+	private Integer intvalue;
 
 	private String description;
 
-    private byte[] resourceContents;
+    private String resourcecontents;
 
 	public Integer getId() {
 		return id;
@@ -75,12 +74,12 @@ public class Code implements Serializable {
 		this.id = id;
 	}
 
-	public String getCodeName() {
-		return codeName;
+	public String getCodename() {
+		return codename;
 	}
 
-	public void setCodeName(String codeName) {
-		this.codeName = codeName;
+	public void setCodename(String codename) {
+		this.codename = codename;
 	}
 
 	public String getValue() {
@@ -91,12 +90,12 @@ public class Code implements Serializable {
 		this.value = value;
 	}
 
-	public Integer getIntValue() {
-		return intValue;
+	public Integer getIntvalue() {
+		return intvalue;
 	}
 
-	public void setIntValue(Integer intValue) {
-		this.intValue = intValue;
+	public void setIntvalue(Integer intvalue) {
+		this.intvalue = intvalue;
 	}
 
 	public String getDescription() {
@@ -107,30 +106,13 @@ public class Code implements Serializable {
 		this.description = description;
 	}
 
-    public byte[] getResourceContents() {
-        return resourceContents;
+    public String getResourcecontents() {
+        return resourcecontents;
     }
 
-    public void setResourceContents(byte[] resourceContents) {
-        this.resourceContents = resourceContents;
+    public void setResourcecontents(String resourcecontents) {
+        this.resourcecontents = resourcecontents;
     }
-
-    // Helper methods for resourceContents as String
-    public String getResourceContentsString() {
-    	if (this.resourceContents != null) {
-    		return new String(resourceContents, StandardCharsets.UTF_8);
-    	}
-		return null;
-	}
-
-	public void setResourceContentsString(String resourceContentsString) {
-		if (resourceContentsString != null && !resourceContentsString.isEmpty()) {
-			this.resourceContents = resourceContentsString.getBytes(StandardCharsets.UTF_8);
-		}
-		else {
-			this.resourceContents = null;
-		}
-	}
 
     /**
      * Return copy of this object
@@ -148,11 +130,11 @@ public class Code implements Serializable {
     	} else {
     		clone.setId(null);
     	}
-    	clone.setCodeName(this.getCodeName());
+    	clone.setCodename(this.getCodename());
     	clone.setValue(this.getValue());
-    	clone.setIntValue(this.getIntValue());
+    	clone.setIntvalue(this.getIntvalue());
     	clone.setDescription(this.getDescription());
-    	clone.setResourceContents(this.getResourceContents());
+    	clone.setResourcecontents(this.getResourcecontents());
 
     	return clone;
     }
@@ -184,9 +166,8 @@ public class Code implements Serializable {
 
     @Override
     public String toString() {
-        return "Code [id=" + id + ", codeName=" + codeName + ", value=" + value
-        		+ ", intValue=" + intValue.toString()
-                + ", description=" + description + "]";
+        return "Code [id=" + id + ", codename=" + codename + ", value=" + value
+        		+ ", intvalue=" + intvalue.toString() + ", description=" + description + "]";
     }
 
 }

@@ -88,10 +88,10 @@ public class ResourcemetadataLibrary extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Library object
 			if (chainedResource != null) {
-				iLibrary = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iLibrary = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iLibrary = new ByteArrayInputStream(resource.getResourceContents());
+				iLibrary = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Library library = (Library) xmlP.parse(iLibrary);

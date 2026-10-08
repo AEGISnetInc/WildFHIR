@@ -61,16 +61,16 @@ import net.aegis.fhir.service.util.UTCDateUtil;
 
 /**
  * SubscriptionTopic R5 Special Support
- * 
+ *
  * This is a FHIR R5 canonical resource type. The FHIR core library conversion package is used
  * to accept the R5 SubscriptionTopic resource instance which is then immediately converted to
  * a FHIR R4 Basic resource instance where all R5 data elements are represented as cross version
  * extensions.
- * 
+ *
  * WildFHIR leverages the existing resource meta data logic to store custom search parameters
  * needed for internal support of the R5 Subscriptions Backport functionality. Storage of
  * the R5 SubscriptionTopic resource will be done via a FHIR R4 Basic resource.
- * 
+ *
  * @author richard.ettema
  *
  */
@@ -102,10 +102,10 @@ public class ResourcemetadataSubscriptionTopic extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Parameters object
 			if (chainedResource != null) {
-				iSubscriptionTopic = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iSubscriptionTopic = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iSubscriptionTopic = new ByteArrayInputStream(resource.getResourceContents());
+				iSubscriptionTopic = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Basic subscriptionTopic = (Basic) xmlP.parse(iSubscriptionTopic);

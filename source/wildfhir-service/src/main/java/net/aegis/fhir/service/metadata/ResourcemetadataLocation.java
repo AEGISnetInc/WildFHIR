@@ -83,10 +83,10 @@ public class ResourcemetadataLocation extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Location object
 			if (chainedResource != null) {
-				iLocation = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iLocation = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iLocation = new ByteArrayInputStream(resource.getResourceContents());
+				iLocation = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Location location = (Location) xmlP.parse(iLocation);

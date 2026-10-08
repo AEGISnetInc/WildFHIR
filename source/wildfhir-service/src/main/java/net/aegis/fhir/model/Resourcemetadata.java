@@ -53,24 +53,24 @@ public class Resourcemetadata implements Serializable {
 
     //bi-directional many-to-one association to Resource
     @ManyToOne
-    @JoinColumn(name="resourceJoinId")
+    @JoinColumn(name="resourcejoinid")
     private Resource resource;
 
-    private String paramName;
+    private String paramname;
 
-    private String paramType;
+    private String paramtype;
 
-    private String paramValue;
+    private String paramvalue;
 
-    private String systemValue;
+    private String systemvalue;
 
-    private String codeValue;
+    private String codevalue;
 
-    private String textValue;
+    private String textvalue;
 
-    private String paramValueU;
+    private String paramvalueu;
 
-    private String textValueU;
+    private String textvalueu;
 
 
     public Resourcemetadata() {
@@ -92,92 +92,92 @@ public class Resourcemetadata implements Serializable {
         this.resource = resource;
     }
 
-    public String getParamName() {
-        return paramName;
+    public String getParamname() {
+        return paramname;
     }
 
-    public void setParamName(String paramName) {
-        this.paramName = paramName;
+    public void setParamname(String paramname) {
+        this.paramname = paramname;
     }
 
-    public String getParamType() {
-		return paramType;
+    public String getParamtype() {
+		return paramtype;
 	}
 
-	public void setParamType(String paramType) {
-		this.paramType = paramType;
+	public void setParamtype(String paramtype) {
+		this.paramtype = paramtype;
 	}
 
-	public String getParamValue() {
-        return paramValue;
+	public String getParamvalue() {
+        return paramvalue;
     }
 
-    public void setParamValue(String paramValue) {
-    	if (paramValue != null && paramValue.length() > 750) {
-    		paramValue = paramValue.substring(0, 749);
+    public void setParamvalue(String paramvalue) {
+    	if (paramvalue != null && paramvalue.length() > 670) {
+    		paramvalue = paramvalue.substring(0, 669);
     	}
-        this.paramValue = paramValue;
+        this.paramvalue = paramvalue;
     }
 
-    public String getSystemValue() {
-        return systemValue;
+    public String getSystemvalue() {
+        return systemvalue;
     }
 
-    public void setSystemValue(String systemValue) {
-    	if (systemValue != null && systemValue.length() > 750) {
-    		systemValue = systemValue.substring(0, 749);
+    public void setSystemvalue(String systemvalue) {
+    	if (systemvalue != null && systemvalue.length() > 670) {
+    		systemvalue = systemvalue.substring(0, 669);
     	}
-        this.systemValue = systemValue;
+        this.systemvalue = systemvalue;
     }
 
-    public String getCodeValue() {
-		return codeValue;
+    public String getCodevalue() {
+		return codevalue;
 	}
 
-	public void setCodeValue(String codeValue) {
-    	if (codeValue != null && codeValue.length() > 750) {
-    		codeValue = codeValue.substring(0, 749);
+	public void setCodevalue(String codevalue) {
+    	if (codevalue != null && codevalue.length() > 670) {
+    		codevalue = codevalue.substring(0, 669);
     	}
-		this.codeValue = codeValue;
+		this.codevalue = codevalue;
 	}
 
-	public String getTextValue() {
-		return textValue;
+	public String getTextvalue() {
+		return textvalue;
 	}
 
-	public void setTextValue(String textValue) {
-    	if (textValue != null && textValue.length() > 750) {
-    		textValue = textValue.substring(0, 749);
+	public void setTextvalue(String textvalue) {
+    	if (textvalue != null && textvalue.length() > 670) {
+    		textvalue = textvalue.substring(0, 669);
     	}
-		this.textValue = textValue;
+		this.textvalue = textvalue;
 	}
 
-	public String getParamValueU() {
-        return paramValueU;
+	public String getParamvalueu() {
+        return paramvalueu;
     }
 
-    public void setParamValueU(String paramValueU) {
-    	if (paramValueU != null && paramValueU.length() > 750) {
-    		paramValueU = paramValueU.substring(0, 749);
+    public void setParamvalueu(String paramvalueu) {
+    	if (paramvalueu != null && paramvalueu.length() > 670) {
+    		paramvalueu = paramvalueu.substring(0, 669);
     	}
-    	if (paramValueU != null) {
-    		paramValueU = paramValueU.toUpperCase();
+    	if (paramvalueu != null) {
+    		paramvalueu = paramvalueu.toUpperCase();
     	}
-        this.paramValueU = paramValueU;
+        this.paramvalueu = paramvalueu;
     }
 
-	public String getTextValueU() {
-		return textValueU;
+	public String getTextvalueu() {
+		return textvalueu;
 	}
 
-	public void setTextValueU(String textValueU) {
-    	if (textValueU != null && textValueU.length() > 750) {
-    		textValueU = textValueU.substring(0, 749);
+	public void setTextvalueu(String textvalueu) {
+    	if (textvalueu != null && textvalueu.length() > 670) {
+    		textvalueu = textvalueu.substring(0, 669);
     	}
-    	if (textValueU != null) {
-    		textValueU = textValueU.toUpperCase();
+    	if (textvalueu != null) {
+    		textvalueu = textvalueu.toUpperCase();
     	}
-		this.textValueU = textValueU;
+		this.textvalueu = textvalueu;
 	}
 
 	/**
@@ -197,14 +197,14 @@ public class Resourcemetadata implements Serializable {
     		clone.setId(null);
     	}
     	clone.setResource(this.getResource());
-    	clone.setParamName(this.getParamName());
-    	clone.setParamType(this.getParamType());
-    	clone.setParamValue(this.getParamValue());
-    	clone.setSystemValue(this.getSystemValue());
-    	clone.setCodeValue(this.getCodeValue());
-    	clone.setTextValue(this.getTextValue());
-    	clone.setParamValueU(this.getParamValueU());
-    	clone.setTextValueU(this.getTextValueU());
+    	clone.setParamname(this.getParamname());
+    	clone.setParamtype(this.getParamtype());
+    	clone.setParamvalue(this.getParamvalue());
+    	clone.setSystemvalue(this.getSystemvalue());
+    	clone.setCodevalue(this.getCodevalue());
+    	clone.setTextvalue(this.getTextvalue());
+    	clone.setParamvalueu(this.getParamvalueu());
+    	clone.setTextvalueu(this.getTextvalueu());
 
     	return clone;
     }
@@ -236,11 +236,11 @@ public class Resourcemetadata implements Serializable {
 
     @Override
     public String toString() {
-        return "Resourcemetadata [id=" + id + ", resourceId=" + ((resource == null) ? 0 : resource.getId())
-                + ", paramName=" + paramName+ ", paramType=" + paramType + ", paramValue=" + ((paramValue == null) ? "null" : paramValue)
-                + ", system=" + ((systemValue == null) ? "null" : systemValue) + ", code=" + ((codeValue == null) ? "null" : codeValue)
-                + ", textValue=" + ((textValue == null) ? "null" : textValue) + ", paramValueU=" + ((paramValueU == null) ? "null" : paramValueU)
-                + ", textValueU=" + ((textValueU == null) ? "null" : textValueU);
+        return "Resourcemetadata [id=" + id + ", resourceid=" + ((resource == null) ? 0 : resource.getId())
+                + ", paramname=" + paramname+ ", paramtype=" + paramtype + ", paramvalue=" + ((paramvalue == null) ? "null" : paramvalue)
+                + ", system=" + ((systemvalue == null) ? "null" : systemvalue) + ", code=" + ((codevalue == null) ? "null" : codevalue)
+                + ", textvalue=" + ((textvalue == null) ? "null" : textvalue) + ", paramvalueu=" + ((paramvalueu == null) ? "null" : paramvalueu)
+                + ", textvalueu=" + ((textvalueu == null) ? "null" : textvalueu);
     }
 
 }

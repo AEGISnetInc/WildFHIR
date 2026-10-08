@@ -80,10 +80,10 @@ public class ResourcemetadataSubstanceSpecification extends ResourcemetadataProx
 		try {
             // Extract and convert the resource contents to a SubstanceSpecification object
 			if (chainedResource != null) {
-				iSubstanceSpecification = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iSubstanceSpecification = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iSubstanceSpecification = new ByteArrayInputStream(resource.getResourceContents());
+				iSubstanceSpecification = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             SubstanceSpecification substanceSpecification = (SubstanceSpecification) xmlP.parse(iSubstanceSpecification);

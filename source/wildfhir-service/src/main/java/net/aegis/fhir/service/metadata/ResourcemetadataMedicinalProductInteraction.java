@@ -80,10 +80,10 @@ public class ResourcemetadataMedicinalProductInteraction extends Resourcemetadat
 		try {
             // Extract and convert the resource contents to a MedicinalProductInteraction object
 			if (chainedResource != null) {
-				iMedicinalProductInteraction = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMedicinalProductInteraction = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMedicinalProductInteraction = new ByteArrayInputStream(resource.getResourceContents());
+				iMedicinalProductInteraction = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MedicinalProductInteraction medicinalProductInteraction = (MedicinalProductInteraction) xmlP.parse(iMedicinalProductInteraction);

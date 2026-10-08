@@ -91,10 +91,10 @@ public class ResourcemetadataPatient extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Patient object
 			if (chainedResource != null) {
-				iPatient = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iPatient = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iPatient = new ByteArrayInputStream(resource.getResourceContents());
+				iPatient = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Patient patient = (Patient) xmlP.parse(iPatient);

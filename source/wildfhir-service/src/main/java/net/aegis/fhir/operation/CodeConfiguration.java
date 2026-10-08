@@ -161,7 +161,7 @@ public class CodeConfiguration extends ResourceOperationProxy {
 
 								parameterPart = new ParametersParameterComponent();
 								parameterPart.setName("codeName");
-								partString = new StringType(code.getCodeName());
+								partString = new StringType(code.getCodename());
 								parameterPart.setValue(partString);
 								parameter.addPart(parameterPart);
 
@@ -200,10 +200,10 @@ public class CodeConfiguration extends ResourceOperationProxy {
 									existingCode.setValue(valueString.getValue());
 								}
 								if (intValueInteger != null) {
-									existingCode.setIntValue(intValueInteger.getValue());
+									existingCode.setIntvalue(intValueInteger.getValue());
 								}
 								if (resourceContentsString != null) {
-									existingCode.setResourceContents(resourceContentsString.getValue().getBytes());
+									existingCode.setResourcecontents(resourceContentsString.getValue());
 								}
 
 								Code updatedCode = this.codeService.update(existingCode);

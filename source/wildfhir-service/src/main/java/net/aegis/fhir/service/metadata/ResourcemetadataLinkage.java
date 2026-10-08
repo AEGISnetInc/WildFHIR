@@ -78,10 +78,10 @@ public class ResourcemetadataLinkage extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Linkage object
 			if (chainedResource != null) {
-				iLinkage = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iLinkage = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iLinkage = new ByteArrayInputStream(resource.getResourceContents());
+				iLinkage = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Linkage linkage = (Linkage) xmlP.parse(iLinkage);

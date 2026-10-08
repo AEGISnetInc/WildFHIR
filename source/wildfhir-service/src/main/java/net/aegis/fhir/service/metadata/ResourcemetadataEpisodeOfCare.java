@@ -85,10 +85,10 @@ public class ResourcemetadataEpisodeOfCare extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a EpisodeOfCare object
 			if (chainedResource != null) {
-				iEpisodeOfCare = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iEpisodeOfCare = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iEpisodeOfCare = new ByteArrayInputStream(resource.getResourceContents());
+				iEpisodeOfCare = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             EpisodeOfCare episodeOfCare = (EpisodeOfCare) xmlP.parse(iEpisodeOfCare);

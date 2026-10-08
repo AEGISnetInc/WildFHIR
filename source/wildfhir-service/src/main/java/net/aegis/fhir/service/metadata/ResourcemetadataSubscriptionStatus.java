@@ -51,16 +51,16 @@ import net.aegis.fhir.service.ResourceService;
 
 /**
  * SubscriptionStatus R5 Special Support
- * 
+ *
  * This resource type does not define any explicit search parameters in the base specification. Also,
  * the SubscriptionStatus is not intended to be persisted but rather used only in subscription
  * notification Bundles as the first entry resource.
- * 
+ *
  * However, WildFHIR will leverage this existing resource meta data logic to store custom search
  * parameters needed for internal support of the R5 Subscriptions Backport functionality. Storage of
  * the R5 SubscriptionStatus resource will be done via the R5 Subscriptions Backport profiled
  * Parameters resource.
- * 
+ *
  * @author richard.ettema
  *
  */
@@ -92,10 +92,10 @@ public class ResourcemetadataSubscriptionStatus extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Parameters object
 			if (chainedResource != null) {
-				iSubscriptionStatus = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iSubscriptionStatus = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iSubscriptionStatus = new ByteArrayInputStream(resource.getResourceContents());
+				iSubscriptionStatus = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Parameters subscriptionStatus = (Parameters) xmlP.parse(iSubscriptionStatus);
@@ -113,7 +113,7 @@ public class ResourcemetadataSubscriptionStatus extends ResourcemetadataProxy {
 			 * R4 SubscriptionStatus is stored as a Parameters resource type. The custom search parameters will be
 			 * extracted from the following parameter names as defined by the R5 Subscriptions Backport profile
 			 * http://hl7.org/fhir/uv/subscriptions-backport/StructureDefinition/backport-subscription-status-r4
-			 * 
+			 *
 			 * status, subscription, topic, type
 			 */
 

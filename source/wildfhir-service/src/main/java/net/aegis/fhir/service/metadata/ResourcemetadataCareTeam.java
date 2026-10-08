@@ -84,10 +84,10 @@ public class ResourcemetadataCareTeam extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a CareTeam object
 			if (chainedResource != null) {
-				iCareTeam = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iCareTeam = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iCareTeam = new ByteArrayInputStream(resource.getResourceContents());
+				iCareTeam = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			CareTeam careTeam = (CareTeam) xmlP.parse(iCareTeam);

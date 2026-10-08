@@ -87,10 +87,10 @@ public class ResourcemetadataNamingSystem extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a NamingSystem object
 			if (chainedResource != null) {
-				iNamingSystem = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iNamingSystem = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iNamingSystem = new ByteArrayInputStream(resource.getResourceContents());
+				iNamingSystem = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             NamingSystem namingSystem = (NamingSystem) xmlP.parse(iNamingSystem);

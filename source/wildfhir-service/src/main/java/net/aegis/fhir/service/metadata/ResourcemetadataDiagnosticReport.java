@@ -85,10 +85,10 @@ public class ResourcemetadataDiagnosticReport extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a DiagnosticReport object
 			if (chainedResource != null) {
-				iDiagnosticReport = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iDiagnosticReport = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iDiagnosticReport = new ByteArrayInputStream(resource.getResourceContents());
+				iDiagnosticReport = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			DiagnosticReport diagnosticReport = (DiagnosticReport) xmlP.parse(iDiagnosticReport);

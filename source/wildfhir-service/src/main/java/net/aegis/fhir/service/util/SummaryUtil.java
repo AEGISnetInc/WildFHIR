@@ -71,7 +71,7 @@ public enum SummaryUtil {
 		try {
 			// Convert XML contents to Resource
 			XmlParser xmlP = new XmlParser();
-			ByteArrayInputStream iResource = new ByteArrayInputStream(resource.getResourceContents());
+			ByteArrayInputStream iResource = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			org.hl7.fhir.r4.model.Resource originalResource = xmlP.parse(iResource);
 
 			org.hl7.fhir.r4.model.Resource summaryResource = null;
@@ -80,12 +80,12 @@ public enum SummaryUtil {
 			if (originalResource instanceof DomainResource) {
 
 				ResourceSummaryProxyObjectFactory objectFactory = new ResourceSummaryProxyObjectFactory();
-				ResourceSummaryProxy proxy = objectFactory.getResourceSummaryProxy(resource.getResourceType());
+				ResourceSummaryProxy proxy = objectFactory.getResourceSummaryProxy(resource.getResourcetype());
 
 				// Check for valid proxy
 				if (proxy != null) {
 
-					log.fine("Generating _summary=" + _summary + " for resource type " + resource.getResourceType());
+					log.fine("Generating _summary=" + _summary + " for resource type " + resource.getResourcetype());
 
 					// Convert resource based on _summary type
 					if (_summary.equals("true")) {
@@ -111,7 +111,7 @@ public enum SummaryUtil {
 						xmlP.setOutputStyle(OutputStyle.PRETTY);
 						xmlP.compose(oResource, summaryResource, true);
 
-						resource.setResourceContents(oResource.toByteArray());
+						resource.setResourcecontents(oResource.toString("UTF-8"));
 					}
 				}
 			}

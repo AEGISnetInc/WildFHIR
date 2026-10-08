@@ -84,10 +84,10 @@ public class ResourcemetadataStructureDefinition extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a StructureDefinition object
 			if (chainedResource != null) {
-				iStructureDefinition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iStructureDefinition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iStructureDefinition = new ByteArrayInputStream(resource.getResourceContents());
+				iStructureDefinition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             StructureDefinition structureDefinition = (StructureDefinition) xmlP.parse(iStructureDefinition);

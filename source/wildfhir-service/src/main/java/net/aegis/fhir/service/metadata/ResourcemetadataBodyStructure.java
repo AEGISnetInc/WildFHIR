@@ -80,10 +80,10 @@ public class ResourcemetadataBodyStructure extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a BodyStructure object
 			if (chainedResource != null) {
-				iBodyStructure = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iBodyStructure = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iBodyStructure = new ByteArrayInputStream(resource.getResourceContents());
+				iBodyStructure = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             BodyStructure bodyStructure = (BodyStructure) xmlP.parse(iBodyStructure);

@@ -81,10 +81,10 @@ public class ResourcemetadataDeviceUseStatement extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a DeviceUseStatement object
 			if (chainedResource != null) {
-				iDeviceUseStatement = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iDeviceUseStatement = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iDeviceUseStatement = new ByteArrayInputStream(resource.getResourceContents());
+				iDeviceUseStatement = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             DeviceUseStatement deviceUseStatement = (DeviceUseStatement) xmlP.parse(iDeviceUseStatement);

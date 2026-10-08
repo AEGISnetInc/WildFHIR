@@ -81,12 +81,12 @@ public class InitializeCapabilityStatement extends HttpServlet {
 			String softwareVersion = ServicesUtil.INSTANCE.getSoftwareVersion();
 			boolean versionsMatch = false;
 
-			if (resourceContainer != null && resourceContainer.getConformance() != null && resourceContainer.getConformance().getResourceContents() != null) {
+			if (resourceContainer != null && resourceContainer.getConformance() != null && resourceContainer.getConformance().getResourcecontents() != null) {
 				// CapabilityStatement exists, check current version
 
 				// Parse contents to CapabilityStatement object
 				XmlParser xmlParser = new XmlParser();
-				CapabilityStatement capstmt = (CapabilityStatement)xmlParser.parse(resourceContainer.getConformance().getResourceContents());
+				CapabilityStatement capstmt = (CapabilityStatement)xmlParser.parse(resourceContainer.getConformance().getResourcecontents().getBytes("UTF-8"));
 
 				String capstmtVersion = capstmt.getVersion();
 
@@ -97,7 +97,7 @@ public class InitializeCapabilityStatement extends HttpServlet {
 
 			if (!versionsMatch ||
 					(resourceContainer != null && resourceContainer.getConformance() != null
-					&& (resourceContainer.getConformance().getResourceContents() == null || resourceContainer.getConformance().getResourceContents().length == 0))) {
+					&& (resourceContainer.getConformance().getResourcecontents() == null || resourceContainer.getConformance().getResourcecontents().isEmpty()))) {
 				/*
 				 * Use Factory Pattern for execution of capability-reload operation
 				 */

@@ -84,10 +84,10 @@ public class ResourcemetadataDocumentManifest extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a DocumentManifest object
 			if (chainedResource != null) {
-				iDocumentManifest = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iDocumentManifest = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iDocumentManifest = new ByteArrayInputStream(resource.getResourceContents());
+				iDocumentManifest = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			DocumentManifest documentManifest = (DocumentManifest) xmlP.parse(iDocumentManifest);

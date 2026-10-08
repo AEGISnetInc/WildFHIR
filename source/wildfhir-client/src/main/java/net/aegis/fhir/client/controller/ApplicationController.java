@@ -222,7 +222,7 @@ public class ApplicationController implements Serializable {
 
 						FacesContext.getCurrentInstance().addMessage(
 								"tabView:interactionsTabView:createForm",
-								new FacesMessage(FacesMessage.SEVERITY_INFO, "Resource with ID: " + wrapper.getResourceBean().getResourceId() + " successfully created.", "Resource with ID: " + wrapper.getResourceBean().getResourceId()
+								new FacesMessage(FacesMessage.SEVERITY_INFO, "Resource with ID: " + wrapper.getResourceBean().getResourceid() + " successfully created.", "Resource with ID: " + wrapper.getResourceBean().getResourceid()
 										+ " successfully created."));
 					}
 					catch (Exception e) {

@@ -89,10 +89,10 @@ public class ResourcemetadataProcedure extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Procedure object
 			if (chainedResource != null) {
-				iProcedure = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iProcedure = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iProcedure = new ByteArrayInputStream(resource.getResourceContents());
+				iProcedure = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Procedure procedure = (Procedure) xmlP.parse(iProcedure);

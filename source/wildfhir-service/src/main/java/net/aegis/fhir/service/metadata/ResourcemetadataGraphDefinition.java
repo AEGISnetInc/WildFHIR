@@ -84,10 +84,10 @@ public class ResourcemetadataGraphDefinition extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a GraphDefinition object
 			if (chainedResource != null) {
-				iGraphDefinition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iGraphDefinition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iGraphDefinition = new ByteArrayInputStream(resource.getResourceContents());
+				iGraphDefinition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			GraphDefinition graphDefinition = (GraphDefinition) xmlP.parse(iGraphDefinition);

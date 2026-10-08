@@ -76,10 +76,10 @@ public class ResourcemetadataSubstanceSourceMaterial extends ResourcemetadataPro
 		try {
             // Extract and convert the resource contents to a SubstanceSourceMaterial object
 			if (chainedResource != null) {
-				iSubstanceSourceMaterial = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iSubstanceSourceMaterial = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iSubstanceSourceMaterial = new ByteArrayInputStream(resource.getResourceContents());
+				iSubstanceSourceMaterial = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             SubstanceSourceMaterial substanceSourceMaterial = (SubstanceSourceMaterial) xmlP.parse(iSubstanceSourceMaterial);

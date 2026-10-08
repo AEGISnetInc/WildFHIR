@@ -136,6 +136,11 @@ public class FHIRPathEvaluate extends ResourceOperationProxy {
 						outputParameter.setValue(method);
 						outputParameters.getParameter().add(outputParameter);
 
+						outputParameter = new ParametersParameterComponent();
+						outputParameter.setName("expression");
+						outputParameter.setValue(expression);
+						outputParameters.getParameter().add(outputParameter);
+
 						// Call evaluate based on method and build evaluate output parameters
 						if (method.getValue().equalsIgnoreCase("evaluate")) {
 							log.warning("Calling FHIRValidatorClient with parameters for evaluate method");

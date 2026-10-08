@@ -30,7 +30,7 @@
 				<h:outputText value="Select FHIR Server: * " />
 				<p:selectOneMenu required="true" label="Select FHIR Server" value="#{context.selectedServerURL}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
 					<f:selectItem itemValue="#{null}" itemLabel="-- Select FHIR Server --         " noSelectionOption="true" />
-					<f:selectItems value="#{context.availableServers}" var="server" itemLabel="#{server.name.trim()}         " itemValue="#{server.basePath}" />
+					<f:selectItems value="#{context.availableServers}" var="server" itemLabel="#{server.name.trim()}         " itemValue="#{server.basepath}" />
 				</p:selectOneMenu>
 
 				<h:outputText value="Enter Resource Id to Patch: * " />

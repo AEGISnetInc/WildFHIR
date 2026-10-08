@@ -83,10 +83,10 @@ public class ResourcemetadataInvoice extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Invoice object
 			if (chainedResource != null) {
-				iInvoice = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iInvoice = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iInvoice = new ByteArrayInputStream(resource.getResourceContents());
+				iInvoice = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Invoice invoice = (Invoice) xmlP.parse(iInvoice);

@@ -34,6 +34,7 @@ package net.aegis.fhir.operation;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -93,7 +94,7 @@ public class ResourceMetaAdd extends ResourceOperationProxy {
 
 		if (resourceContainer != null && resourceContainer.getResource() != null && resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
 			XmlParser xmlP = new XmlParser();
-			Resource resource = xmlP.parse(new ByteArrayInputStream(resourceContainer.getResource().getResourceContents()));
+			Resource resource = xmlP.parse(new ByteArrayInputStream(resourceContainer.getResource().getResourcecontents().getBytes("UTF-8")));
 
 			Meta resourceMeta = new Meta();
 
@@ -227,7 +228,7 @@ public class ResourceMetaAdd extends ResourceOperationProxy {
 			xmlP.compose(oResource, resource, true);
 			byte[] bResource = oResource.toByteArray();
 
-			updateResource.setResourceContents(bResource);
+			updateResource.setResourcecontents(new String(bResource, Charset.forName("UTF-8")));
 
 			this.resourceService.updateOnly(updateResource, baseUrl);
 		}

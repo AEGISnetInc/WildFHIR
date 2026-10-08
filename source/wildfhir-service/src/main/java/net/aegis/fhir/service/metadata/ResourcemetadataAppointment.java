@@ -85,10 +85,10 @@ public class ResourcemetadataAppointment extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Appointment object
 			if (chainedResource != null) {
-				iAppointment = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iAppointment = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iAppointment = new ByteArrayInputStream(resource.getResourceContents());
+				iAppointment = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Appointment appointment = (Appointment) xmlP.parse(iAppointment);

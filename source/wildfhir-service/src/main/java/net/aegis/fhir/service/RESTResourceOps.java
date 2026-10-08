@@ -221,7 +221,7 @@ public class RESTResourceOps {
 						}
 
 						if (resourceContainer != null && resourceContainer.getResource() != null) {
-							requestURL.append("/_history/").append(resourceContainer.getResource().getVersionId());
+							requestURL.append("/_history/").append(resourceContainer.getResource().getVersionid());
 						}
 
 						// Construct full request URL with any query parameters
@@ -300,7 +300,7 @@ public class RESTResourceOps {
 													modifiedSince = new Date();
 												}
 
-												Date lastUpdate = resourceContainer.getResource().getLastUpdate();
+												Date lastUpdate = resourceContainer.getResource().getLastupdate();
 
 												if (lastUpdate.before(modifiedSince)) {
 													notModifiedorMatched = true;
@@ -315,7 +315,7 @@ public class RESTResourceOps {
 
 											if (ifNoneMatch != null) {
 												try {
-													String versionId = resourceContainer.getResource().getVersionId().toString();
+													String versionId = resourceContainer.getResource().getVersionid().toString();
 
 													// First check for versionId only
 													if (ifNoneMatch.equals(versionId)) {
@@ -481,7 +481,7 @@ public class RESTResourceOps {
 							requestURL.append("/").append(resourceType).append("/").append(id);
 
 							if (resourceContainer != null && resourceContainer.getResource() != null) {
-								requestURL.append("/_history/").append(resourceContainer.getResource().getVersionId());
+								requestURL.append("/_history/").append(resourceContainer.getResource().getVersionid());
 							}
 						}
 
@@ -744,18 +744,18 @@ public class RESTResourceOps {
 
 								// Initialize a Resource to be created
 								net.aegis.fhir.model.Resource newResource = new net.aegis.fhir.model.Resource();
-								newResource.setResourceType(resourceType);
-								newResource.setResourceContents(bResource);
+								newResource.setResourcetype(resourceType);
+								newResource.setResourcecontents(new String(bResource, Charset.forName("UTF-8")));
 
 								ResourceContainer resourceContainer = resourceService.create(newResource, resourceId, request.getRequestURL().toString());
 
 								if (resourceId == null) {
-									sbLocationPath.append("/").append(resourceContainer.getResource().getResourceId());
+									sbLocationPath.append("/").append(resourceContainer.getResource().getResourceid());
 								}
 								else {
 									sbLocationPath.append("/").append(resourceId);
 								}
-								sbLocationPath.append("/_history/").append(resourceContainer.getResource().getVersionId());
+								sbLocationPath.append("/_history/").append(resourceContainer.getResource().getVersionid());
 
 								/*
 								 * Honor Prefer HTTP Header first. If not defined, use configuration setting createResponsePayload
@@ -768,14 +768,14 @@ public class RESTResourceOps {
 
 								if (prefer != null && prefer.indexOf("minimal") >= 0) {
 									// Return content preference set to minimal; remove resource contents
-									resourceContainer.getResource().setResourceContents(null);
+									resourceContainer.getResource().setResourcecontents(null);
 								}
 								else if ((prefer != null && prefer.indexOf("OperationOutcome") >= 0)) {
 									// Return content preference set to OperationOutcome; generate XML OperationOutcome resource contents
-									String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL, resourceContainer.getResource().getResourceType()
-											+ " resource created with resource id " + resourceContainer.getResource().getResourceId() + ".", null, null);
+									String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL, resourceContainer.getResource().getResourcetype()
+											+ " resource created with resource id " + resourceContainer.getResource().getResourceid() + ".", null, null);
 
-									resourceContainer.getResource().setResourceContents(outcome.getBytes());
+									resourceContainer.getResource().setResourcecontents(outcome);
 								}
 
 								/*
@@ -785,7 +785,7 @@ public class RESTResourceOps {
 								if (codeService.isSupported("subscriptionServiceEnabled")) {
 									if (resourceType.equals("Subscription") && resourceContainer.getResponseStatus().equals(Response.Status.CREATED)) {
 										// Create initial SubscriptionStatus for Subscription
-										this.initialSubscriptionStatus(resource, resourceContainer.getResource().getResourceId());
+										this.initialSubscriptionStatus(resource, resourceContainer.getResource().getResourceid());
 									}
 								}
 
@@ -1095,7 +1095,7 @@ public class RESTResourceOps {
 									if (ifMatch != null) {
 										try {
 											if (resourceContainer != null && resourceContainer.getResource() != null) {
-												String versionId = resourceContainer.getResource().getVersionId().toString();
+												String versionId = resourceContainer.getResource().getVersionid().toString();
 												String matchVersionId = "";
 	
 												// First check for versionId only
@@ -1162,8 +1162,8 @@ public class RESTResourceOps {
 
 											// Initialize a Resource to be updated
 											net.aegis.fhir.model.Resource updateResource = new net.aegis.fhir.model.Resource();
-											updateResource.setResourceType(resourceType);
-											updateResource.setResourceContents(bResource);
+											updateResource.setResourcetype(resourceType);
+											updateResource.setResourcecontents(new String(bResource, Charset.forName("UTF-8")));
 
 											String locationPath = request.getRequestURL().toString();
 
@@ -1177,7 +1177,7 @@ public class RESTResourceOps {
 											resourceContainer = resourceService.update(id, updateResource, locationPath);
 
 											if (resourceContainer != null && resourceContainer.getResource() != null) {
-												locationPath += "/_history/" + resourceContainer.getResource().getVersionId();
+												locationPath += "/_history/" + resourceContainer.getResource().getVersionid();
 											}
 
 											/*
@@ -1188,14 +1188,14 @@ public class RESTResourceOps {
 
 											if (prefer != null && prefer.indexOf("minimal") >= 0) {
 												// Return content preference set to minimal; remove resource contents
-												resourceContainer.getResource().setResourceContents(null);
+												resourceContainer.getResource().setResourcecontents(null);
 											}
 											else if ((prefer != null && prefer.indexOf("OperationOutcome") >= 0)) {
 												// Return content preference set to OperationOutcome; generate XML OperationOutcome resource contents
 												String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL,
-														resourceContainer.getResource().getResourceType() + " resource updated with resource id " + resourceContainer.getResource().getResourceId() + ".", null, null);
+														resourceContainer.getResource().getResourcetype() + " resource updated with resource id " + resourceContainer.getResource().getResourceid() + ".", null, null);
 	
-												resourceContainer.getResource().setResourceContents(outcome.getBytes());
+												resourceContainer.getResource().setResourcecontents(outcome);
 											}
 
 											/*
@@ -1205,7 +1205,7 @@ public class RESTResourceOps {
 											if (codeService.isSupported("subscriptionServiceEnabled")) {
 												if (resourceType.equals("Subscription") && resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
 													// Create new SubscriptionStatus for Subscription
-													this.updateSubscriptionStatus(resource, resourceContainer.getResource().getResourceId());
+													this.updateSubscriptionStatus(resource, resourceContainer.getResource().getResourceid());
 												}
 											}
 
@@ -1475,7 +1475,7 @@ public class RESTResourceOps {
 										if (ifMatch != null) {
 											try {
 												if (resourceContainer != null && resourceContainer.getResource() != null) {
-													String versionId = resourceContainer.getResource().getVersionId().toString();
+													String versionId = resourceContainer.getResource().getVersionid().toString();
 													String matchVersionId = "";
 	
 													// First check for versionId only
@@ -1558,7 +1558,7 @@ public class RESTResourceOps {
 												// Generate location path with new reference url to the updated resource
 												locationPath = request.getRequestURL().toString();
 												if (resourceContainer != null && resourceContainer.getResource() != null) {
-													locationPath += "/_history/" + resourceContainer.getResource().getVersionId();
+													locationPath += "/_history/" + resourceContainer.getResource().getVersionid();
 												}
 
 												/*
@@ -1568,10 +1568,10 @@ public class RESTResourceOps {
 
 												if (prefer != null && prefer.indexOf("minimal") >= 0) {
 													// Return content preference set to minimal; return information OperationOutcome
-													String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL, resourceContainer.getResource().getResourceType()
-															+ " resource patched with resource id " + resourceContainer.getResource().getResourceId() + ".", null, producesType);
+													String outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL, resourceContainer.getResource().getResourcetype()
+															+ " resource patched with resource id " + resourceContainer.getResource().getResourceid() + ".", null, producesType);
 
-													resourceContainer.getResource().setResourceContents(outcome.getBytes());
+													resourceContainer.getResource().setResourcecontents(outcome);
 												}
 
 												builder = buildResource(locationPath, producesType, resourceContainer, Ops.UPDATE, responseFhirVersion);
@@ -1867,7 +1867,7 @@ public class RESTResourceOps {
 									// if resourceContainer is not null, delete happened, finish processing
 									locationPath = request.getRequestURL().toString();
 									if (resourceContainer != null && resourceContainer.getResource() != null) {
-										locationPath += "/_history/" + resourceContainer.getResource().getVersionId();
+										locationPath += "/_history/" + resourceContainer.getResource().getVersionid();
 									}
 
 									builder = buildResource(locationPath, producesType, resourceContainer, Ops.DELETE, responseFhirVersion);
@@ -2573,8 +2573,8 @@ public class RESTResourceOps {
 
 		// Initialize a Resource to be created
 		net.aegis.fhir.model.Resource aegisResource = new net.aegis.fhir.model.Resource();
-		aegisResource.setResourceType("SubscriptionStatus");
-		aegisResource.setResourceContents(bResource);
+		aegisResource.setResourcetype("SubscriptionStatus");
+		aegisResource.setResourcecontents(new String(bResource, Charset.forName("UTF-8")));
 
 		resourceService.create(aegisResource, null, codeService.getCodeValue("baseUrl"));
 	}
@@ -2647,8 +2647,8 @@ public class RESTResourceOps {
 
 		// Initialize a Resource to be created
 		net.aegis.fhir.model.Resource aegisResource = new net.aegis.fhir.model.Resource();
-		aegisResource.setResourceType("SubscriptionStatus");
-		aegisResource.setResourceContents(bResource);
+		aegisResource.setResourcetype("SubscriptionStatus");
+		aegisResource.setResourcecontents(new String(bResource, Charset.forName("UTF-8")));
 
 		resourceService.create(aegisResource, null, codeService.getCodeValue("baseUrl"));
 	}
@@ -2937,7 +2937,7 @@ public class RESTResourceOps {
 
 				if (resourceContainer.getResource() != null) {
 					// Get last update date
-					Date lastUpdate = resourceContainer.getResource().getLastUpdate();
+					Date lastUpdate = resourceContainer.getResource().getLastupdate();
 					log.fine("Last Update Date: " + lastUpdate);
 
 
@@ -2947,7 +2947,7 @@ public class RESTResourceOps {
 					}
 
 					// ETag to hold the resource version id; format "W/##"
-					eTagVersion = resourceContainer.getResource().getVersionId().toString();
+					eTagVersion = resourceContainer.getResource().getVersionid().toString();
 					eTag = new EntityTag(eTagVersion, true);
 				}
 
@@ -2971,14 +2971,14 @@ public class RESTResourceOps {
 					}
 					if (resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
 						// if resource already deleted; return OperationOutcome
-						outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL, resourceContainer.getResource().getResourceType() + " resource with resource id "
-								+ resourceContainer.getResource().getResourceId() + " is already deleted.", null, null, producesType);
+						outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL, resourceContainer.getResource().getResourcetype() + " resource with resource id "
+								+ resourceContainer.getResource().getResourceid() + " is already deleted.", null, null, producesType);
 						builder = builder.entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 					}
 
 				}
 				else if (opsCode.equals(Ops.VALIDATE)) {
-					outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL, resourceContainer.getResource().getResourceType() + " resource type validated.", null,
+					outcome = ServicesUtil.INSTANCE.getOperationOutcome(OperationOutcome.IssueSeverity.INFORMATION, OperationOutcome.IssueType.INFORMATIONAL, resourceContainer.getResource().getResourcetype() + " resource type validated.", null,
 							null, producesType);
 					builder = builder.entity(outcome).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion);
 				}
@@ -3024,15 +3024,15 @@ public class RESTResourceOps {
                 || resourceContainer.getResponseStatus().equals(Response.Status.CREATED)
                 || resourceContainer.getResponseStatus().equals(Response.Status.BAD_REQUEST)) {
 
-        	if (resourceContainer.getResource().getResourceContents() != null) {
+        	if (resourceContainer.getResource().getResourcecontents() != null) {
 	            if (producesType.indexOf("xml") >= 0) {
-	            	String out = new String(resourceContainer.getResource().getResourceContents());
+	            	String out = resourceContainer.getResource().getResourcecontents();
 	                builder = builder.entity(out).tag(eTag).type(producesType + Constants.CHARSET_UTF8_EXT + responseFhirVersion)
 	                		.header(HttpHeaders.CONTENT_LENGTH, out.getBytes("UTF-8").length);
 
 	            } else {
 	                // Convert XML contents to JSON
-	                iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourceContents());
+	                iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourcecontents().getBytes("UTF-8"));
 	                XmlParser xmlP = new XmlParser();
 	                Resource resource = xmlP.parse(iResource);
 	                oResource = new ByteArrayOutputStream();

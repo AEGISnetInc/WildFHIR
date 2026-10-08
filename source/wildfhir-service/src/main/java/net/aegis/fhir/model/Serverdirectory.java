@@ -63,26 +63,34 @@ public class Serverdirectory implements Serializable {
 
 	private String description;
 
-	private String basePath;
+	private String basepath;
 
-	private String lastUser;
+	private String lastuser;
 
 	@Temporal(TemporalType.TIMESTAMP)
-	private Date lastUpdate;
+	private Date lastupdate;
 
-    private String oauthGrantType;
+    private String oauthgranttype;
 
-    private String oauthClientId;
+    private String oauthclientid;
 
-    private String oauthClientSecret;
+    private String oauthclientsecret;
 
-    private String oauthScope;
+    private String oauthusername;
 
-    private String oauthAuthUrl;
+    private String oauthpassword;
 
-    private String oauthTokenUrl;
+    private String oauthprivatekey;
 
-    private String oauthIntrospectUrl;
+    private String oauthpublickey;
+
+    private String oauthscope;
+
+    private String oauthauthurl;
+
+    private String oauthtokenurl;
+
+    private String oauthintrospecturl;
 
 	public Serverdirectory() {
 	}
@@ -111,105 +119,149 @@ public class Serverdirectory implements Serializable {
 		this.description = description;
 	}
 
-	public String getBasePath() {
-		return basePath;
+	public String getBasepath() {
+		return basepath;
 	}
 
-	public void setBasePath(String basePath) {
-		this.basePath = basePath;
+	public void setBasepath(String basepath) {
+		this.basepath = basepath;
 	}
 
-	public String getLastUser() {
-		return lastUser;
+	public String getLastuser() {
+		return lastuser;
 	}
 
-	public void setLastUser(String lastUser) {
-		this.lastUser = lastUser;
+	public void setLastuser(String lastuser) {
+		this.lastuser = lastuser;
 	}
 
-	public Date getLastUpdate() {
-		return lastUpdate;
+	public Date getLastupdate() {
+		return lastupdate;
 	}
 
-	public void setLastUpdate(Date lastUpdate) {
-		this.lastUpdate = lastUpdate;
+	public void setLastupdate(Date lastupdate) {
+		this.lastupdate = lastupdate;
 	}
 
-	public String getOauthGrantType() {
-		return oauthGrantType;
+	public String getOauthgranttype() {
+		return oauthgranttype;
 	}
 
-	public void setOauthGrantType(String oauthGrantType) {
-		if (oauthGrantType != null && oauthGrantType.isEmpty()) {
-			oauthGrantType = null;
+	public void setOauthgranttype(String oauthgranttype) {
+		if (oauthgranttype != null && oauthgranttype.isEmpty()) {
+			oauthgranttype = null;
 		}
-		this.oauthGrantType = oauthGrantType;
+		this.oauthgranttype = oauthgranttype;
 	}
 
-	public String getOauthClientId() {
-		return oauthClientId;
+	public String getOauthclientid() {
+		return oauthclientid;
 	}
 
-	public void setOauthClientId(String oauthClientId) {
-		if (oauthClientId != null && oauthClientId.isEmpty()) {
-			oauthClientId = null;
+	public void setOauthclientid(String oauthclientid) {
+		if (oauthclientid != null && oauthclientid.isEmpty()) {
+			oauthclientid = null;
 		}
-		this.oauthClientId = oauthClientId;
+		this.oauthclientid = oauthclientid;
 	}
 
-	public String getOauthClientSecret() {
-		return oauthClientSecret;
+	public String getOauthclientsecret() {
+		return oauthclientsecret;
 	}
 
-	public void setOauthClientSecret(String oauthClientSecret) {
-		if (oauthClientId != null && oauthClientId.isEmpty()) {
-			oauthClientId = null;
+	public void setOauthclientsecret(String oauthclientsecret) {
+		if (oauthclientsecret != null && oauthclientsecret.isEmpty()) {
+			oauthclientsecret = null;
 		}
-		this.oauthClientSecret = oauthClientSecret;
+		this.oauthclientsecret = oauthclientsecret;
 	}
 
-	public String getOauthScope() {
-		return oauthScope;
+	public String getOauthusername() {
+		return oauthusername;
 	}
 
-	public void setOauthScope(String oauthScope) {
-		if (oauthScope != null && oauthScope.isEmpty()) {
-			oauthScope = null;
+	public void setOauthusername(String oauthusername) {
+		if (oauthusername != null && oauthusername.isEmpty()) {
+			oauthusername = null;
 		}
-		this.oauthScope = oauthScope;
+		this.oauthusername = oauthusername;
 	}
 
-	public String getOauthAuthUrl() {
-		return oauthAuthUrl;
+	public String getOauthpassword() {
+		return oauthpassword;
 	}
 
-	public void setOauthAuthUrl(String oauthAuthUrl) {
-		if (oauthAuthUrl != null && oauthAuthUrl.isEmpty()) {
-			oauthAuthUrl = null;
+	public void setOauthpassword(String oauthpassword) {
+		if (oauthpassword != null && oauthpassword.isEmpty()) {
+			oauthpassword = null;
 		}
-		this.oauthAuthUrl = oauthAuthUrl;
+		this.oauthpassword = oauthpassword;
 	}
 
-	public String getOauthTokenUrl() {
-		return oauthTokenUrl;
+	public String getOauthprivatekey() {
+		return oauthprivatekey;
 	}
 
-	public void setOauthTokenUrl(String oauthTokenUrl) {
-		if (oauthTokenUrl != null && oauthTokenUrl.isEmpty()) {
-			oauthTokenUrl = null;
+	public void setOauthprivatekey(String oauthprivatekey) {
+		if (oauthprivatekey != null && oauthprivatekey.isEmpty()) {
+			oauthprivatekey = null;
 		}
-		this.oauthTokenUrl = oauthTokenUrl;
+		this.oauthprivatekey = oauthprivatekey;
 	}
 
-	public String getOauthIntrospectUrl() {
-		return oauthIntrospectUrl;
+	public String getOauthpublickey() {
+		return oauthpublickey;
 	}
 
-	public void setOauthIntrospectUrl(String oauthIntrospectUrl) {
-		if (oauthIntrospectUrl != null && oauthIntrospectUrl.isEmpty()) {
-			oauthIntrospectUrl = null;
+	public void setOauthpublickey(String oauthpublickey) {
+		if (oauthpublickey != null && oauthpublickey.isEmpty()) {
+			oauthpublickey = null;
 		}
-		this.oauthIntrospectUrl = oauthIntrospectUrl;
+		this.oauthpublickey = oauthpublickey;
+	}
+
+	public String getOauthscope() {
+		return oauthscope;
+	}
+
+	public void setOauthscope(String oauthscope) {
+		if (oauthscope != null && oauthscope.isEmpty()) {
+			oauthscope = null;
+		}
+		this.oauthscope = oauthscope;
+	}
+
+	public String getOauthauthurl() {
+		return oauthauthurl;
+	}
+
+	public void setOauthauthurl(String oauthauthurl) {
+		if (oauthauthurl != null && oauthauthurl.isEmpty()) {
+			oauthauthurl = null;
+		}
+		this.oauthauthurl = oauthauthurl;
+	}
+
+	public String getOauthtokenurl() {
+		return oauthtokenurl;
+	}
+
+	public void setOauthtokenurl(String oauthtokenurl) {
+		if (oauthtokenurl != null && oauthtokenurl.isEmpty()) {
+			oauthtokenurl = null;
+		}
+		this.oauthtokenurl = oauthtokenurl;
+	}
+
+	public String getOauthintrospecturl() {
+		return oauthintrospecturl;
+	}
+
+	public void setOauthintrospecturl(String oauthintrospecturl) {
+		if (oauthintrospecturl != null && oauthintrospecturl.isEmpty()) {
+			oauthintrospecturl = null;
+		}
+		this.oauthintrospecturl = oauthintrospecturl;
 	}
 
 	/**
@@ -229,18 +281,22 @@ public class Serverdirectory implements Serializable {
 		} else {
 			clone.setId(null);
 		}
-		clone.setBasePath(this.getBasePath());
+		clone.setBasepath(this.getBasepath());
 		clone.setName(this.getName());
 		clone.setDescription(this.getDescription());
-		clone.setLastUser(this.getLastUser());
-		clone.setLastUpdate(this.getLastUpdate());
-		clone.setOauthGrantType(this.getOauthGrantType());
-		clone.setOauthClientId(this.getOauthClientId());
-		clone.setOauthClientSecret(this.getOauthClientSecret());
-		clone.setOauthScope(this.getOauthScope());
-		clone.setOauthAuthUrl(this.getOauthAuthUrl());
-		clone.setOauthTokenUrl(this.getOauthTokenUrl());
-		clone.setOauthIntrospectUrl(this.getOauthIntrospectUrl());
+		clone.setLastuser(this.getLastuser());
+		clone.setLastupdate(this.getLastupdate());
+		clone.setOauthgranttype(this.getOauthgranttype());
+		clone.setOauthclientid(this.getOauthclientid());
+		clone.setOauthclientsecret(this.getOauthclientsecret());
+		clone.setOauthusername(this.getOauthusername());
+		clone.setOauthpassword(this.getOauthpassword());
+		clone.setOauthprivatekey(this.getOauthprivatekey());
+		clone.setOauthpublickey(this.getOauthpublickey());
+		clone.setOauthscope(this.getOauthscope());
+		clone.setOauthauthurl(this.getOauthauthurl());
+		clone.setOauthtokenurl(this.getOauthtokenurl());
+		clone.setOauthintrospecturl(this.getOauthintrospecturl());
 
 		return clone;
 	}
@@ -272,10 +328,12 @@ public class Serverdirectory implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Serverdirectory [id=" + id + ", name=" + name + ", description=" + description + ", basePath="
-				+ basePath + ", lastUser=" + lastUser + ", lastUpdate=" + lastUpdate + ", oauthGrantType" + oauthGrantType
-				+ ", oauthClientId" + oauthClientId + ", oauthClientSecret" + oauthClientSecret + ", oauthScope" + oauthScope
-				+ ", oauthAuthUrl" + oauthAuthUrl + ", oauthTokenUrl" + oauthTokenUrl + ", oauthIntrospectUrl" + oauthIntrospectUrl;
+		return "Serverdirectory [id=" + id + ", name=" + name + ", description=" + description + ", basepath="
+				+ basepath + ", lastuser=" + lastuser + ", lastupdate=" + lastupdate + ", oauthgranttype" + oauthgranttype
+				+ ", oauthclientid" + oauthclientid + ", oauthclientsecret" + oauthclientsecret + ", oauthusername" + oauthusername
+				+ ", oauthpassword" + oauthpassword + ", oauthprivatekey" + oauthprivatekey + ", oauthpublickey" + oauthpublickey
+				+ ", oauthscope" + oauthscope + ", oauthauthurl" + oauthauthurl + ", oauthtokenurl" + oauthtokenurl
+				+ ", oauthintrospecturl" + oauthintrospecturl;
 	}
 
 }

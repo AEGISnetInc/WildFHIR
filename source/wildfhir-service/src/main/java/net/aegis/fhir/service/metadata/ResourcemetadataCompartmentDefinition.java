@@ -84,10 +84,10 @@ public class ResourcemetadataCompartmentDefinition extends ResourcemetadataProxy
 		try {
             // Extract and convert the resource contents to a CompartmentDefinition object
 			if (chainedResource != null) {
-				iCompartmentDefinition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iCompartmentDefinition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iCompartmentDefinition = new ByteArrayInputStream(resource.getResourceContents());
+				iCompartmentDefinition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             CompartmentDefinition compartmentDefinition = (CompartmentDefinition) xmlP.parse(iCompartmentDefinition);

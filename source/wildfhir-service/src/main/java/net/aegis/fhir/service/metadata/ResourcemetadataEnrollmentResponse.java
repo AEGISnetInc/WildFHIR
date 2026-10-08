@@ -79,10 +79,10 @@ public class ResourcemetadataEnrollmentResponse extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a EnrollmentResponse object
 			if (chainedResource != null) {
-				iEnrollmentResponse = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iEnrollmentResponse = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iEnrollmentResponse = new ByteArrayInputStream(resource.getResourceContents());
+				iEnrollmentResponse = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             EnrollmentResponse enrollmentResponse = (EnrollmentResponse) xmlP.parse(iEnrollmentResponse);

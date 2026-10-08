@@ -86,10 +86,10 @@ public class ResourcemetadataServiceRequest extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a ServiceRequest object
 			if (chainedResource != null) {
-				iServiceRequest = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iServiceRequest = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iServiceRequest = new ByteArrayInputStream(resource.getResourceContents());
+				iServiceRequest = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             ServiceRequest serviceRequest = (ServiceRequest) xmlP.parse(iServiceRequest);

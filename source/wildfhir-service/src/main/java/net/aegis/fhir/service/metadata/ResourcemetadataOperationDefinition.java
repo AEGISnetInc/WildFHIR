@@ -84,10 +84,10 @@ public class ResourcemetadataOperationDefinition extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a OperationDefinition object
 			if (chainedResource != null) {
-				iOperationDefinition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iOperationDefinition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iOperationDefinition = new ByteArrayInputStream(resource.getResourceContents());
+				iOperationDefinition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             OperationDefinition operationDefinition = (OperationDefinition) xmlP.parse(iOperationDefinition);

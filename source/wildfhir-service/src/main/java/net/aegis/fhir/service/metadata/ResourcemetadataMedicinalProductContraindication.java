@@ -80,10 +80,10 @@ public class ResourcemetadataMedicinalProductContraindication extends Resourceme
 		try {
             // Extract and convert the resource contents to a MedicinalProductContraindication object
 			if (chainedResource != null) {
-				iMedicinalProductContraindication = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMedicinalProductContraindication = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMedicinalProductContraindication = new ByteArrayInputStream(resource.getResourceContents());
+				iMedicinalProductContraindication = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MedicinalProductContraindication medicinalProductContraindication = (MedicinalProductContraindication) xmlP.parse(iMedicinalProductContraindication);

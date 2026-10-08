@@ -86,10 +86,10 @@ public class ResourcemetadataPractitionerRole extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a PractitionerRole object
 			if (chainedResource != null) {
-				iPractitionerRole = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iPractitionerRole = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iPractitionerRole = new ByteArrayInputStream(resource.getResourceContents());
+				iPractitionerRole = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             PractitionerRole practitionerRole = (PractitionerRole) xmlP.parse(iPractitionerRole);

@@ -79,10 +79,10 @@ public class ResourcemetadataSpecimenDefinition extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a SpecimenDefinition object
 			if (chainedResource != null) {
-				iSpecimenDefinition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iSpecimenDefinition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iSpecimenDefinition = new ByteArrayInputStream(resource.getResourceContents());
+				iSpecimenDefinition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             SpecimenDefinition specimenDefinition = (SpecimenDefinition) xmlP.parse(iSpecimenDefinition);

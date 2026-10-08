@@ -326,7 +326,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 
 			// First, populate the _matchedId list for use in _include and _revInclude duplicate check
 			for (net.aegis.fhir.model.Resource resourceEntry : resources) {
-				_matchedId.add(resourceEntry.getResourceType() + "/" + resourceEntry.getResourceId());
+				_matchedId.add(resourceEntry.getResourcetype() + "/" + resourceEntry.getResourceid());
 			}
 
 			/*
@@ -352,12 +352,12 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 			boolean addToBundle = false;
 
 			for (Resource resourceEntry : resources) {
-				log.fine("$lastn - processing " + resourceEntry.getResourceType() + " resource [" + resourceEntry.getResourceId() + "]");
+				log.fine("$lastn - processing " + resourceEntry.getResourcetype() + " resource [" + resourceEntry.getResourceid() + "]");
 
 				addToBundle = false;
 
 				// Convert XML contents to Resource object
-				iResource = new ByteArrayInputStream(resourceEntry.getResourceContents());
+				iResource = new ByteArrayInputStream(resourceEntry.getResourcecontents().getBytes("UTF-8"));
 				org.hl7.fhir.r4.model.Resource resourceObject = xmlP.parse(iResource);
 
 				// Only add Observation resource types
@@ -458,7 +458,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 								bundleEntry.setResource(resourceObject);
 
 								// Build and set Bundle.entry.fullUrl
-								fullUrl = baseUrl + "/" + resourceEntry.getResourceId();
+								fullUrl = baseUrl + "/" + resourceEntry.getResourceid();
 								bundleEntry.setFullUrl(fullUrl);
 
 								BundleEntrySearchComponent bundleEntrySearch = new BundleEntrySearchComponent();
@@ -495,7 +495,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 										log.fine("--> _include is '" + source + ":" + (parameter != null ? parameter : "null") + ":" + (type != null ? type : "null") + "'");
 
 										// Proceed only if current resource type matches include source and we have a parameter
-										if (resourceEntry.getResourceType().equals(source) && parameter != null) {
+										if (resourceEntry.getResourcetype().equals(source) && parameter != null) {
 											log.fine("-->--> _include resource type match (" + source + "); _include parameter is reference (" + parameter + ")");
 
 											boolean isParamRef = false;
@@ -506,11 +506,11 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 
 											// Check for wild card parameter
 											if (parameter.equals("*")) {
-												paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeLevel1Param(resourceEntry.getResourceId(), source);
+												paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeLevel1Param(resourceEntry.getResourceid(), source);
 											}
 											else {
 												// Query the resourcemetadata for the current resource parameter
-												paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeParam(resourceEntry.getResourceId(), source, parameter);
+												paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeParam(resourceEntry.getResourceid(), source, parameter);
 											}
 
 											if (paramMetaData != null && paramMetaData.size() > 0) {
@@ -518,22 +518,22 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 
 												for (Resourcemetadata metadata : paramMetaData) {
 													if (parameter.equals("*")) {
-														resolvedParamEnd = metadata.getParamName().indexOf("[");
+														resolvedParamEnd = metadata.getParamname().indexOf("[");
 														if (resolvedParamEnd < 0) {
-															resolvedParamEnd = metadata.getParamName().length();
+															resolvedParamEnd = metadata.getParamname().length();
 														}
-														resolvedParameter = metadata.getParamName().substring(0, resolvedParamEnd);
+														resolvedParameter = metadata.getParamname().substring(0, resolvedParamEnd);
 													}
 													else {
 														resolvedParameter = parameter;
 													}
 													isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, resolvedParameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
-													if (isParamRef == true && !metadata.getParamValue().isEmpty()) {
-														log.fine("-->-->-->--> _include parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
+													if (isParamRef == true && !metadata.getParamvalue().isEmpty()) {
+														log.fine("-->-->-->--> _include parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamvalue() + ")");
 
 														// Extract resource type and id
-														String[] refParts = metadata.getParamValue().split("/");
+														String[] refParts = metadata.getParamvalue().split("/");
 
 														int refPartsLength = refParts.length;
 														if (refPartsLength > 1) {
@@ -563,7 +563,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 																		bundleEntry.setFullUrl(fullUrl);
 
 																		// Convert XML contents to Resource object
-																		iResource = new ByteArrayInputStream(refResource.getResource().getResourceContents());
+																		iResource = new ByteArrayInputStream(refResource.getResource().getResourcecontents().getBytes("UTF-8"));
 
 																		resourceObject = xmlP.parse(iResource);
 
@@ -624,7 +624,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 										log.fine("--> _include:iterate is '" + source + ":" + (parameter != null ? parameter : "null") + ":" + (type != null ? type : "null") + "'");
 
 										// Proceed only if current resource type matches include source and we have a parameter
-										if (resourceEntry.getResourceType().equals(source) && parameter != null) {
+										if (resourceEntry.getResourcetype().equals(source) && parameter != null) {
 											log.fine("-->--> _include:iterate resource type match (" + source + "); _include:iterate parameter is reference (" + parameter + ")");
 
 											boolean isParamRef = false;
@@ -635,11 +635,11 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 
 											// Check for wild card parameter
 											if (parameter.equals("*")) {
-												paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeLevel1Param(resourceEntry.getResourceId(), source);
+												paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeLevel1Param(resourceEntry.getResourceid(), source);
 											}
 											else {
 												// Query the resourcemetadata for the current resource parameter
-												paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeParam(resourceEntry.getResourceId(), source, parameter);
+												paramMetaData = resourcemetadataService.findMetadataByResourceIdTypeParam(resourceEntry.getResourceid(), source, parameter);
 											}
 
 											if (paramMetaData != null && paramMetaData.size() > 0) {
@@ -647,22 +647,22 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 
 												for (Resourcemetadata metadata : paramMetaData) {
 													if (parameter.equals("*")) {
-														resolvedParamEnd = metadata.getParamName().indexOf("[");
+														resolvedParamEnd = metadata.getParamname().indexOf("[");
 														if (resolvedParamEnd < 0) {
-															resolvedParamEnd = metadata.getParamName().length();
+															resolvedParamEnd = metadata.getParamname().length();
 														}
-														resolvedParameter = metadata.getParamName().substring(0, resolvedParamEnd);
+														resolvedParameter = metadata.getParamname().substring(0, resolvedParamEnd);
 													}
 													else {
 														resolvedParameter = parameter;
 													}
 													isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, resolvedParameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
-													if (isParamRef == true && !metadata.getParamValue().isEmpty()) {
-														log.fine("-->-->-->--> _include:iterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
+													if (isParamRef == true && !metadata.getParamvalue().isEmpty()) {
+														log.fine("-->-->-->--> _include:iterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamvalue() + ")");
 
 														// Extract resource type and id
-														String[] refParts = metadata.getParamValue().split("/");
+														String[] refParts = metadata.getParamvalue().split("/");
 
 														int refPartsLength = refParts.length;
 														if (refPartsLength > 1) {
@@ -692,7 +692,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 																		bundleEntry.setFullUrl(fullUrl);
 
 																		// Convert XML contents to Resource object
-																		iResource = new ByteArrayInputStream(refResource.getResource().getResourceContents());
+																		iResource = new ByteArrayInputStream(refResource.getResource().getResourcecontents().getBytes("UTF-8"));
 
 																		resourceObject = xmlP.parse(iResource);
 
@@ -756,23 +756,23 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 										}
 
 										// Proceed based on revinclude source and current resource type
-										log.fine("-->--> _revinclude resource type (" + source + "); current resource type (" + resourceEntry.getResourceType() + ")");
+										log.fine("-->--> _revinclude resource type (" + source + "); current resource type (" + resourceEntry.getResourcetype() + ")");
 
 										// Proceed only if we have a parameter
 										if (parameter != null) {
 											boolean isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, parameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
 											if (isParamRef) {
-												log.fine("-->-->--> _revinclude parameter is reference (" + parameter + "); current resource id entry (" + resourceEntry.getResourceId() + ")");
+												log.fine("-->-->--> _revinclude parameter is reference (" + parameter + "); current resource id entry (" + resourceEntry.getResourceid() + ")");
 
 												// If type defined, check for current resource type match
-												if (type == null || resourceEntry.getResourceType().equals(type)) {
+												if (type == null || resourceEntry.getResourcetype().equals(type)) {
 													if (type != null) {
 														log.fine("-->-->-->-->--> _revinclude type match (" + type + ")");
 													}
 
 													// Build reverse search parameter
-													String revSearchParameter = parameter + "=" + resourceEntry.getResourceType() + "/" + resourceEntry.getResourceId();
+													String revSearchParameter = parameter + "=" + resourceEntry.getResourcetype() + "/" + resourceEntry.getResourceid();
 
 													// Convert search parameter string into queryParams map
 													List<NameValuePair> params = URLEncodedUtils.parse(revSearchParameter, Charset.defaultCharset());
@@ -785,7 +785,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 														log.fine("-->-->-->--> _revinclude reverse search found matches (" + revSearch.size() + ")");
 
 														for (Resource revResource : revSearch) {
-															String revResourceCheckId = revResource.getResourceType() + "/" + revResource.getResourceId();
+															String revResourceCheckId = revResource.getResourcetype() + "/" + revResource.getResourceid();
 															log.fine("-->-->-->-->--> _revinclude resource (" + revResourceCheckId + ")");
 
 															// Check already _revincludedId and _matchedId lists for this revincluded resource; if found, skip
@@ -805,11 +805,11 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 																	SummaryUtil.INSTANCE.generateResourceSummary(foundRevResource, summaryString);
 
 																	// Convert XML contents of copy to Resource object
-																	iResource = new ByteArrayInputStream(foundRevResource.getResourceContents());
+																	iResource = new ByteArrayInputStream(foundRevResource.getResourcecontents().getBytes("UTF-8"));
 																}
 																else {
 																	// Convert XML contents to Resource object
-																	iResource = new ByteArrayInputStream(revResource.getResourceContents());
+																	iResource = new ByteArrayInputStream(revResource.getResourcecontents().getBytes("UTF-8"));
 																}
 
 																resourceObject = xmlP.parse(iResource);
@@ -953,22 +953,22 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 
 								for (Resourcemetadata metadata : paramMetaData) {
 									if (parameter.equals("*")) {
-										resolvedParamEnd = metadata.getParamName().indexOf("[");
+										resolvedParamEnd = metadata.getParamname().indexOf("[");
 										if (resolvedParamEnd < 0) {
-											resolvedParamEnd = metadata.getParamName().length();
+											resolvedParamEnd = metadata.getParamname().length();
 										}
-										resolvedParameter = metadata.getParamName().substring(0, resolvedParamEnd);
+										resolvedParameter = metadata.getParamname().substring(0, resolvedParamEnd);
 									}
 									else {
 										resolvedParameter = parameter;
 									}
 									isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, resolvedParameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
-									if (isParamRef == true && !metadata.getParamValue().isEmpty()) {
-										log.fine("-->-->-->--> _include parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
+									if (isParamRef == true && !metadata.getParamvalue().isEmpty()) {
+										log.fine("-->-->-->--> _include parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamvalue() + ")");
 
 										// Extract resource type and id
-										String[] refParts = metadata.getParamValue().split("/");
+										String[] refParts = metadata.getParamvalue().split("/");
 
 										int refPartsLength = refParts.length;
 										if (refPartsLength > 1) {
@@ -998,7 +998,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 														bundleEntry.setFullUrl(fullUrl);
 
 														// Convert XML contents to Resource object
-														iResource = new ByteArrayInputStream(refResource.getResource().getResourceContents());
+														iResource = new ByteArrayInputStream(refResource.getResource().getResourcecontents().getBytes("UTF-8"));
 
 														resourceObject = xmlP.parse(iResource);
 
@@ -1082,22 +1082,22 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 
 								for (Resourcemetadata metadata : paramMetaData) {
 									if (parameter.equals("*")) {
-										resolvedParamEnd = metadata.getParamName().indexOf("[");
+										resolvedParamEnd = metadata.getParamname().indexOf("[");
 										if (resolvedParamEnd < 0) {
-											resolvedParamEnd = metadata.getParamName().length();
+											resolvedParamEnd = metadata.getParamname().length();
 										}
-										resolvedParameter = metadata.getParamName().substring(0, resolvedParamEnd);
+										resolvedParameter = metadata.getParamname().substring(0, resolvedParamEnd);
 									}
 									else {
 										resolvedParameter = parameter;
 									}
 									isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, resolvedParameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
-									if (isParamRef == true && !metadata.getParamValue().isEmpty()) {
-										log.fine("-->-->-->--> _include:iterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
+									if (isParamRef == true && !metadata.getParamvalue().isEmpty()) {
+										log.fine("-->-->-->--> _include:iterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamvalue() + ")");
 
 										// Extract resource type and id
-										String[] refParts = metadata.getParamValue().split("/");
+										String[] refParts = metadata.getParamvalue().split("/");
 
 										int refPartsLength = refParts.length;
 										if (refPartsLength > 1) {
@@ -1127,7 +1127,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 														bundleEntry.setFullUrl(fullUrl);
 
 														// Convert XML contents to Resource object
-														iResource = new ByteArrayInputStream(refResource.getResource().getResourceContents());
+														iResource = new ByteArrayInputStream(refResource.getResource().getResourcecontents().getBytes("UTF-8"));
 
 														resourceObject = xmlP.parse(iResource);
 
@@ -1197,22 +1197,22 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 
 			for (Resourcemetadata metadata : paramMetaData) {
 				if (parameter.equals("*")) {
-					resolvedParamEnd = metadata.getParamName().indexOf("[");
+					resolvedParamEnd = metadata.getParamname().indexOf("[");
 					if (resolvedParamEnd < 0) {
-						resolvedParamEnd = metadata.getParamName().length();
+						resolvedParamEnd = metadata.getParamname().length();
 					}
-					resolvedParameter = metadata.getParamName().substring(0, resolvedParamEnd);
+					resolvedParameter = metadata.getParamname().substring(0, resolvedParamEnd);
 				}
 				else {
 					resolvedParameter = parameter;
 				}
 				isParamRef = (net.aegis.fhir.model.ResourceType.findResourceTypeResourceCriteriaType(source, resolvedParameter).equalsIgnoreCase("REFERENCE") ? true : false);
 
-				if (isParamRef == true && !metadata.getParamValue().isEmpty()) {
-					log.fine("-->-->-->--> includeIterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamValue() + ")");
+				if (isParamRef == true && !metadata.getParamvalue().isEmpty()) {
+					log.fine("-->-->-->--> includeIterate parameter (" + resolvedParameter + ") meta data reference found (" + metadata.getParamvalue() + ")");
 
 					// Extract resource type and id
-					String[] refParts = metadata.getParamValue().split("/");
+					String[] refParts = metadata.getParamvalue().split("/");
 
 					int refPartsLength = refParts.length;
 					if (refPartsLength > 1) {
@@ -1242,7 +1242,7 @@ public class ObservationLastNOperation extends ResourceOperationProxy {
 									bundleEntry.setFullUrl(fullUrl);
 
 									// Convert XML contents to Resource object
-									iResource = new ByteArrayInputStream(refResource.getResource().getResourceContents());
+									iResource = new ByteArrayInputStream(refResource.getResource().getResourcecontents().getBytes("UTF-8"));
 
 									resourceObject = xmlP.parse(iResource);
 

@@ -80,10 +80,10 @@ public class ResourcemetadataMedicinalProductIndication extends Resourcemetadata
 		try {
             // Extract and convert the resource contents to a MedicinalProductIndication object
 			if (chainedResource != null) {
-				iMedicinalProductIndication = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMedicinalProductIndication = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMedicinalProductIndication = new ByteArrayInputStream(resource.getResourceContents());
+				iMedicinalProductIndication = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MedicinalProductIndication medicinalProductIndication = (MedicinalProductIndication) xmlP.parse(iMedicinalProductIndication);

@@ -90,7 +90,7 @@ public class AuditEventService {
 				resCon = resourceService.create(resource, null, baseUrl);
 
 				if (resCon.getResponseStatus().equals(Status.CREATED)) {
-					log.fine("AuditEventService.createAuditEvent() - AuditEvent/" + resCon.getResource().getResourceId() + " successfully created.");
+					log.fine("AuditEventService.createAuditEvent() - AuditEvent/" + resCon.getResource().getResourceid() + " successfully created.");
 				}
 				else {
 					throw new Exception("Error attempting to create AuditEvent! " +

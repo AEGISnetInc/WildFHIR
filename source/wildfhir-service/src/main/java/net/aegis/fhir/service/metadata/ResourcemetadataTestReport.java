@@ -81,10 +81,10 @@ public class ResourcemetadataTestReport extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a TestReport object
 			if (chainedResource != null) {
-				iTestReport = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iTestReport = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iTestReport = new ByteArrayInputStream(resource.getResourceContents());
+				iTestReport = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             TestReport testReport = (TestReport) xmlP.parse(iTestReport);

@@ -84,10 +84,10 @@ public class ResourcemetadataMedicationDispense extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a MedicationDispense object
 			if (chainedResource != null) {
-				iMedicationDispense = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMedicationDispense = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMedicationDispense = new ByteArrayInputStream(resource.getResourceContents());
+				iMedicationDispense = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MedicationDispense medicationDispense = (MedicationDispense) xmlP.parse(iMedicationDispense);

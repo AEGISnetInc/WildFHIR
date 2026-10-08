@@ -88,10 +88,10 @@ public class ResourcemetadataRelatedPerson extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a RelatedPerson object
 			if (chainedResource != null) {
-				iRelatedPerson = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iRelatedPerson = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iRelatedPerson = new ByteArrayInputStream(resource.getResourceContents());
+				iRelatedPerson = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			RelatedPerson relatedPerson = (RelatedPerson) xmlP.parse(iRelatedPerson);

@@ -158,7 +158,7 @@ public class PatientEverything extends ResourceOperationProxy {
 					// Process everything on the found Patient
 
 					// Convert XML contents to Resource object and set id and meta
-					ByteArrayInputStream iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourceContents());
+					ByteArrayInputStream iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourcecontents().getBytes("UTF-8"));
 					XmlParser xmlP = new XmlParser();
 					patient = (Patient) xmlP.parse(iResource);
 
@@ -283,7 +283,7 @@ public class PatientEverything extends ResourceOperationProxy {
 						log.fine("Adding resource type " + resourceType + " to everything resources");
 
 						// Convert XML contents to Resource object
-						iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourceContents());
+						iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourcecontents().getBytes("UTF-8"));
 						org.hl7.fhir.r4.model.Resource resourceObject = xmlP.parse(iResource);
 
 						everythingKey = resourceObject.getId();
@@ -319,7 +319,7 @@ public class PatientEverything extends ResourceOperationProxy {
 					log.fine("Adding resource type " + resourceType + " to everything resources");
 
 					// Convert XML contents to Resource object
-					iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourceContents());
+					iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourcecontents().getBytes("UTF-8"));
 					org.hl7.fhir.r4.model.Resource resourceObject = xmlP.parse(iResource);
 
 					everythingKey = resourceObject.getId();
@@ -398,7 +398,7 @@ public class PatientEverything extends ResourceOperationProxy {
 					for (Resource resourceEntry : resources) {
 
 						// Convert XML contents to Resource object
-						iResource = new ByteArrayInputStream(resourceEntry.getResourceContents());
+						iResource = new ByteArrayInputStream(resourceEntry.getResourcecontents().getBytes("UTF-8"));
 						org.hl7.fhir.r4.model.Resource resourceObject = xmlP.parse(iResource);
 
 						everythingKey = resourceObject.getId();

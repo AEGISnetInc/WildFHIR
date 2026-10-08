@@ -88,10 +88,10 @@ public class ResourcemetadataCarePlan extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a CarePlan object
 			if (chainedResource != null) {
-				iCarePlan = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iCarePlan = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iCarePlan = new ByteArrayInputStream(resource.getResourceContents());
+				iCarePlan = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			CarePlan carePlan = (CarePlan) xmlP.parse(iCarePlan);

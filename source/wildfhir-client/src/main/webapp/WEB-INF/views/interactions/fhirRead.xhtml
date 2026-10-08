@@ -26,10 +26,10 @@
 				<h:outputText value="Select FHIR Server: * " />
 				<p:selectOneMenu required="true" label="Select FHIR Server" value="#{context.selectedServerURL}" maxlength="255" style="width:240px;text-align:left;padding-right:30px;">
 					<f:selectItem itemValue="#{null}" itemLabel="-- Select FHIR Server --         " noSelectionOption="true" />
-					<f:selectItems value="#{context.availableServers}" var="server" itemLabel="#{server.name.trim()}         " itemValue="#{server.basePath}" />
+					<f:selectItems value="#{context.availableServers}" var="server" itemLabel="#{server.name.trim()}         " itemValue="#{server.basepath}" />
 				</p:selectOneMenu>
 
-				<h:outputText value="Enter Resource id to read: * " />
+				<h:outputText value="Enter Resource Id to read: * " />
 				<h:inputText value="#{context.resourceId}" maxlength="255" required="true" requiredMessage="Please enter a resource id" size="40" />
 
 				<h:outputText value="Conditional Options" style="font-weight: bold" />
@@ -72,33 +72,33 @@
 					value="#{context.resourceResults}"
 					rendered="#{context.resourceResults.size() > 0}">
 					<p:column headerText="Resource ID" width="40%">
-						<h:outputText value="#{res.resourceBean.resourceId}" />
+						<h:outputText value="#{res.resourceBean.resourceid}" />
 					</p:column>
 					<p:column headerText="Version ID" width="7%">
-						<h:outputText value="#{res.resourceBean.versionId}" />
+						<h:outputText value="#{res.resourceBean.versionid}" />
 					</p:column>
 					<p:column headerText="Last Modified Date" width="20%">
 						<h:outputText value="#{res.lastUpdated}" />
 					</p:column>
 					<p:column headerText="View Resource" width="18%">
 						<p:commandButton value="View XML"
-							onclick="PF('readResInfoDialg#{res.resourceBean.resourceId}XML').show()"
+							onclick="PF('readResInfoDialg#{res.resourceBean.resourceid}XML').show()"
 							type="button"
 							rendered="#{context.returnedFormatType eq 'XML'}" />
-						<p:dialog id="readResInfoDialg#{res.resourceBean.resourceId}XML"
+						<p:dialog id="readResInfoDialg#{res.resourceBean.resourceid}XML"
 							header="Resource XML"
-							widgetVar="readResInfoDialg#{res.resourceBean.resourceId}XML"
+							widgetVar="readResInfoDialg#{res.resourceBean.resourceid}XML"
 							modal="true" width="450" height="400">
 							<h:outputText value="#{res.resourceXML}"
 								styleClass="whiteSpaceClass" />
 						</p:dialog>
 						<p:commandButton value="View JSON"
-							onclick="PF('readResInfoDialg#{res.resourceBean.resourceId}JSON').show()"
+							onclick="PF('readResInfoDialg#{res.resourceBean.resourceid}JSON').show()"
 							type="button"
 							rendered="#{context.returnedFormatType eq 'JSON'}" />
-						<p:dialog id="readResInfoDialg#{res.resourceBean.resourceId}JSON"
+						<p:dialog id="readResInfoDialg#{res.resourceBean.resourceid}JSON"
 							header="Resource JSON"
-							widgetVar="readResInfoDialg#{res.resourceBean.resourceId}JSON"
+							widgetVar="readResInfoDialg#{res.resourceBean.resourceid}JSON"
 							modal="true" width="450" height="400">
 							<h:outputText value="#{res.resourceJSON}"
 								styleClass="whiteSpaceClass" />
@@ -106,7 +106,7 @@
 					</p:column>
 					<p:column headerText="Actions" width="15%">
 						<p:commandButton value="delete" title="Delete"
-							actionListener="#{controller.fhirDelete(res.resourceBean.resourceId,'fhirReadForm')}"
+							actionListener="#{controller.fhirDelete(res.resourceBean.resourceid,'fhirReadForm')}"
 							update=":tabView:interactionsTabView:fhirReadForm" icon="ui-icon-trash">
 							<p:confirm header="Confirmation" message="Are you sure?"
 								icon="ui-icon-alert" />

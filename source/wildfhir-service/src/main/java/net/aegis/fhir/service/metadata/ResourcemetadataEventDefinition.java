@@ -87,10 +87,10 @@ public class ResourcemetadataEventDefinition extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a EventDefinition object
 			if (chainedResource != null) {
-				iEventDefinition = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iEventDefinition = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iEventDefinition = new ByteArrayInputStream(resource.getResourceContents());
+				iEventDefinition = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             EventDefinition eventDefinition = (EventDefinition) xmlP.parse(iEventDefinition);

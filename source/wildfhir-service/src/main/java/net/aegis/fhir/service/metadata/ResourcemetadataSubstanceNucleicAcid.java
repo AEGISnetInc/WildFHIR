@@ -79,10 +79,10 @@ public class ResourcemetadataSubstanceNucleicAcid extends ResourcemetadataProxy 
 		try {
             // Extract and convert the resource contents to a SubstanceNucleicAcid object
 			if (chainedResource != null) {
-				iSubstanceNucleicAcid = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iSubstanceNucleicAcid = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iSubstanceNucleicAcid = new ByteArrayInputStream(resource.getResourceContents());
+				iSubstanceNucleicAcid = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             SubstanceNucleicAcid substanceNucleicAcid = (SubstanceNucleicAcid) xmlP.parse(iSubstanceNucleicAcid);

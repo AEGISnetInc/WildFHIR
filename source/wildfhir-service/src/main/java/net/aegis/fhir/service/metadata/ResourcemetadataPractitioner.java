@@ -86,10 +86,10 @@ public class ResourcemetadataPractitioner extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Practitioner object
 			if (chainedResource != null) {
-				iPractitioner = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iPractitioner = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iPractitioner = new ByteArrayInputStream(resource.getResourceContents());
+				iPractitioner = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Practitioner practitioner = (Practitioner) xmlP.parse(iPractitioner);

@@ -8,7 +8,7 @@
         <query><![CDATA[
                 select s
                 from Serverdirectory s
-                where s.basePath = :basePath
+                where s.basepath = :basepath
         ]]></query>
     </named-query>
 
@@ -16,7 +16,7 @@
         <query><![CDATA[
                 select s
                 from Subscriptionactivity s
-                where s.subscriptionId = :subscriptionId
+                where s.subscriptionid = :subscriptionid
         ]]></query>
     </named-query>
 
@@ -32,7 +32,7 @@
         <query><![CDATA[
                 select r1
                 from Resource r1
-                where r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = r1.resourceId and r2.resourceType = r1.resourceType)
+                where r1.versionid = (select max(r2.versionid) from Resource r2 where r2.resourceid = r1.resourceid and r2.resourcetype = r1.resourcetype)
                 and r1.status <> 'deleted'
         ]]></query>
     </named-query>
@@ -41,9 +41,9 @@
         <query><![CDATA[
                 select r1
                 from Resource r1
-                where r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = r1.resourceId and r2.resourceType = :resourceType)
+                where r1.versionid = (select max(r2.versionid) from Resource r2 where r2.resourceid = r1.resourceid and r2.resourcetype = :resourcetype)
                 and r1.status <> 'deleted'
-                and r1.resourceType = :resourceType
+                and r1.resourcetype = :resourcetype
         ]]></query>
     </named-query>
 
@@ -51,11 +51,11 @@
         <query><![CDATA[
                 select rm1
                 from Resourcemetadata rm1
-                where rm1.resource.resourceId = (select r1.resourceId
+                where rm1.resource.resourceid = (select r1.resourceid
                     from Resource r1
-                    where r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = :resourceId and r2.resourceType = r1.resourceType)
+                    where r1.versionid = (select max(r2.versionid) from Resource r2 where r2.resourceid = :resourceid and r2.resourcetype = r1.resourcetype)
                     and r1.status <> 'deleted')
-                and rm1.paramType = 'tag'
+                and rm1.paramtype = 'tag'
         ]]></query>
     </named-query>
 
@@ -63,12 +63,12 @@
         <query><![CDATA[
                 select rm1
                 from Resourcemetadata rm1
-                where rm1.resource.resourceId = (select r1.resourceId
+                where rm1.resource.resourceid = (select r1.resourceid
                     from Resource r1
-                    where r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = :resourceId and r2.resourceType = r1.resourceType)
+                    where r1.versionid = (select max(r2.versionid) from Resource r2 where r2.resourceid = :resourceid and r2.resourcetype = r1.resourcetype)
                     and r1.status <> 'deleted')
-                and rm1.paramType = 'tag'
-                and rm1.paramName = '_tag'
+                and rm1.paramtype = 'tag'
+                and rm1.paramname = '_tag'
         ]]></query>
     </named-query>
 
@@ -76,12 +76,12 @@
         <query><![CDATA[
                 select rm1
                 from Resourcemetadata rm1
-                where rm1.resource.resourceId = (select r1.resourceId
+                where rm1.resource.resourceid = (select r1.resourceid
                     from Resource r1
-                    where r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = :resourceId and r2.resourceType = r1.resourceType)
+                    where r1.versionid = (select max(r2.versionid) from Resource r2 where r2.resourceid = :resourceid and r2.resourcetype = r1.resourcetype)
                     and r1.status <> 'deleted')
-                and rm1.paramType = 'tag'
-                and rm1.paramName = '_profile'
+                and rm1.paramtype = 'tag'
+                and rm1.paramname = '_profile'
         ]]></query>
     </named-query>
 
@@ -89,12 +89,12 @@
         <query><![CDATA[
                 select rm1
                 from Resourcemetadata rm1
-                where rm1.resource.resourceId = (select r1.resourceId
+                where rm1.resource.resourceid = (select r1.resourceid
                     from Resource r1
-                    where r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = :resourceId and r2.resourceType = r1.resourceType)
+                    where r1.versionid = (select max(r2.versionid) from Resource r2 where r2.resourceid = :resourceid and r2.resourcetype = r1.resourcetype)
                     and r1.status <> 'deleted')
-                and rm1.paramType = 'tag'
-                and rm1.paramName = '_security'
+                and rm1.paramtype = 'tag'
+                and rm1.paramname = '_security'
         ]]></query>
     </named-query>
 
@@ -102,14 +102,14 @@
         <query><![CDATA[
                 select rm1
                 from Resourcemetadata rm1
-                where rm1.resource.resourceId = (select r1.resourceId
+                where rm1.resource.resourceid = (select r1.resourceid
                     from Resource r1
-                    where r1.resourceId = :resourceId
-                    and r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = :resourceId and r2.resourceType = :resourceType)
-                    and r1.resourceType = :resourceType
+                    where r1.resourceid = :resourceid
+                    and r1.versionid = (select max(r2.versionid) from Resource r2 where r2.resourceid = :resourceid and r2.resourcetype = :resourcetype)
+                    and r1.resourcetype = :resourcetype
                     and r1.status <> 'deleted')
-                and rm1.resource.resourceType like :resourceType
-                and rm1.paramName = :paramName
+                and rm1.resource.resourcetype like :resourcetype
+                and rm1.paramname = :paramname
         ]]></query>
     </named-query>
 
@@ -117,14 +117,14 @@
         <query><![CDATA[
                 select rm1
                 from Resourcemetadata rm1
-                where rm1.resource.resourceId = (select r1.resourceId
+                where rm1.resource.resourceid = (select r1.resourceid
                     from Resource r1
-                    where r1.resourceId = :resourceId
-                    and r1.versionId = (select max(r2.versionId) from Resource r2 where r2.resourceId = :resourceId and r2.resourceType = :resourceType)
-                    and r1.resourceType = :resourceType
+                    where r1.resourceid = :resourceid
+                    and r1.versionid = (select max(r2.versionid) from Resource r2 where r2.resourceid = :resourceid and r2.resourcetype = :resourcetype)
+                    and r1.resourcetype = :resourcetype
                     and r1.status <> 'deleted')
-                and rm1.resource.resourceType like :resourceType
-                and rm1.paramName not like '%:%'
+                and rm1.resource.resourcetype like :resourcetype
+                and rm1.paramname not like '%:%'
         ]]></query>
     </named-query>
 

@@ -202,11 +202,11 @@ public class CodeService {
 		try {
 			code = read(updateCode.getId());
 
-			code.setCodeName(updateCode.getCodeName());
+			code.setCodename(updateCode.getCodename());
 			code.setValue(updateCode.getValue());
-			code.setIntValue(updateCode.getIntValue());
+			code.setIntvalue(updateCode.getIntvalue());
 			code.setDescription(updateCode.getDescription());
-			code.setResourceContents(updateCode.getResourceContents());
+			code.setResourcecontents(updateCode.getResourcecontents());
 
 			/*
 			 *  TRANSACTION BEGIN
@@ -230,7 +230,7 @@ public class CodeService {
 	}
 
 	/**
-	 * The findAll interaction returns all Code records sorted by codeType, codeName and value.
+	 * The findAll interaction returns all Code records sorted by id and value.
 	 *
 	 * @return <code>List<Code></code>
 	 * @throws Exception
@@ -270,13 +270,13 @@ public class CodeService {
 	}
 
 	/**
-	 * The findCodeByName interaction returns the Code record for a given codeName.
+	 * The findCodeByName interaction returns the Code record for a given codename.
 	 *
-	 * @param codeName
+	 * @param codename
 	 * @return <code>Code</code>
 	 * @throws Exception
 	 */
-	public Code findCodeByName(String codeName) throws Exception {
+	public Code findCodeByName(String codename) throws Exception {
 
 		log.fine("[START] CodeService.findCodeByName");
 
@@ -293,11 +293,11 @@ public class CodeService {
 			CriteriaQuery<Code> criteria = cb.createQuery(Code.class);
 			Root<Code> rootCode = criteria.from(Code.class);
 			List<Predicate> predicateList = new ArrayList<Predicate>();
-			predicateList.add(cb.equal(rootCode.get("codeName"), codeName));
+			predicateList.add(cb.equal(rootCode.get("codename"), codename));
 
 			criteria.select(rootCode)
 				.where(cb.and(predicateList.toArray(new Predicate[predicateList.size()])))
-				.orderBy(cb.asc(rootCode.get("codeName")), cb.asc(rootCode.get("value")));
+				.orderBy(cb.asc(rootCode.get("codename")), cb.asc(rootCode.get("value")));
 
 			result = em.createQuery(criteria).getResultList();
 
@@ -320,13 +320,13 @@ public class CodeService {
 	}
 
 	/**
-	 * The findCodeValueByName interaction returns the string value for a given codeName.
+	 * The findCodeValueByName interaction returns the string value for a given codename.
 	 *
-	 * @param codeName
+	 * @param codename
 	 * @return String code value
 	 * @throws Exception
 	 */
-	public String findCodeValueByName(String codeName) throws Exception {
+	public String findCodeValueByName(String codename) throws Exception {
 
 		log.fine("[START] CodeService.findCodeValueByName");
 
@@ -344,11 +344,11 @@ public class CodeService {
 			CriteriaQuery<Code> criteria = cb.createQuery(Code.class);
 			Root<Code> rootCode = criteria.from(Code.class);
 			List<Predicate> predicateList = new ArrayList<Predicate>();
-			predicateList.add(cb.equal(rootCode.get("codeName"), codeName));
+			predicateList.add(cb.equal(rootCode.get("codename"), codename));
 
 			criteria.select(rootCode)
 				.where(cb.and(predicateList.toArray(new Predicate[predicateList.size()])))
-				.orderBy(cb.asc(rootCode.get("codeName")), cb.asc(rootCode.get("value")));
+				.orderBy(cb.asc(rootCode.get("codename")), cb.asc(rootCode.get("value")));
 
 			result = em.createQuery(criteria).getResultList();
 
@@ -372,13 +372,13 @@ public class CodeService {
 	}
 
 	/**
-	 * The findCodeIntValueByName interaction returns the integer value for a given codeName.
+	 * The findCodeIntValueByName interaction returns the integer value for a given codename.
 	 *
-	 * @param codeName
+	 * @param codename
 	 * @return Integer code int value
 	 * @throws Exception
 	 */
-	public Integer findCodeIntValueByName(String codeName) throws Exception {
+	public Integer findCodeIntValueByName(String codename) throws Exception {
 
 		log.fine("[START] CodeService.findCodeIntValueByName");
 
@@ -396,18 +396,18 @@ public class CodeService {
 			CriteriaQuery<Code> criteria = cb.createQuery(Code.class);
 			Root<Code> rootCode = criteria.from(Code.class);
 			List<Predicate> predicateList = new ArrayList<Predicate>();
-			predicateList.add(cb.equal(rootCode.get("codeName"), codeName));
+			predicateList.add(cb.equal(rootCode.get("codename"), codename));
 
 			criteria.select(rootCode)
 				.where(cb.and(predicateList.toArray(new Predicate[predicateList.size()])))
-				.orderBy(cb.asc(rootCode.get("codeName")), cb.asc(rootCode.get("value")));
+				.orderBy(cb.asc(rootCode.get("codename")), cb.asc(rootCode.get("value")));
 
 			result = em.createQuery(criteria).getResultList();
 
 			if (result != null && result.size() > 0) {
 				// Return the first found Code; should only be one
 				resultCode = result.get(0);
-				codeIntValue = resultCode.getIntValue();
+				codeIntValue = resultCode.getIntvalue();
 			}
 
 			/*
@@ -424,14 +424,14 @@ public class CodeService {
 	}
 
 	/**
-	 * @param codeName
+	 * @param codename
 	 * @return boolean - true, if boolean code value is supported; false, otherwise
 	 * @throws Exception
 	 */
-	public boolean isSupported(String codeName) throws Exception {
+	public boolean isSupported(String codename) throws Exception {
 		boolean result = false;
 
-		Code code = this.findCodeByName(codeName);
+		Code code = this.findCodeByName(codename);
 
 		if (code != null && code.getValue().equals("true")) {
 			result = true;
@@ -444,10 +444,10 @@ public class CodeService {
 	 * @return boolean - true, if code value equals argument value; false, otherwise
 	 * @throws Exception
 	 */
-	public boolean isValueSupported(String codeName, String codeValue) throws Exception {
+	public boolean isValueSupported(String codename, String codeValue) throws Exception {
 		boolean result = false;
 
-		Code code = this.findCodeByName(codeName);
+		Code code = this.findCodeByName(codename);
 
 		if (code != null && code.getValue().equals(codeValue)) {
 			result = true;
@@ -460,10 +460,10 @@ public class CodeService {
 	 * @return String - code value for code name
 	 * @throws Exception
 	 */
-	public String getCodeValue(String codeName) throws Exception {
+	public String getCodeValue(String codename) throws Exception {
 		String result = null;
 
-		Code code = this.findCodeByName(codeName);
+		Code code = this.findCodeByName(codename);
 
 		if (code != null && !code.getValue().isEmpty()) {
 			result = code.getValue();
@@ -473,30 +473,30 @@ public class CodeService {
 	}
 
 	/**
-	 * @return byte[] - code resource contents
+	 * @return String - code resource contents
 	 * @throws Exception
 	 */
-	public byte[] getCodeResourceContents(String codeName) throws Exception {
-		byte[] result = null;
+	public String getCodeResourceContents(String codename) throws Exception {
+		String result = null;
 
-		Code code = this.findCodeByName(codeName);
+		Code code = this.findCodeByName(codename);
 
-		if (code != null && code.getResourceContents() != null) {
-			result = code.getResourceContents();
+		if (code != null && code.getResourcecontents() != null) {
+			result = code.getResourcecontents();
 		}
 
 		return result;
 	}
 
 	/**
-	 * @param codeName
+	 * @param codename
 	 * @param codeValue
 	 * @return <code>Code</code>
 	 * @throws Exception
 	 */
-	public Code updateCodeValueByName(String codeName, String codeValue) throws Exception {
+	public Code updateCodeValueByName(String codename, String codeValue) throws Exception {
 
-		Code code = this.findCodeByName(codeName);
+		Code code = this.findCodeByName(codename);
 
 		if (code != null && codeValue != null) {
 			code.setValue(codeValue);

@@ -85,10 +85,10 @@ public class ResourcemetadataFamilyMemberHistory extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a FamilyMemberHistory object
 			if (chainedResource != null) {
-				iFamilyMemberHistory = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iFamilyMemberHistory = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iFamilyMemberHistory = new ByteArrayInputStream(resource.getResourceContents());
+				iFamilyMemberHistory = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			FamilyMemberHistory familyMemberHistory = (FamilyMemberHistory) xmlP.parse(iFamilyMemberHistory);

@@ -85,10 +85,10 @@ public class ResourcemetadataExampleScenario extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a ExampleScenario object
 			if (chainedResource != null) {
-				iExampleScenario = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iExampleScenario = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iExampleScenario = new ByteArrayInputStream(resource.getResourceContents());
+				iExampleScenario = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             ExampleScenario exampleScenario = (ExampleScenario) xmlP.parse(iExampleScenario);

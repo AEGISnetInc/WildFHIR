@@ -87,10 +87,10 @@ public class ResourcemetadataEvidence extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Evidence object
 			if (chainedResource != null) {
-				iEvidence = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iEvidence = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iEvidence = new ByteArrayInputStream(resource.getResourceContents());
+				iEvidence = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Evidence evidence = (Evidence) xmlP.parse(iEvidence);

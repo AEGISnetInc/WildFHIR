@@ -88,10 +88,10 @@ public class ResourcemetadataCapabilityStatement extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a CapabilityStatement object
 			if (chainedResource != null) {
-				iCapabilityStatement = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iCapabilityStatement = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iCapabilityStatement = new ByteArrayInputStream(resource.getResourceContents());
+				iCapabilityStatement = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			CapabilityStatement capabilityStatement = (CapabilityStatement) xmlP.parse(iCapabilityStatement);

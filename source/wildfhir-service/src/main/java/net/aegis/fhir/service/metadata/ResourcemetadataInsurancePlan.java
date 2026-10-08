@@ -84,10 +84,10 @@ public class ResourcemetadataInsurancePlan extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a InsurancePlan object
 			if (chainedResource != null) {
-				iInsurancePlan = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iInsurancePlan = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iInsurancePlan = new ByteArrayInputStream(resource.getResourceContents());
+				iInsurancePlan = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			InsurancePlan insurancePlan = (InsurancePlan) xmlP.parse(iInsurancePlan);

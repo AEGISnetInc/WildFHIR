@@ -84,10 +84,10 @@ public class ResourcemetadataSchedule extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Schedule object
 			if (chainedResource != null) {
-				iSchedule = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iSchedule = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iSchedule = new ByteArrayInputStream(resource.getResourceContents());
+				iSchedule = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Schedule schedule = (Schedule) xmlP.parse(iSchedule);

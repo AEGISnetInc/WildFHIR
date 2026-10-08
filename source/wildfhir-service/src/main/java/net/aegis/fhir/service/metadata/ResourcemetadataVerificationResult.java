@@ -80,10 +80,10 @@ public class ResourcemetadataVerificationResult extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a VerificationResult object
 			if (chainedResource != null) {
-				iVerificationResult = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iVerificationResult = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iVerificationResult = new ByteArrayInputStream(resource.getResourceContents());
+				iVerificationResult = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             VerificationResult verificationResult = (VerificationResult) xmlP.parse(iVerificationResult);

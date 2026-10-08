@@ -86,10 +86,10 @@ public class ResourcemetadataOrganizationAffiliation extends ResourcemetadataPro
 		try {
             // Extract and convert the resource contents to a OrganizationAffiliation object
 			if (chainedResource != null) {
-				iOrganizationAffiliation = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iOrganizationAffiliation = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iOrganizationAffiliation = new ByteArrayInputStream(resource.getResourceContents());
+				iOrganizationAffiliation = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             OrganizationAffiliation organizationAffiliation = (OrganizationAffiliation) xmlP.parse(iOrganizationAffiliation);

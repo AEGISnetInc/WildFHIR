@@ -82,7 +82,7 @@ public abstract class LinkedResourceProxy {
 		if (resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
 
 			// Convert XML contents to Resource object
-			ByteArrayInputStream iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourceContents());
+			ByteArrayInputStream iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourcecontents().getBytes("UTF-8"));
 			linkedResource = xmlP.parse(iResource);
 		}
 
@@ -108,7 +108,7 @@ public abstract class LinkedResourceProxy {
 		if (resourceContainer.getResponseStatus().equals(Response.Status.OK)) {
 
 			// Convert XML contents to Resource object
-			ByteArrayInputStream iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourceContents());
+			ByteArrayInputStream iResource = new ByteArrayInputStream(resourceContainer.getResource().getResourcecontents().getBytes("UTF-8"));
 			linkedResource = xmlP.parse(iResource);
 		}
 

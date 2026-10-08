@@ -85,10 +85,10 @@ public class ResourcemetadataExplanationOfBenefit extends ResourcemetadataProxy 
 		try {
             // Extract and convert the resource contents to a ExplanationOfBenefit object
 			if (chainedResource != null) {
-				iExplanationOfBenefit = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iExplanationOfBenefit = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iExplanationOfBenefit = new ByteArrayInputStream(resource.getResourceContents());
+				iExplanationOfBenefit = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             ExplanationOfBenefit explanationOfBenefit = (ExplanationOfBenefit) xmlP.parse(iExplanationOfBenefit);

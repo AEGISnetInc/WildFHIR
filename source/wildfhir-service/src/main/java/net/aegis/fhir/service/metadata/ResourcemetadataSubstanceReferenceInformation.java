@@ -76,10 +76,10 @@ public class ResourcemetadataSubstanceReferenceInformation extends Resourcemetad
 		try {
             // Extract and convert the resource contents to a SubstanceReferenceInformation object
 			if (chainedResource != null) {
-				iSubstanceReferenceInformation = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iSubstanceReferenceInformation = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iSubstanceReferenceInformation = new ByteArrayInputStream(resource.getResourceContents());
+				iSubstanceReferenceInformation = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             SubstanceReferenceInformation substanceReferenceInformation = (SubstanceReferenceInformation) xmlP.parse(iSubstanceReferenceInformation);

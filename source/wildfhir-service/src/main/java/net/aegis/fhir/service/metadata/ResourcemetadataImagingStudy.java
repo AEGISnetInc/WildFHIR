@@ -87,10 +87,10 @@ public class ResourcemetadataImagingStudy extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a ImagingStudy object
 			if (chainedResource != null) {
-				iImagingStudy = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iImagingStudy = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iImagingStudy = new ByteArrayInputStream(resource.getResourceContents());
+				iImagingStudy = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			ImagingStudy imagingStudy = (ImagingStudy) xmlP.parse(iImagingStudy);

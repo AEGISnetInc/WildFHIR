@@ -90,7 +90,7 @@ public class ProvenanceService {
 				resCon = resourceService.create(resource, null, baseUrl);
 
 				if (resCon.getResponseStatus().equals(Status.CREATED)) {
-					log.fine("ProvenanceService.createProvenance() - Provenance/" + resCon.getResource().getResourceId() + " successfully created.");
+					log.fine("ProvenanceService.createProvenance() - Provenance/" + resCon.getResource().getResourceid() + " successfully created.");
 				}
 				else {
 					throw new Exception("Error attempting to create Provenance! " +

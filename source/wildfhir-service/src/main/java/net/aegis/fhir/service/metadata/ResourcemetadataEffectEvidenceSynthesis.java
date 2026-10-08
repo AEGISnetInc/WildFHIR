@@ -85,10 +85,10 @@ public class ResourcemetadataEffectEvidenceSynthesis extends ResourcemetadataPro
 		try {
             // Extract and convert the resource contents to a EffectEvidenceSynthesis object
 			if (chainedResource != null) {
-				iEffectEvidenceSynthesis = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iEffectEvidenceSynthesis = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iEffectEvidenceSynthesis = new ByteArrayInputStream(resource.getResourceContents());
+				iEffectEvidenceSynthesis = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             EffectEvidenceSynthesis effectEvidenceSynthesis = (EffectEvidenceSynthesis) xmlP.parse(iEffectEvidenceSynthesis);

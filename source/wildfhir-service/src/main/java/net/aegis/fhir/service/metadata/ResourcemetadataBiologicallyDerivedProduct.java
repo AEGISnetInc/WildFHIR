@@ -77,10 +77,10 @@ public class ResourcemetadataBiologicallyDerivedProduct extends Resourcemetadata
 		try {
 			// Extract and convert the resource contents to a BiologicallyDerivedProduct object
 			if (chainedResource != null) {
-				iBiologicallyDerivedProduct = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iBiologicallyDerivedProduct = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iBiologicallyDerivedProduct = new ByteArrayInputStream(resource.getResourceContents());
+				iBiologicallyDerivedProduct = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			BiologicallyDerivedProduct biologicallyDerivedProduct = (BiologicallyDerivedProduct) xmlP.parse(iBiologicallyDerivedProduct);

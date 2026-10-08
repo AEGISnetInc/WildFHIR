@@ -86,10 +86,10 @@ public class ResourcemetadataDocumentReference extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a DocumentReference object
 			if (chainedResource != null) {
-				iDocumentReference = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iDocumentReference = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iDocumentReference = new ByteArrayInputStream(resource.getResourceContents());
+				iDocumentReference = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			DocumentReference documentReference = (DocumentReference) xmlP.parse(iDocumentReference);

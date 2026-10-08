@@ -88,10 +88,10 @@ public class ResourcemetadataValueSet extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a ValueSet object
 			if (chainedResource != null) {
-				iValueSet = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iValueSet = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iValueSet = new ByteArrayInputStream(resource.getResourceContents());
+				iValueSet = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			ValueSet valueSet = (ValueSet) xmlP.parse(iValueSet);

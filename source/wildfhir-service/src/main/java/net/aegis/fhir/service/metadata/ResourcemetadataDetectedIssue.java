@@ -83,10 +83,10 @@ public class ResourcemetadataDetectedIssue extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a DetectedIssue object
 			if (chainedResource != null) {
-				iDetectedIssue = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iDetectedIssue = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iDetectedIssue = new ByteArrayInputStream(resource.getResourceContents());
+				iDetectedIssue = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             DetectedIssue detectedIssue = (DetectedIssue) xmlP.parse(iDetectedIssue);

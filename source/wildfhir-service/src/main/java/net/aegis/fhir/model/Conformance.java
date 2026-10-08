@@ -59,20 +59,20 @@ public class Conformance implements Serializable {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 
-	private String resourceId;
+	private String resourceid;
 
-	private Integer versionId;
+	private Integer versionid;
 
-	private String resourceType;
+	private String resourcetype;
 
 	private String status;
 
-	private String lastUser;
+	private String lastuser;
 
 	@Temporal(TemporalType.TIMESTAMP)
-	private Date lastUpdate;
+	private Date lastupdate;
 
-	private byte[] resourceContents;
+	private String resourcecontents;
 
 	public Integer getId() {
 		return id;
@@ -82,28 +82,28 @@ public class Conformance implements Serializable {
 		this.id = id;
 	}
 
-	public String getResourceId() {
-		return resourceId;
+	public String getResourceid() {
+		return resourceid;
 	}
 
-	public void setResourceId(String resourceId) {
-		this.resourceId = resourceId;
+	public void setResourceid(String resourceid) {
+		this.resourceid = resourceid;
 	}
 
-	public Integer getVersionId() {
-		return versionId;
+	public Integer getVersionid() {
+		return versionid;
 	}
 
-	public void setVersionId(Integer versionId) {
-		this.versionId = versionId;
+	public void setVersionid(Integer versionid) {
+		this.versionid = versionid;
 	}
 
-	public String getResourceType() {
-		return resourceType;
+	public String getResourcetype() {
+		return resourcetype;
 	}
 
-	public void setResourceType(String resourceType) {
-		this.resourceType = resourceType;
+	public void setResourcetype(String resourcetype) {
+		this.resourcetype = resourcetype;
 	}
 
 	public String getStatus() {
@@ -114,28 +114,28 @@ public class Conformance implements Serializable {
 		this.status = status;
 	}
 
-	public String getLastUser() {
-		return lastUser;
+	public String getLastuser() {
+		return lastuser;
 	}
 
-	public void setLastUser(String lastUser) {
-		this.lastUser = lastUser;
+	public void setLastuser(String lastuser) {
+		this.lastuser = lastuser;
 	}
 
-	public Date getLastUpdate() {
-		return lastUpdate;
+	public Date getLastupdate() {
+		return lastupdate;
 	}
 
-	public void setLastUpdate(Date lastUpdate) {
-		this.lastUpdate = lastUpdate;
+	public void setLastupdate(Date lastupdate) {
+		this.lastupdate = lastupdate;
 	}
 
-	public byte[] getResourceContents() {
-		return resourceContents;
+	public String getResourcecontents() {
+		return resourcecontents;
 	}
 
-	public void setResourceContents(byte[] resourceContents) {
-		this.resourceContents = resourceContents;
+	public void setResourcecontents(String resourcecontents) {
+		this.resourcecontents = resourcecontents;
 	}
 
 	/**
@@ -155,13 +155,13 @@ public class Conformance implements Serializable {
     	} else {
     		clone.setId(null);
     	}
-    	clone.setResourceId(this.getResourceId());
-    	clone.setVersionId(this.getVersionId());
-    	clone.setResourceType(this.getResourceType());
+    	clone.setResourceid(this.getResourceid());
+    	clone.setVersionid(this.getVersionid());
+    	clone.setResourcetype(this.getResourcetype());
     	clone.setStatus(this.getStatus());
-    	clone.setLastUser(this.getLastUser());
-    	clone.setLastUpdate(this.getLastUpdate());
-    	clone.setResourceContents(this.getResourceContents());
+    	clone.setLastuser(this.getLastuser());
+    	clone.setLastupdate(this.getLastupdate());
+    	clone.setResourcecontents(this.getResourcecontents());
 
     	return clone;
     }
@@ -193,9 +193,9 @@ public class Conformance implements Serializable {
 
     @Override
     public String toString() {
-        return "Conformance [id=" + id + ", resourceId=" + resourceId + ", versionId="
-                + versionId + ", resourceType=" + resourceType + ", status=" + status
-                + ", lastUser=" + lastUser;
+        return "Conformance [id=" + id + ", resourceid=" + resourceid + ", versionid="
+                + versionid + ", resourcetype=" + resourcetype + ", status=" + status
+                + ", lastuser=" + lastuser;
     }
 
 

@@ -85,10 +85,10 @@ public class ResourcemetadataAuditEvent extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a AuditEvent object
 			if (chainedResource != null) {
-				iAuditEvent = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iAuditEvent = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iAuditEvent = new ByteArrayInputStream(resource.getResourceContents());
+				iAuditEvent = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			AuditEvent auditEvent = (AuditEvent) xmlP.parse(iAuditEvent);

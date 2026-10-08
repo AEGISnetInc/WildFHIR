@@ -84,10 +84,10 @@ public class ResourcemetadataTerminologyCapabilities extends ResourcemetadataPro
 		try {
 			// Extract and convert the resource contents to a TerminologyCapabilities object
 			if (chainedResource != null) {
-				iTerminologyCapabilities = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iTerminologyCapabilities = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iTerminologyCapabilities = new ByteArrayInputStream(resource.getResourceContents());
+				iTerminologyCapabilities = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			TerminologyCapabilities terminologyCapabilities = (TerminologyCapabilities) xmlP.parse(iTerminologyCapabilities);

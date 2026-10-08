@@ -82,10 +82,10 @@ public class ResourcemetadataHealthcareService extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a HealthcareService object
 			if (chainedResource != null) {
-				iHealthcareService = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iHealthcareService = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iHealthcareService = new ByteArrayInputStream(resource.getResourceContents());
+				iHealthcareService = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             HealthcareService healthcareService = (HealthcareService) xmlP.parse(iHealthcareService);

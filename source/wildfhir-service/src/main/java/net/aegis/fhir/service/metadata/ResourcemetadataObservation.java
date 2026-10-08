@@ -92,10 +92,10 @@ public class ResourcemetadataObservation extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Observation object
 			if (chainedResource != null) {
-				iObservation = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iObservation = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iObservation = new ByteArrayInputStream(resource.getResourceContents());
+				iObservation = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Observation observation = (Observation) xmlP.parse(iObservation);

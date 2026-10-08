@@ -79,10 +79,10 @@ public class ResourcemetadataMedicinalProductIngredient extends Resourcemetadata
 		try {
             // Extract and convert the resource contents to a MedicinalProductIngredient object
 			if (chainedResource != null) {
-				iMedicinalProductIngredient = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iMedicinalProductIngredient = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iMedicinalProductIngredient = new ByteArrayInputStream(resource.getResourceContents());
+				iMedicinalProductIngredient = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             MedicinalProductIngredient medicinalProductIngredient = (MedicinalProductIngredient) xmlP.parse(iMedicinalProductIngredient);

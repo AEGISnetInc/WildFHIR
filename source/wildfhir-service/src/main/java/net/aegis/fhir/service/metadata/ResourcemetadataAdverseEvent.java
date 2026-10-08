@@ -84,10 +84,10 @@ public class ResourcemetadataAdverseEvent extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a AdverseEvent object
 			if (chainedResource != null) {
-				iAdverseEvent = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iAdverseEvent = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iAdverseEvent = new ByteArrayInputStream(resource.getResourceContents());
+				iAdverseEvent = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			AdverseEvent adverseEvent = (AdverseEvent) xmlP.parse(iAdverseEvent);

@@ -82,10 +82,10 @@ public class ResourcemetadataBasic extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a Basic object
 			if (chainedResource != null) {
-				iBasic = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iBasic = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iBasic = new ByteArrayInputStream(resource.getResourceContents());
+				iBasic = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             Basic basic = (Basic) xmlP.parse(iBasic);

@@ -83,10 +83,10 @@ public class ResourcemetadataSupplyRequest extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a SupplyRequest object
 			if (chainedResource != null) {
-				iSupplyRequest = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iSupplyRequest = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iSupplyRequest = new ByteArrayInputStream(resource.getResourceContents());
+				iSupplyRequest = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			SupplyRequest supplyRequest = (SupplyRequest) xmlP.parse(iSupplyRequest);

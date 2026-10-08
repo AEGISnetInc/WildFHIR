@@ -85,10 +85,10 @@ public class ResourcemetadataClinicalImpression extends ResourcemetadataProxy {
 		try {
             // Extract and convert the resource contents to a ClinicalImpression object
 			if (chainedResource != null) {
-				iClinicalImpression = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iClinicalImpression = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iClinicalImpression = new ByteArrayInputStream(resource.getResourceContents());
+				iClinicalImpression = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
             ClinicalImpression clinicalImpression = (ClinicalImpression) xmlP.parse(iClinicalImpression);

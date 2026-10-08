@@ -84,10 +84,10 @@ public class ResourcemetadataOrganization extends ResourcemetadataProxy {
 		try {
 			// Extract and convert the resource contents to a Organization object
 			if (chainedResource != null) {
-				iOrganization = new ByteArrayInputStream(chainedResource.getResourceContents());
+				iOrganization = new ByteArrayInputStream(chainedResource.getResourcecontents().getBytes("UTF-8"));
 			}
 			else {
-				iOrganization = new ByteArrayInputStream(resource.getResourceContents());
+				iOrganization = new ByteArrayInputStream(resource.getResourcecontents().getBytes("UTF-8"));
 			}
 			XmlParser xmlP = new XmlParser();
 			Organization organization = (Organization) xmlP.parse(iOrganization);
