@@ -5,10 +5,10 @@
     <parent>
         <groupId>net.aegis.fhir</groupId>
         <artifactId>wildfhir</artifactId>
-        <version>0.8.0</version>
+        <version>0.8.1</version>
     </parent>
     <artifactId>wildfhir-rest-server</artifactId>
-    <version>0.8.0</version>
+    <version>0.8.1</version>
     <packaging>war</packaging>
     <name>wildfhir-rest-server</name>
     <description>AEGIS FHIR RESTful Server</description>
