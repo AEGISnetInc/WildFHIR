@@ -1,7 +1,4 @@
-/*
--- Insert default codes and their settings
-*/
-INSERT INTO wildfhirr4.code (codeName,value,intValue,description,resourceContents) VALUES
+INSERT INTO wildfhirr4.code (codename, value, intvalue, description, resourcecontents) VALUES
 ('baseUrl','http://localhost:8080/r4',0,'WildFHIR base url (used by capabilitystatement-reload)',NULL),
 ('conditionalDelete','multiple',0,'Conditional delete support setting (single, multiple, not-supported)',NULL),
 ('conditionalRead','full-support',0,'Conditional read support setting (full-support, modified-since, not-match, not-supported)',NULL),

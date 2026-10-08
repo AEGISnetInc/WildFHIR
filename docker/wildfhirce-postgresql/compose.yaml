@@ -1,0 +1,34 @@
+services:
+  wildfhircepostgresql:
+    image: aegisnetinc/wildfhirce-postgresql:v0.8.1
+    container_name: wildfhircepostgresql
+    hostname: wildfhircepostgresql
+    environment:
+      # Superuser (postgres) password; set in .env, never committed
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      # PostgreSQL 18+ images: mount /var/lib/postgresql, NOT /var/lib/postgresql/data
+      - wildfhirce-postgresql-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d wildfhirr4"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+
+  wildfhircewildflypostgresql:
+    image: aegisnetinc/wildfhirce-wildfly-postgresql:v0.8.1
+    container_name: wildfhircewildflypostgresql
+    hostname: wildfhircewildflypostgresql
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+      - "9990:9990"
+    depends_on:
+      - wildfhircepostgresql
+
+volumes:
+  wildfhirce-postgresql-data:

@@ -1,0 +1,42 @@
+# -------------------------------------------------------------------------------
+# Set up named compose project wildfhirce-r4-wildfly39-postgresql18
+# - This will show up in Docker Desktop
+# -------------------------------------------------------------------------------
+docker compose -p wildfhirce-r4-wildfly39-postgresql18 create
+
+=================================================================================
+
+# -------------------------------------------------------------------------------
+# Create docker bridge network wildfhirce-net
+# - This is needed for container-container communication
+# -------------------------------------------------------------------------------
+docker network create -d bridge wildfhirce-net
+
+# -------------------------------------------------------------------------------
+# Create and run wildfhirce-postgresql image
+# - From tag v0.8.1
+# - Using the bridge network wildfhirce-net
+# - Expose port 5432 for pgAdmin access
+# -------------------------------------------------------------------------------
+docker run --network=wildfhirce-net -itd -p 5432:5432 --name=wildfhircepostgresql aegisnetinc/wildfhirce-postgresql:v0.8.1
+
+# -------------------------------------------------------------------------------
+# Run wildfhircepostgresql container
+# - Uses wildfhircepostgresql container created from run command above
+# -------------------------------------------------------------------------------
+docker start wildfhircepostgresql
+
+# -------------------------------------------------------------------------------
+# Create and run wildfhirce-wildfly-postgresql image
+# - From tag v0.8.1
+# - Using the bridge network wildfhirce-net
+# - Define WildFHIR environment variable file
+# - Expose ports 8080, 8443, 9990 for browser and RESTful client access
+# -------------------------------------------------------------------------------
+docker run --network=wildfhirce-net -itd -p 8080:8080 -p 8443:8443 -p 9990:9990 --env-file env.list --name=wildfhircewildflypostgresql aegisnetinc/wildfhirce-wildfly-postgresql:v0.8.1
+
+# -------------------------------------------------------------------------------
+# Run wildfhircewildflypostgresql container
+# - Uses wildfhircewildflypostgresql container created from run command above
+# -------------------------------------------------------------------------------
+docker start wildfhircewildflypostgresql
