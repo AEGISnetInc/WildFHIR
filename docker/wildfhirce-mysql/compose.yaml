@@ -12,6 +12,8 @@ services:
     image: aegisnetinc/wildfhirce-wildfly-mysql:v0.8.1
     container_name: wildfhircewildflymysql
     hostname: wildfhircewildflymysql
+    env_file:
+      - env.list
     ports:
       - "8080:8080"
       - "8443:8443"

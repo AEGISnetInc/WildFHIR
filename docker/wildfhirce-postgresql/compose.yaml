@@ -23,6 +23,8 @@ services:
     image: aegisnetinc/wildfhirce-wildfly-postgresql:v0.8.1
     container_name: wildfhircewildflypostgresql
     hostname: wildfhircewildflypostgresql
+    env_file:
+      - env.list
     ports:
       - "8080:8080"
       - "8443:8443"
